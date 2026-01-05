@@ -1,0 +1,431 @@
+.appContainer {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+}
+
+@media (min-width: 1024px) {
+    .appContainer {
+        flex-direction: row;
+    }
+}
+
+/* --- Left Panel --- */
+.leftPanel {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border-subtle);
+    background: var(--bg-primary);
+    height: auto;
+}
+
+@media (min-width: 1024px) {
+    .leftPanel {
+        width: 41.666667%;
+        /* 5/12 */
+        height: 100vh;
+    }
+}
+
+@media (min-width: 1280px) {
+    .leftPanel {
+        width: 33.333333%;
+        /* 1/3 */
+    }
+}
+
+.scrollArea {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    padding-bottom: 0;
+}
+
+@media (min-width: 1024px) {
+    .scrollArea {
+        padding: 2rem;
+        padding-bottom: 0;
+    }
+}
+
+.header {
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.titleGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.logoBox {
+    padding: 0.5rem;
+    background-color: var(--accent-primary);
+    border-radius: var(--radius-md);
+    color: var(--text-inverse);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: var(--text-heading);
+}
+
+.subtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.fieldGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: space-between;
+}
+
+.inputWrapper {
+    position: relative;
+}
+
+.input,
+.textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    transition: all 0.15s;
+}
+
+.input:focus,
+.textarea:focus {
+    outline: none;
+    background-color: var(--bg-primary);
+    border-color: var(--accent-primary);
+}
+
+.textarea {
+    min-height: 160px;
+    resize: none;
+}
+
+.inputIcon {
+    position: absolute;
+    left: 0.625rem;
+    top: 0.625rem;
+    color: var(--text-secondary);
+    pointer-events: none;
+}
+
+.inputWithIcon {
+    padding-left: 2rem;
+}
+
+/* --- Toggles/Buttons --- */
+.toggleGroup {
+    display: flex;
+    background-color: var(--bg-tertiary);
+    padding: 0.25rem;
+    border-radius: var(--radius-md);
+}
+
+.toggleBtn {
+    flex: 1;
+    font-size: 0.75rem;
+    padding: 0.375rem 0;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.15s;
+}
+
+.toggleBtnActive {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.generateBtn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    background-color: var(--accent-primary);
+    color: var(--text-inverse);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.generateBtn:hover {
+    background-color: var(--accent-hover);
+    box-shadow: var(--shadow-md);
+}
+
+.generateBtn:active {
+    transform: scale(0.98);
+}
+
+.generateBtnDisabled {
+    background-color: var(--text-secondary);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* --- Right Panel --- */
+.rightPanel {
+    width: 100%;
+    background-color: var(--bg-tertiary);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+@media (min-width: 1024px) {
+    .rightPanel {
+        width: 58.333333%;
+        padding: 2rem;
+    }
+}
+
+@media (min-width: 1280px) {
+    .rightPanel {
+        width: 66.666667%;
+        /* 2/3 */
+    }
+}
+
+.paperSheet {
+    background: var(--bg-primary);
+    box-shadow: var(--shadow-lg);
+    min-height: 80vh;
+    width: 100%;
+    max-width: 42rem;
+    padding: 2rem;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius-sm);
+}
+
+@media (min-width: 1024px) {
+    .paperSheet {
+        min-height: calc(100vh - 6rem);
+        padding: 3rem;
+    }
+}
+
+.paperContent {
+    width: 100%;
+    flex-grow: 1;
+    border: none;
+    resize: none;
+    background: transparent;
+    font-size: 1.125rem;
+    line-height: 1.6;
+    font-family: var(--font-serif);
+    color: var(--text-primary);
+}
+
+.paperContent:focus {
+    outline: none;
+}
+
+.emptyState {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--border-focus);
+}
+
+.emptyIcon {
+    width: 4rem;
+    height: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* --- Floating Actions --- */
+.floatingBar {
+    position: sticky;
+    bottom: 1.5rem;
+    margin-top: 1.5rem;
+    background-color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-full);
+    padding: 0.5rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    z-index: 10;
+}
+
+/* --- Chat Section --- */
+.chatSection {
+    margin-top: 1rem;
+    width: 100%;
+    max-width: 42rem;
+}
+
+.chatInputWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.chatInput {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    padding-right: 3rem;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-primary);
+    box-shadow: var(--shadow-md);
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    color: var(--text-primary);
+}
+
+.chatInput:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-lg);
+}
+
+.chatSendBtn {
+    position: absolute;
+    right: 0.5rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.chatSendBtn:hover:not(:disabled) {
+    background: var(--accent-hover);
+    transform: scale(1.05);
+}
+
+.chatSendBtn:disabled {
+    background: var(--text-secondary);
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.navGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.navBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    color: var(--text-secondary);
+    transition: all 0.15s;
+    background: transparent;
+}
+
+.navBtn:hover:not(.navBtnDisabled) {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.navBtnDisabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.versionLabel {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+    min-width: 2.5rem;
+    text-align: center;
+}
+
+.actionBtn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: color 0.15s;
+}
+
+.actionBtn:hover {
+    color: var(--accent-primary);
+}
+
+.divider {
+    width: 1px;
+    height: 1rem;
+    background-color: var(--border-focus);
+}
+
+/* --- Spinners --- */
+.spinner {
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
