@@ -47,9 +47,9 @@ export const AGENTS = {
         name: 'Draft Generator',
         description: 'An expert writer and editor ready to help you with your letter writing. Writes a draft letter from your rough notes, tone, language, and length settings.',
         type: 'chat',
-        primary: "openai/gpt-oss-120b:free",
+        primary: "openai/gpt-oss-120b",
         fallbacks: [
-            "openai/gpt-oss-120b",
+            "openai/gpt-oss-120b:free",
         ],
         systemInstruction: `Act as an expert writer and editor. 
 Produce ONLY the content of the letter. Do not include introductory text like "Here is your letter:".
@@ -66,9 +66,9 @@ IMPORTANT: Do NOT wrap normal text in backticks or code blocks. Only use code fo
         name: 'Refinement Editor',
         description: 'Updates your rough notes based on your chat feedback. Tells the Draft Generator to make another pass.',
         type: 'chat',
-        primary: "openai/gpt-oss-120b:free",
+        primary: "openai/gpt-oss-120b",
         fallbacks: [
-            "openai/gpt-oss-120b",
+            "openai/gpt-oss-120b:free",
         ],
         systemInstruction: `You are a writing assistant helping a user refine their rough notes for a letter.
 
@@ -93,8 +93,8 @@ INSTRUCTIONS:
         name: 'Suggestions',
         description: 'Reviews your draft letter to propose actionable improvements based on the draft letter and your rough notes.',
         type: 'chat',
-        primary: "openai/gpt-oss-120b:free",
-        fallbacks: ["openai/gpt-oss-120b"],
+        primary: "openai/gpt-oss-120b",
+        fallbacks: ["openai/gpt-oss-120b:free"],
         systemInstruction: `Act as an expert editor reviewing a draft letter against the user's original rough notes.
 Your goal is to identify specific improvements to make the letter more precise, effective, or aligned with the user's intent.
 Focus on:
@@ -105,15 +105,18 @@ Focus on:
 
 Provide 3 specific, actionable suggestions for the user to add or clarify in their notes to improve the next iteration.
 Suggestions should be brief directives (e.g., "Specify the exact meeting date", "Mention the project name explicitly").
-Return ONLY the suggestions as a JSON array of strings.`
+Return ONLY the suggestions as a plain JSON array of strings. Do not wrap it in an object (like {"suggestions": ...}).
+
+Example Output:
+["Clarify the deadline", "Add the budget figure", "Specify the recipient"]`
     },
     RECOMMEND_LENGTH: {
         id: 'RECOMMEND_LENGTH',
         name: 'Length Analyst',
         description: 'Analyzes your rough notes to recommend the optimal draft letter length.',
         type: 'chat',
-        primary: "openai/gpt-oss-20b:free",
-        fallbacks: ["openai/gpt-oss-20b"],
+        primary: "openai/gpt-oss-20b",
+        fallbacks: ["openai/gpt-oss-20b:free"],
         systemInstruction: `Analyze the following rough notes for a letter.
 Based on the complexity, number of topics, and implied depth of the content, recommend the most appropriate length for the final letter.
 
@@ -129,8 +132,8 @@ Return ONLY one word: "Short", "Medium", or "Long". Do not use Markdown formatti
         name: 'Notes Sync',
         description: 'Updates your rough notes to match changes you make when editing the letter.',
         type: 'chat',
-        primary: "openai/gpt-oss-120b:free",
-        fallbacks: ["openai/gpt-oss-120b"],
+        primary: "openai/gpt-oss-120b",
+        fallbacks: ["openai/gpt-oss-120b:free"],
         systemInstruction: `You are a helpful assistant that keeps rough notes in sync with a finished letter.
 Compare the "Edited Letter" to the "Current Rough Notes".
 Identify any NEW information, specific details, or key points that appear in the letter but are missing from the notes.
@@ -186,8 +189,8 @@ Only include suggestions that have some relevance (score < 0.70). If no suggesti
         name: 'Tone Request Detector',
         description: 'Analyzes chat messages to detect tone change requests and maps them to existing or new tones.',
         type: 'chat',
-        primary: "openai/gpt-oss-20b:free",
-        fallbacks: ["openai/gpt-oss-20b"],
+        primary: "openai/gpt-oss-20b",
+        fallbacks: ["openai/gpt-oss-20b:free"],
         systemInstruction: `You analyze user messages to detect tone change requests for letters.
 
 You will receive:
@@ -213,8 +216,8 @@ Examples:
         name: 'Image Request Detector',
         description: 'Analyzes chat messages to detect requests for background images or illustrations.',
         type: 'chat',
-        primary: "openai/gpt-oss-20b:free",
-        fallbacks: ["openai/gpt-oss-20b"],
+        primary: "openai/gpt-oss-20b",
+        fallbacks: ["openai/gpt-oss-20b:free"],
         systemInstruction: `You analyze user messages to detect requests for background images or illustrations.
 
 Your task:

@@ -118,8 +118,17 @@ export async function POST(req: NextRequest) {
         console.log("Tone:", tone);
         console.log("Length:", length);
         console.log("Rough Notes:", cleanedNotes);
+        if (styleExample) {
+            console.log("Style Reference:", styleExample);
+        }
+        else {
+            console.log("Style Reference: None");
+        }
         if (generatedImage) {
             console.log("Background Image: Generated");
+        }
+        else {
+            console.log("Background Image: None");
         }
 
         const openai = createOpenAIClient();

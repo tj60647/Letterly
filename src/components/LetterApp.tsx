@@ -273,11 +273,13 @@ export default function LetterApp() {
                     tone,
                     length,
                     generatedLetter: currentLetter,
+                    styleExample,
                     model: getModelFor(AGENTS.SUGGEST.id)
                 }),
             });
             const data = await response.json();
             if (data.suggestions) {
+                console.log("Suggestions received:", data.suggestions.length, data.suggestions);
                 setSuggestions(data.suggestions);
             }
             if (data.usedModel) {
@@ -534,6 +536,7 @@ export default function LetterApp() {
                     length,
                     language,
                     roughNotes: newRoughNotes, // use updated rough notes
+                    styleExample,
                     model: getModelFor(AGENTS.GENERATE.id)
                 }),
             });

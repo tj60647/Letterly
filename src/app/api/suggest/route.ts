@@ -35,7 +35,7 @@ Return ONLY the suggestions as a JSON array of strings. Example: ["Clarify the d
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { roughNotes, context, recipient, generatedLetter, tone, length, model } = body;
+        const { roughNotes, context, recipient, generatedLetter, tone, length, model, styleExample } = body;
 
         if (!roughNotes || roughNotes.trim().length < 5) {
             return NextResponse.json({ suggestions: [] });
@@ -51,6 +51,8 @@ export async function POST(req: NextRequest) {
         
         Rough Notes:
         ${roughNotes}
+
+        ${styleExample ? `Style Context/Match: ${styleExample}` : ""}
 
         Generated Draft:
         ${generatedLetter || "(No draft generated yet)"}
@@ -76,6 +78,12 @@ export async function POST(req: NextRequest) {
         console.log("Model:", response.usedModel);
 
         let suggestions = [];
+
+        if (!content || !content.trim()) {
+            console.warn("Suggest agent returned empty content.");
+            return NextResponse.json({ suggestions: [], usedModel: response.usedModel });
+        }
+
         try {
             // Some models might include markdown code blocks ```json ... ```
             const cleanContent = content.replace(/```json\n?|\n?```/g, "").trim();
@@ -85,7 +93,12 @@ export async function POST(req: NextRequest) {
             console.log("Clean content:", cleanContent);
 
             const parsed = JSON.parse(cleanContent);
-            suggestions = parsed.suggestions || [];
+
+            if (Array.isArray(parsed.suggestions)) {
+                suggestions = parsed.suggestions;
+            } else if (Array.isArray(parsed.final)) {
+                suggestions = parsed.final;
+            }
 
             // If parsed is an array directly
             if (Array.isArray(parsed)) suggestions = parsed;
