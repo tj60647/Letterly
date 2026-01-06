@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useCallback } from "react";
+import ReactMarkdown from 'react-markdown';
 import styles from "./LetterApp.module.css";
 // ModelSelector removed in favor of AgentModelSettings
 import { AgentModelSettings } from "./AgentModelSettings";
@@ -13,11 +14,6 @@ import {
 } from "./ui/icons";
 
 // --- Constants ---
-const TONE_OPTIONS = [
-    "Professional", "Casual", "Persuasive",
-    "Apologetic", "Warm & Friendly", "Firm & Direct", "Grateful"
-];
-
 const LENGTH_OPTIONS = [
     { value: "Short", label: "Brief" },
     { value: "Medium", label: "Standard" },
@@ -29,12 +25,17 @@ interface HistoryItem {
     roughNotes: string;
     chatHistory: { role: 'user' | 'model'; text: string }[];
     score: number | null;
+    backgroundImage?: string;
 }
 
 export default function LetterApp() {
     // Config State
     const [recipient, setRecipient] = useState("");
     const [sender, setSender] = useState("");
+    const [toneOptions, setToneOptions] = useState([
+        "Professional", "Casual", "Persuasive",
+        "Apologetic", "Warm & Friendly", "Firm & Direct", "Grateful"
+    ]);
     const [tone, setTone] = useState("Casual");
     const [length, setLength] = useState("Short");
     const [roughNotes, setRoughNotes] = useState("");
@@ -55,6 +56,7 @@ export default function LetterApp() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isCopied, setIsCopied] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
 
     // History State
     const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -78,6 +80,14 @@ export default function LetterApp() {
 
     // Metadata State
     const [modelUsage, setModelUsage] = useState<{ generated?: string, reviewed?: string, refined?: string }>({});
+    
+    // Image State
+    const [backgroundImage, setBackgroundImage] = useState<string>("");
+    
+    // Debug: log when backgroundImage changes
+    React.useEffect(() => {
+        console.log("Background image state changed:", { hasImage: !!backgroundImage, length: backgroundImage?.length });
+    }, [backgroundImage]);
     
     // Recommendation State
     const [recommendedLength, setRecommendedLength] = useState<string>("Short");
@@ -177,6 +187,14 @@ export default function LetterApp() {
 
         return () => clearTimeout(timer);
     }, [roughNotes, getModelFor]);
+
+    // Auto-generate when tone, length, language, or model changes (if rough notes exist)
+    React.useEffect(() => {
+        if (roughNotes.trim().length > 0 && generatedLetter) {
+            handleGenerate();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tone, length, language, agentModels]);
 
     // TODO: Implement History and Chat in next iteration if needed, keeping simple for now to match verified plan steps for migration first.
 
@@ -352,16 +370,22 @@ export default function LetterApp() {
             const data = await response.json();
             if (data.error) throw new Error(data.error);
 
+            console.log("Generate response:", { hasImage: !!data.backgroundImage, imageLength: data.backgroundImage?.length });
+
             const text = data.text;
             setGeneratedLetter(text);
             lastSyncedLetterRef.current = text;
             if (data.usedModel) {
                 setModelUsage(prev => ({ ...prev, generated: data.usedModel }));
             }
+            if (data.backgroundImage) {
+                console.log("Setting background image...");
+                setBackgroundImage(data.backgroundImage);
+            }
 
             // Update history
             setHistory(prev => {
-                const newHistory = [...prev, { letter: text, roughNotes: roughNotes, chatHistory: [...chatHistory], score: null }];
+                const newHistory = [...prev, { letter: text, roughNotes: roughNotes, chatHistory: [...chatHistory], score: null, backgroundImage: data.backgroundImage }];
                 setHistoryIndex(newHistory.length - 1); // Point to the new latest
                 return newHistory;
             });
@@ -396,6 +420,7 @@ export default function LetterApp() {
                 setChatHistory(history[newIndex].chatHistory);
             }
             setCompletenessScore(history[newIndex].score);
+            setBackgroundImage(history[newIndex].backgroundImage || "");
         } else if (direction === 'next' && historyIndex < history.length - 1) {
             const newIndex = historyIndex + 1;
             setHistoryIndex(newIndex);
@@ -406,6 +431,7 @@ export default function LetterApp() {
                 setChatHistory(history[newIndex].chatHistory);
             }
             setCompletenessScore(history[newIndex].score);
+            setBackgroundImage(history[newIndex].backgroundImage || "");
         }
     };
 
@@ -437,6 +463,8 @@ export default function LetterApp() {
                     roughNotes: roughNotes,
                     instructions,
                     conversationHistory: updatedChatHistory,
+                    currentTone: tone,
+                    existingTones: toneOptions,
                     model: getModelFor(AGENTS.REFINE.id)
                 }),
             });
@@ -449,6 +477,17 @@ export default function LetterApp() {
             if (refineData.usedModel) {
                 setModelUsage(prev => ({ ...prev, refined: refineData.usedModel }));
             }
+            
+            // Update tone if detected from chat
+            if (refineData.detectedTone) {
+                const detectedTone = refineData.detectedTone;
+                // Add tone to options if it doesn't exist
+                if (!toneOptions.includes(detectedTone)) {
+                    setToneOptions(prev => [...prev, detectedTone]);
+                }
+                setTone(detectedTone);
+            }
+            
             setRoughNotes(newRoughNotes);
             
             const modelMsg = { role: 'model' as const, text: "Rough notes updated. Regenerating letter..." };
@@ -485,8 +524,11 @@ export default function LetterApp() {
             if (genData.usedModel) {
                 setModelUsage(prev => ({ ...prev, generated: genData.usedModel }));
             }
+            if (genData.backgroundImage) {
+                setBackgroundImage(genData.backgroundImage);
+            }
             setHistory(prev => {
-                const newHistory = [...prev, { letter: text, roughNotes: newRoughNotes, chatHistory: finalChatHistory, score: null }];
+                const newHistory = [...prev, { letter: text, roughNotes: newRoughNotes, chatHistory: finalChatHistory, score: null, backgroundImage: genData.backgroundImage || backgroundImage }];
                 setHistoryIndex(newHistory.length - 1);
                 return newHistory;
             });
@@ -588,7 +630,7 @@ export default function LetterApp() {
                                     value={tone}
                                     onChange={(e) => setTone(e.target.value)}
                                 >
-                                    {TONE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                                    {toneOptions.map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                             </div>
                         </div>
@@ -615,9 +657,15 @@ export default function LetterApp() {
                         </label>
                         <textarea
                             className={styles.textarea}
-                            style={{ minHeight: "160px" }}
+                            style={{ minHeight: "240px" }}
                             value={roughNotes}
-                            onChange={(e) => setRoughNotes(e.target.value)}
+                            onChange={(e) => {
+                                setRoughNotes(e.target.value);
+                                // Reset chat history when notes are manually edited
+                                if (chatHistory.length > 0) {
+                                    setChatHistory([]);
+                                }
+                            }}
                             placeholder={"- Ask about the project timeline\n- Mention the budget constraints\n- Express excitement for the collaboration..."}
                         />
                     </div>
@@ -637,7 +685,7 @@ export default function LetterApp() {
                         </div>
                     </div>
 
-<div style={{ marginTop: "1rem" }}>
+                    <div style={{ marginTop: "1rem" }}>
                         <details className={styles.details}>
                             <summary className={styles.summary}>
                                 Style Match (Optional)
@@ -722,7 +770,24 @@ export default function LetterApp() {
             </div>
 
             <div className={styles.centerPanel}>
-                <div className={styles.paperSheet}>
+                <div className={styles.paperSheet} style={{ position: 'relative' }}>
+                    {backgroundImage && (
+                        <img 
+                            src={backgroundImage} 
+                            alt="Background illustration"
+                            style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                width: '60%',
+                                height: 'auto',
+                                opacity: 0.4,
+                                pointerEvents: 'none',
+                                zIndex: 0
+                            }}
+                        />
+                    )}
                     {!generatedLetter && !isLoading && (
                         <div className={styles.emptyState}>
                             <div className={styles.emptyIcon}><PenToolIcon /></div>
@@ -731,12 +796,27 @@ export default function LetterApp() {
                     )}
 
                     {generatedLetter && (
-                        <textarea
-                            className={styles.paperContent}
-                            value={generatedLetter}
-                            onChange={(e) => setGeneratedLetter(e.target.value)}
-                            onBlur={handleSyncNotes}
-                        />
+                        isEditing ? (
+                            <textarea
+                                className={styles.paperContent}
+                                value={generatedLetter}
+                                onChange={(e) => setGeneratedLetter(e.target.value)}
+                                onBlur={() => {
+                                    handleSyncNotes();
+                                    setIsEditing(false);
+                                }}
+                                autoFocus
+                                style={{ position: 'relative', zIndex: 1, background: 'transparent' }}
+                            />
+                        ) : (
+                            <div 
+                                className={styles.paperContent}
+                                onClick={() => setIsEditing(true)}
+                                style={{ cursor: 'text', whiteSpace: 'pre-wrap', position: 'relative', zIndex: 1 }}
+                            >
+                                <ReactMarkdown>{generatedLetter}</ReactMarkdown>
+                            </div>
+                        )
                     )}
                 </div>
 

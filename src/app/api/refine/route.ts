@@ -5,7 +5,27 @@ export async function POST(req: NextRequest) {
     console.log("POST /api/refine called");
     try {
         const body = await req.json();
-        const { roughNotes, instructions, conversationHistory, model } = body;
+        const { roughNotes, instructions, conversationHistory, model, currentTone, existingTones } = body;
+
+        // Detect tone change requests using agent
+        let detectedTone: string | null = null;
+        try {
+            const toneResponse = await fetch(`${req.nextUrl.origin}/api/detect-tone`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    message: instructions,
+                    existingTones: existingTones || [],
+                    model: model // Use same model as refine for consistency
+                }),
+            });
+            const toneData = await toneResponse.json();
+            if (toneData.tone) {
+                detectedTone = toneData.tone;
+            }
+        } catch (error) {
+            console.error("Failed to detect tone:", error);
+        }
 
         // Format conversation history if available
         let historyContext = "";
@@ -17,20 +37,12 @@ export async function POST(req: NextRequest) {
         }
 
         const fullPrompt = `
-      You are a writing assistant helping a user refine their rough notes for a letter.
-            
-      CURRENT ROUGH NOTES:
-      ${roughNotes}
-      ${historyContext}
+CURRENT ROUGH NOTES:
+${roughNotes}
+${historyContext}
 
-      LATEST USER FEEDBACK/REQUEST:
-      ${instructions}
-
-      INSTRUCTIONS:
-      1. Rewrite the "Current Rough Notes" to incorporate the "User Feedback".
-      2. You can add points, remove points, or change the emphasis as requested.
-      3. Do NOT write the final letter. Just output the updated raw notes/bullet points.
-      4. Keep the output plain text.
+LATEST USER FEEDBACK/REQUEST:
+${instructions}
     `;
 
         console.log("Refining with OpenRouter model:", model);
@@ -45,15 +57,22 @@ export async function POST(req: NextRequest) {
             const response = await callWithFallback(
                 openai,
                 [
-                    { role: "system", content: "You are a helpful AI writing assistant." },
+                    { role: "system", content: agent.systemInstruction },
                     { role: "user", content: fullPrompt }
                 ],
                 agent
             );
 
+            console.log("--- REFINE Agent Output ---");
+            console.log("Content:", response.content);
+            console.log("Detected Tone:", detectedTone || "None");
+            console.log("Model:", response.usedModel);
+            console.log("---------------------------");
+
             return NextResponse.json({ 
                 text: response.content,
-                usedModel: response.usedModel 
+                usedModel: response.usedModel,
+                detectedTone: detectedTone
             });
 
         } catch (err: unknown) {

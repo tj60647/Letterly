@@ -55,6 +55,10 @@ export async function POST(req: NextRequest) {
 
         const content = response.content;
         
+        console.log("--- SUGGEST Agent Output ---");
+        console.log("Raw Content:", content);
+        console.log("Model:", response.usedModel);
+        
         let suggestions = [];
         try {
             // Some models might include markdown code blocks ```json ... ```

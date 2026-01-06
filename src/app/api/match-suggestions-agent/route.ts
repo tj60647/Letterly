@@ -44,6 +44,8 @@ Return a JSON array of matched indices.`;
         );
 
         console.log("Agent Response:", result.content);
+        console.log("Model:", result.usedModel);
+        console.log("----------------------------------");
 
         // Parse the JSON response
         let matchedSuggestions: { index: number; score: number }[] = [];

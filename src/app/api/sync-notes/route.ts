@@ -12,31 +12,24 @@ export async function POST(req: NextRequest) {
 
         const openai = createOpenAIClient();
 
-        const systemPrompt = `
-        You are a helpful assistant that keeps rough notes in sync with a finished letter.
-        Compare the "Edited Letter" to the "Current Rough Notes".
-        Identify any NEW information, specific details, or key points that appear in the letter but are missing from the notes.
-        
-        Return ONLY the new points as a bulleted list (e.g., "- New point here").
-        If there is no new information, return an empty string.
-        Do not repeat points that are already in the rough notes.
-        Keep the points concise.
-        IMPORTANT: Write all points in present tense, not past tense (e.g., "Express interest in..." not "Expressed interest in...", "Add budget details" not "Added budget details").
-        `;
-
         const agent = { ...AGENTS.SYNC_NOTES };
         if (model) agent.primary = model;
 
         const response = await callWithFallback(
             openai,
             [
-                { role: "system", content: systemPrompt },
+                { role: "system", content: agent.systemInstruction },
                 { role: "user", content: `Current Rough Notes:\n${roughNotes}\n\nEdited Letter:\n${editedLetter}` }
             ],
             agent
         );
 
         const content = response.content.trim();
+        
+        console.log("--- SYNC_NOTES Agent Output ---");
+        console.log("Content:", content);
+        console.log("Model:", response.usedModel);
+        console.log("-------------------------------");
         
         // Parse bullets
         const lines = content.split('\n')

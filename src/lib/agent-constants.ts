@@ -18,6 +18,9 @@ export const MODELS = [
     { id: 'openai/text-embedding-3-small', name: 'OpenAI Embedding 3 Small', type: 'embedding' },
     { id: 'mistralai/mistral-embed-2312', name: 'Mistral Embed (2312)', type: 'embedding' },
     { id: 'google/gemini-embedding-001', name: 'Google Gemini Embed', type: 'embedding' },
+
+    // Image Models
+    { id: 'gemini-2.5-flash-image', name: 'Gemini 2.5 Flash Image', type: 'image' },
 ];
 
 export const AGENTS = {
@@ -36,7 +39,9 @@ Do not add additional content or make up details beyond what is provided in the 
 Maintain the requested tone throughout.
 Ensure the flow is logical and polished.
 If the rough draft is fragmented, expand it into full coherent sentences.
-Use standard letter formatting (salutation, body, closing).`
+Use standard letter formatting (salutation, body, closing).
+You may use markdown for emphasis (e.g., *italics* for subtle emphasis) when appropriate, but use sparingly.
+IMPORTANT: Do NOT wrap normal text in backticks or code blocks. Only use code formatting (backticks or triple backticks) if the letter content actually includes technical code or commands that need to be shown.`
     },
     REFINE: {
         id: 'REFINE',
@@ -50,10 +55,20 @@ Use standard letter formatting (salutation, body, closing).`
         systemInstruction: `You are a writing assistant helping a user refine their rough notes for a letter.
 
 INSTRUCTIONS:
-1. Rewrite the "Current Rough Notes" to incorporate the "User Feedback".
-2. You can add points, remove points, or change the emphasis as requested.
-3. Do NOT write the final letter. Just output the updated raw notes/bullet points.
-4. Keep the output plain text.`
+1. AUGMENT the "Current Rough Notes" based on the "User Feedback" - do NOT completely rewrite the entire list.
+2. PRESERVE all existing bullet points EXACTLY as they are unless the user EXPLICITLY requests changes to specific points.
+3. Add new points at the end of the list if the user requests additional information.
+4. Remove ONLY specific points if the user explicitly asks to delete something (e.g., "remove the budget point").
+5. Modify ONLY specific points if the user explicitly asks to change them (e.g., "change the meeting time to 3pm").
+6. If the user's request doesn't reference existing points, assume they want to ADD new information, not replace existing information.
+7. Do NOT write the final letter. Just output the updated raw notes/bullet points.
+8. Keep the output plain text.
+9. IMPORTANT: Keep each note item succinct - use brief bullet points (5-10 words max per item), not long sentences.
+10. CRITICAL: Notes must be TONE-NEUTRAL and FACTUAL. Do NOT add any tonal language, emotional words, or stylistic flourishes to the notes themselves.
+11. Examples of GOOD notes: "Ask about project timeline", "Mention budget constraints", "Request meeting next week"
+12. Examples of BAD notes: "Excitedly ask about the project timeline", "Politely mention budget constraints", "Warmly request a meeting"
+13. The tone will be applied when generating the letter, NOT in the notes.
+14. IGNORE tone change requests (e.g., "make it more formal", "be sarcastic"). Tone is handled separately - do NOT add tone instructions to the notes.`
     },
     SUGGEST: {
         id: 'SUGGEST',
@@ -105,7 +120,7 @@ Identify any NEW information, specific details, or key points that appear in the
 Return ONLY the new points as a bulleted list (e.g., "- New point here").
 If there is no new information, return an empty string.
 Do not repeat points that are already in the rough notes.
-Keep the points concise.
+Keep the points concise and succinct - aim for 5-10 words per bullet point maximum.
 IMPORTANT: Write all points in present tense, not past tense (e.g., "Express interest in..." not "Expressed interest in...", "Add budget details" not "Added budget details").`
     },
     SCORED: {
@@ -147,5 +162,72 @@ Suggestions: ["Consider a more formal tone", "Add specific dates", "Clarify the 
 Output: [{"index": 0, "score": 0.05}, {"index": 1, "score": 0.92}]
 
 Only include suggestions that have some relevance (score < 0.70). If no suggestions match, return an empty array: []`
+    },
+    DETECT_TONE_REQUEST: {
+        id: 'DETECT_TONE_REQUEST',
+        name: 'Tone Request Detector',
+        description: 'Analyzes chat messages to detect tone change requests and maps them to existing or new tones.',
+        type: 'chat',
+        primary: "openai/gpt-oss-20b:free",
+        fallbacks: ["openai/gpt-oss-20b"],
+        systemInstruction: `You analyze user messages to detect tone change requests for letters.
+
+You will receive:
+1. The user's message
+2. A list of existing available tones
+
+Your task:
+- Determine if the user is requesting a tone change
+- If yes, check if the requested tone matches any existing tone (consider synonyms and similar meanings)
+- If it matches an existing tone, return that exact tone name
+- If it's a new tone not covered by existing options, return a clean, title-cased name for the new tone
+- If no tone change is requested, return an empty string
+
+Return ONLY the tone name. No explanation, no formatting, no punctuation.
+Examples:
+- If user says "make it formal" and "Professional" exists → return "Professional"
+- If user says "be sarcastic" and no similar tone exists → return "Sarcastic"
+- If user says "add more details" → return "" (empty, not a tone request)`,
+        hidden: true
+    },
+    DETECT_IMAGE_REQUEST: {
+        id: 'DETECT_IMAGE_REQUEST',
+        name: 'Image Request Detector',
+        description: 'Analyzes chat messages to detect requests for background images or illustrations.',
+        type: 'chat',
+        primary: "openai/gpt-oss-20b:free",
+        fallbacks: ["openai/gpt-oss-20b"],
+        systemInstruction: `You analyze user messages to detect requests for background images or illustrations.
+
+Your task:
+- Determine if the user is requesting an image, illustration, drawing, or background
+- If yes, extract a clear, concise subject description for the image (e.g., "a rose", "mountain landscape", "compass")
+- If no image is requested, return an empty string
+
+Return ONLY the subject description. No explanation, no formatting, just the subject.
+Examples:
+- "add a rose image" → return "a rose"
+- "create a mountain background" → return "mountain landscape"
+- "put an illustration of a compass" → return "a compass"
+- "make it more formal" → return "" (empty, not an image request)
+- "add more details about the timeline" → return "" (empty, not an image request)`,
+        hidden: true
+    },
+    IMAGE: {
+        id: 'IMAGE',
+        name: 'Line Art Generator',
+        description: 'Creates intricate black and white line art illustrations as watermarks for letters.',
+        type: 'image',
+        primary: "gemini-2.5-flash-image",
+        fallbacks: [],
+        systemInstruction: `Create an intricate black and white ink illustration.
+Requirements:
+- Pure white background
+- Use varying line weights for depth
+- Incorporate cross-hatching and stippling for texture
+- Highly detailed contours
+- Professional botanical or technical drawing style
+- No gray tones or digital gradients, only black ink techniques`,
+        hidden: false
     }
 } as const;
