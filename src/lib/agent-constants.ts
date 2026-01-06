@@ -24,7 +24,7 @@ export const AGENTS = {
     GENERATE: {
         id: 'GENERATE',
         name: 'Draft Generator',
-        description: 'Writes a draft letter from your rough notes, tone, language, and length settings.',
+        description: 'An expert writer and editor ready to help you with your letter writing. Writes a draft letter from your rough notes, tone, language, and length settings.',
         type: 'chat',
         primary: "openai/gpt-oss-120b:free",
         fallbacks: [
