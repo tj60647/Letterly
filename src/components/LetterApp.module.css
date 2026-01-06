@@ -1,3 +1,13 @@
+/**
+ * @file src/components/LetterApp.module.css
+ * @description Styles for the main application layout, including the left panel (inputs), center panel (letter), and right panel (chat).
+ * @author Thomas J McLeish
+ * @copyright (c) 2026 Thomas J McLeish
+ * @license MIT
+ *
+ * @see Key Concepts: Responsive Grid, Panel Layout, CSS Modules
+ */
+
 .appContainer {
     display: flex;
     flex-direction: column;
@@ -720,9 +730,11 @@
     padding: 0.5rem;
     position: absolute;
     z-index: 1;
-    top: 125%; /* Position below the icon */
+    top: 125%;
+    /* Position below the icon */
     left: 50%;
-    margin-left: -100px; /* Center the tooltip */
+    margin-left: -100px;
+    /* Center the tooltip */
     opacity: 0;
     transition: opacity 0.2s;
     font-size: 0.75rem;
@@ -736,6 +748,7 @@
     visibility: visible;
     opacity: 1;
 }
+
 .configHeader {
     display: flex;
     justify-content: space-between;
@@ -805,4 +818,3 @@
 .writersRoomBtn {
     justify-content: center;
 }
-

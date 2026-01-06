@@ -1,6 +1,23 @@
+/**
+ * @file src/app/api/refine/route.ts
+ * @description Handles iterative improvements to the draft. Takes user feedback and modifies the generated text while preserving context.
+ * @author Thomas J McLeish
+ * @copyright (c) 2026 Thomas J McLeish
+ * @license MIT
+ *
+ * @see Key Concepts: Iterative Generation, Context Management, Feedback Loops
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
 
+/**
+ * Iteratively refines the rough notes based on user chat instructions.
+ * Can also detect implicit tone changes within the chat message.
+ * 
+ * @param {NextRequest} req - The JSON request containing `{ roughNotes, instructions, conversationHistory, model, existingTones }`.
+ * @returns {Promise<NextResponse>} JSON response with `{ text: string, usedModel: string, detectedTone?: string }`.
+ */
 export async function POST(req: NextRequest) {
     console.log("POST /api/refine called");
     try {
@@ -13,7 +30,7 @@ export async function POST(req: NextRequest) {
             const toneResponse = await fetch(`${req.nextUrl.origin}/api/detect-tone`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     message: instructions,
                     existingTones: existingTones || [],
                     model: model // Use same model as refine for consistency
@@ -69,7 +86,7 @@ ${instructions}
             console.log("Model:", response.usedModel);
             console.log("---------------------------");
 
-            return NextResponse.json({ 
+            return NextResponse.json({
                 text: response.content,
                 usedModel: response.usedModel,
                 detectedTone: detectedTone

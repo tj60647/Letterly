@@ -1,3 +1,13 @@
+/**
+ * @file src/app/api/match-suggestions/route.ts
+ * @description Matches user input against a list of pre-defined suggestions using vector embeddings and cosine similarity.
+ * @author Thomas J McLeish
+ * @copyright (c) 2026 Thomas J McLeish
+ * @license MIT
+ *
+ * @see Key Concepts: Vector Embeddings, Cosine Similarity, Semantic Search
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createOpenAIClient, AGENTS } from '@/lib/models';
 
@@ -14,6 +24,12 @@ function cosineSimilarity(vecA: number[], vecB: number[]) {
     return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
+/**
+ * Finds the most relevant suggestions for a given user chat message using vector similarity.
+ * 
+ * @param {NextRequest} req - The JSON request containing `{ chatInput: string, suggestions: string[], model?: string }`.
+ * @returns {Promise<NextResponse>} JSON response with `{ matchedIndices: number[] }` (indices of suggestions that overlap with the input).
+ */
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
@@ -33,7 +49,7 @@ export async function POST(req: NextRequest) {
 
         // Generate embeddings for chat input and all suggestions
         const textsToEmbed = [chatInput, ...suggestions];
-        
+
         const response = await openai.embeddings.create({
             model: model || AGENTS.MATCH_SUGGESTIONS_SCORER.primary,
             input: textsToEmbed,
@@ -48,7 +64,7 @@ export async function POST(req: NextRequest) {
 
         console.log("--- Match Suggestions Scores ---");
         console.log("Chat Input:", chatInput);
-        
+
         suggestionEmbeddings.forEach((suggestionEmbedding, index) => {
             const similarity = cosineSimilarity(chatEmbedding, suggestionEmbedding);
             console.log(`Suggestion ${index}: "${suggestions[index]}" → Score: ${similarity.toFixed(4)} ${similarity >= SIMILARITY_THRESHOLD ? '✓ MATCHED' : ''}`);
@@ -56,7 +72,7 @@ export async function POST(req: NextRequest) {
                 matchedIndices.push(index);
             }
         });
-        
+
         console.log(`Matched Indices: [${matchedIndices.join(', ')}]`);
         console.log("----------------------------------");
 

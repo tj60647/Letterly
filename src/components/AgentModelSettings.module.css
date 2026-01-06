@@ -1,3 +1,13 @@
+/**
+ * @file src/components/AgentModelSettings.module.css
+ * @description Local scoped styles for the Agent Model Settings modal.
+ * @author Thomas J McLeish
+ * @copyright (c) 2026 Thomas J McLeish
+ * @license MIT
+ *
+ * @see Key Concepts: CSS Modules, Flexbox Layouts, Modal Styling
+ */
+
 .overlay {
     position: fixed;
     top: 0;
@@ -20,7 +30,7 @@
     max-height: 85vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .header {

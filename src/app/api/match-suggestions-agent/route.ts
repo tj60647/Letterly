@@ -1,6 +1,23 @@
+/**
+ * @file src/app/api/match-suggestions-agent/route.ts
+ * @description An alternative matching approach using an LLM agent to intelligently select the best suggestion for a given input.
+ * @author Thomas J McLeish
+ * @copyright (c) 2026 Thomas J McLeish
+ * @license MIT
+ *
+ * @see Key Concepts: Agentic Reasoning, Classification, JSON Output Mode
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
 
+/**
+ * Uses an LLM agent to semantically match user chat input to specific suggestions.
+ * More accurate but slower than vector similarity.
+ * 
+ * @param {NextRequest} req - The JSON request containing `{ chatInput: string, suggestions: string[], model?: string }`.
+ * @returns {Promise<NextResponse>} JSON response with `{ matchedSuggestions: { index: number, score: number }[], usedModel: string }`.
+ */
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
@@ -17,7 +34,7 @@ export async function POST(req: NextRequest) {
         }
 
         const systemPrompt = AGENTS.MATCH_SUGGESTIONS.systemInstruction;
-        
+
         const userPrompt = `Chat Message: "${chatInput}"
 
 Suggestions:

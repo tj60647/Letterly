@@ -1,3 +1,17 @@
+/**
+ * @file src/lib/agent-constants.ts
+ * @description Defines the configuration for all AI agents and available LLM models used in the system.
+ * @author Thomas J McLeish
+ * @copyright (c) 2026 Thomas J McLeish
+ * @license MIT
+ *
+ * @see Key Concepts: Constants, Configuration Objects, Type Definitions
+ */
+
+/**
+ * List of available AI models that can be used in the application.
+ * Each model object contains an ID (used for API calls), a human-readable name, and a type (chat, embedding, or image).
+ */
 export const MODELS = [
     // Chat Models
     { id: 'openai/gpt-oss-120b', name: 'GPT-OSS 120B', type: 'chat' },
@@ -23,6 +37,10 @@ export const MODELS = [
     { id: 'gemini-2.5-flash-image', name: 'Gemini 2.5 Flash Image', type: 'image' },
 ];
 
+/**
+ * Defines the configuration for each "Agent" in the system.
+ * An Agent is a specialized role (e.g., Writer, Editor, Critic) with a specific goal and consistent system instructions.
+ */
 export const AGENTS = {
     GENERATE: {
         id: 'GENERATE',

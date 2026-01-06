@@ -1,7 +1,24 @@
+/**
+ * @file src/app/api/generate/route.ts
+ * @description The core generation API. Handles finding an AI model, constructing the prompt from user inputs (recipient, tone, notes), and returning the polished letter. Also handles image generation if detected.
+ * @author Thomas J McLeish
+ * @copyright (c) 2026 Thomas J McLeish
+ * @license MIT
+ *
+ * @see Key Concepts: LLM Generation, Prompt Engineering, OpenRouter Integration, Multi-Agent Workflow
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
 import { GoogleGenAI } from "@google/genai";
 
+/**
+ * Generates the final letter based on user inputs.
+ * Orchestrates image detection, prompt construction, and LLM generation.
+ * 
+ * @param {NextRequest} req - The JSON request containing configuration (recipient, sender, tone, length, notes, etc.).
+ * @returns {Promise<NextResponse>} JSON response with `{ text: string, usedModel: string, backgroundImage?: string }`.
+ */
 export async function POST(req: NextRequest) {
     console.log("POST /api/generate called");
     try {
@@ -17,7 +34,7 @@ export async function POST(req: NextRequest) {
         const imageRequestPattern = /^\s*-?\s*(add|create|include|put|show|make).*?(illustration|image|picture|drawing|background|art).*$/im;
         const noteLines = roughNotes.split('\n');
         let imageRequestLine = '';
-        
+
         for (const line of noteLines) {
             if (imageRequestPattern.test(line)) {
                 imageRequestLine = line;
@@ -36,7 +53,7 @@ export async function POST(req: NextRequest) {
                     }),
                 });
                 const imageData = await imageResponse.json();
-                
+
                 if (imageData.imageSubject) {
                     const apiKey = process.env.GOOGLE_API_KEY;
                     if (!apiKey) {
@@ -106,13 +123,13 @@ export async function POST(req: NextRequest) {
         }
 
         const openai = createOpenAIClient();
-        
+
         const agent = { ...AGENTS.GENERATE };
         if (model) agent.primary = model;
 
         try {
             const response = await callWithFallback(
-                openai, 
+                openai,
                 [
                     { role: "system", content: agent.systemInstruction },
                     { role: "user", content: fullPrompt }
@@ -126,7 +143,7 @@ export async function POST(req: NextRequest) {
             console.log("Returning image:", generatedImage ? `Yes (${generatedImage.substring(0, 50)}...)` : "No");
             console.log("------------------------------");
 
-            return NextResponse.json({ 
+            return NextResponse.json({
                 text: response.content,
                 usedModel: response.usedModel,
                 backgroundImage: generatedImage

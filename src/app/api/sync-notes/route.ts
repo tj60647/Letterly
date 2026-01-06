@@ -1,6 +1,22 @@
+/**
+ * @file src/app/api/sync-notes/route.ts
+ * @description Reverse-syncs changes made in the letter editor back to the rough notes, keeping the source of truth updated.
+ * @author Thomas J McLeish
+ * @copyright (c) 2026 Thomas J McLeish
+ * @license MIT
+ *
+ * @see Key Concepts: Data Synchronization, Reverse Generation
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
 
+/**
+ * Identifies new information added directly to the letter editor and syncs it back to the rough notes.
+ * 
+ * @param {NextRequest} req - The JSON request containing `{ editedLetter: string, roughNotes: string, model?: string }`.
+ * @returns {Promise<NextResponse>} JSON response with `{ newPoints: string[] }`.
+ */
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
@@ -25,22 +41,22 @@ export async function POST(req: NextRequest) {
         );
 
         const content = response.content.trim();
-        
+
         console.log("--- SYNC_NOTES Agent Output ---");
         console.log("Content:", content);
         console.log("Model:", response.usedModel);
         console.log("-------------------------------");
-        
+
         // Parse bullets
         const lines = content.split('\n')
             .map(line => line.trim())
             .filter(line => line.startsWith('- ') || line.startsWith('* '));
-        
+
         // Clean bullets
         const cleanPoints = lines.map(line => line.replace(/^[-*]\s+/, ''));
 
-        return NextResponse.json({ 
-            newPoints: cleanPoints 
+        return NextResponse.json({
+            newPoints: cleanPoints
         });
 
     } catch (error: unknown) {

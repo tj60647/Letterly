@@ -1,3 +1,13 @@
+/**
+ * @file middleware.ts
+ * @description Intercepts and processes incoming requests, specifically handling CORS for API routes.
+ * @author Thomas J McLeish
+ * @copyright (c) 2026 Thomas J McLeish
+ * @license MIT
+ *
+ * @see Key Concepts: Middleware, CORS, API Security, Request Handling
+ */
+
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 

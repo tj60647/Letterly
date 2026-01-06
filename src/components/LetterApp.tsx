@@ -1,3 +1,13 @@
+/**
+ * @file src/components/LetterApp.tsx
+ * @description The main application component holding the state for the letter generation workflow (inputs, chat, output, history).
+ * @author Thomas J McLeish
+ * @copyright (c) 2026 Thomas J McLeish
+ * @license MIT
+ *
+ * @see Key Concepts: State Management, React Hooks, Main Layout
+ */
+
 "use client";
 
 import React, { useState, useRef, useCallback } from "react";
@@ -20,6 +30,10 @@ const LENGTH_OPTIONS = [
     { value: "Long", label: "Detailed" },
 ];
 
+/**
+ * Represents a snapshot of the application state for history navigation.
+ * Stores the generated letter, original notes, chat context, and any metadata like scores or images.
+ */
 interface HistoryItem {
     letter: string;
     roughNotes: string;
@@ -28,6 +42,16 @@ interface HistoryItem {
     backgroundImage?: string;
 }
 
+/**
+ * The core application component.
+ * Manages the entire state of the letter writing process, including:
+ * - User inputs (Recipient, Sender, Tone, Length, Notes)
+ * - AI Model interactions (Generation, Refinement, Suggestions)
+ * - Chat history and context
+ * - UI state (Loading, Editing, Settings)
+ * 
+ * @returns {JSX.Element} The full single-page application UI.
+ */
 export default function LetterApp() {
     // Config State
     const [recipient, setRecipient] = useState("");
@@ -41,7 +65,7 @@ export default function LetterApp() {
     const [roughNotes, setRoughNotes] = useState("");
     const [language, setLanguage] = useState("English");
     const [styleExample, setStyleExample] = useState("");
-    
+
     // Model State
     const [agentModels, setAgentModels] = useState<Record<string, string>>({});
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -80,15 +104,15 @@ export default function LetterApp() {
 
     // Metadata State
     const [modelUsage, setModelUsage] = useState<{ generated?: string, reviewed?: string, refined?: string }>({});
-    
+
     // Image State
     const [backgroundImage, setBackgroundImage] = useState<string>("");
-    
+
     // Debug: log when backgroundImage changes
     React.useEffect(() => {
         console.log("Background image state changed:", { hasImage: !!backgroundImage, length: backgroundImage?.length });
     }, [backgroundImage]);
-    
+
     // Recommendation State
     const [recommendedLength, setRecommendedLength] = useState<string>("Short");
 
@@ -170,18 +194,18 @@ export default function LetterApp() {
                 fetch("/api/recommend-length", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         roughNotes,
                         model: getModelFor(AGENTS.RECOMMEND_LENGTH.id)
                     }),
                 })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.recommendation) {
-                        setRecommendedLength(data.recommendation);
-                    }
-                })
-                .catch(err => console.error("Failed to get length recommendation", err));
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.recommendation) {
+                            setRecommendedLength(data.recommendation);
+                        }
+                    })
+                    .catch(err => console.error("Failed to get length recommendation", err));
             }
         }, 1000); // Debounce for 1 second
 
@@ -204,8 +228,8 @@ export default function LetterApp() {
             const response = await fetch("/api/score", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    roughNotes, 
+                body: JSON.stringify({
+                    roughNotes,
                     letter,
                     model: getModelFor(AGENTS.SCORED.id)
                 }),
@@ -242,9 +266,9 @@ export default function LetterApp() {
             const response = await fetch("/api/suggest", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    roughNotes: currentRoughNotes, 
-                    context: "Letter", 
+                body: JSON.stringify({
+                    roughNotes: currentRoughNotes,
+                    context: "Letter",
                     recipient,
                     tone,
                     length,
@@ -286,15 +310,15 @@ export default function LetterApp() {
                     model: getModelFor(AGENTS.SYNC_NOTES.id)
                 }),
             });
-            
+
             const data = await response.json();
-            
+
             // Update the ref immediately so we don't re-sync the same changes
             lastSyncedLetterRef.current = generatedLetter;
 
             if (data.newPoints && data.newPoints.length > 0) {
                 const pointsText = data.newPoints.map((p: string) => `- ${p}`).join("\n");
-                
+
                 // Update Rough Notes State
                 setRoughNotes(prev => {
                     const separator = prev.trim() ? "\n" : "";
@@ -441,16 +465,16 @@ export default function LetterApp() {
         const instructions = chatInput;
         const newChatEntry = { role: 'user' as const, text: instructions };
         const updatedChatHistory = [...chatHistory, newChatEntry];
-        
+
         // Capture currently addressed suggestions before clearing chat input
         const currentlyAddressed = new Set(addressedSuggestions);
-        
+
         // Mark currently addressed suggestions as submitted
         setSubmittedSuggestions(prev => new Set([...prev, ...currentlyAddressed]));
-        
+
         setChatInput("");
         setChatHistory(updatedChatHistory);
-        
+
         setIsChatLoading(true);
         setError(null);
 
@@ -477,7 +501,7 @@ export default function LetterApp() {
             if (refineData.usedModel) {
                 setModelUsage(prev => ({ ...prev, refined: refineData.usedModel }));
             }
-            
+
             // Update tone if detected from chat
             if (refineData.detectedTone) {
                 const detectedTone = refineData.detectedTone;
@@ -487,9 +511,9 @@ export default function LetterApp() {
                 }
                 setTone(detectedTone);
             }
-            
+
             setRoughNotes(newRoughNotes);
-            
+
             const modelMsg = { role: 'model' as const, text: "Rough notes updated. Regenerating letter..." };
             const finalChatHistory = [...updatedChatHistory, modelMsg];
             setChatHistory(finalChatHistory);
@@ -703,16 +727,16 @@ export default function LetterApp() {
                     </div>
 
                     <div className={styles.writersRoomContainer} style={{ marginTop: "1.5rem", borderTop: "1px solid var(--border-subtle)", paddingTop: "1rem" }}>
-                        <button 
-                            className={styles.writersRoomBtn} 
+                        <button
+                            className={styles.writersRoomBtn}
                             onClick={() => setIsSettingsOpen(true)}
                             title="Configure AI Models"
                         >
-                             <TeamIcon />
-                             Writers&apos; Room
+                            <TeamIcon />
+                            Writers&apos; Room
                         </button>
                     </div>
-                    
+
                     {error && (
                         <div style={{ marginTop: "1rem", color: "var(--status-error)", fontSize: "0.875rem" }}>
                             Warning: {error}
@@ -744,7 +768,7 @@ export default function LetterApp() {
                         <span>{generatedLetter ? generatedLetter.length : 0} chars</span>
                         <span>•</span>
                         <span>~{generatedLetter ? Math.max(1, Math.ceil(generatedLetter.trim().split(/\s+/).filter(w => w.length > 0).length / 300)) : 0} pages</span>
-                        
+
                         {completenessScore !== null && (
                             <>
                                 <span>•</span>
@@ -764,7 +788,7 @@ export default function LetterApp() {
                             {modelUsage.refined && <span>Refined: {modelUsage.refined.split('/').pop()}</span>}
                         </div>
                     )}
-                    
+
                     <div style={{ height: "1rem" }}></div>
                 </div>
             </div>
@@ -772,8 +796,8 @@ export default function LetterApp() {
             <div className={styles.centerPanel}>
                 <div className={styles.paperSheet} style={{ position: 'relative' }}>
                     {backgroundImage && (
-                        <img 
-                            src={backgroundImage} 
+                        <img
+                            src={backgroundImage}
                             alt="Background illustration"
                             style={{
                                 position: 'absolute',
@@ -809,7 +833,7 @@ export default function LetterApp() {
                                 style={{ position: 'relative', zIndex: 1, background: 'transparent' }}
                             />
                         ) : (
-                            <div 
+                            <div
                                 className={styles.paperContent}
                                 onClick={() => setIsEditing(true)}
                                 style={{ cursor: 'text', whiteSpace: 'pre-wrap', position: 'relative', zIndex: 1 }}
@@ -877,11 +901,11 @@ export default function LetterApp() {
                                     const isAddressed = addressedSuggestions.has(i);
                                     const isSubmitted = submittedSuggestions.has(i);
                                     const tintOpacity = score !== undefined ? score : 0;
-                                    
+
                                     return (
-                                        <button 
-                                            key={i} 
-                                            onClick={() => handleApplySuggestion(s)} 
+                                        <button
+                                            key={i}
+                                            onClick={() => handleApplySuggestion(s)}
                                             className={`${styles.suggestionChip} ${isSubmitted ? styles.suggestionChipSubmitted : ''}`}
                                             style={isAddressed && score !== undefined ? {
                                                 opacity: tintOpacity,
@@ -941,7 +965,7 @@ export default function LetterApp() {
                 </div>
             </div>
 
-            <AgentModelSettings 
+            <AgentModelSettings
                 isOpen={isSettingsOpen}
                 onClose={() => setIsSettingsOpen(false)}
                 assignments={agentModels}

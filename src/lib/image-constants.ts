@@ -1,3 +1,17 @@
+/**
+ * @file src/lib/image-constants.ts
+ * @description Stores constant prompts and types specifically for image generation features.
+ * @author Thomas J McLeish
+ * @copyright (c) 2026 Thomas J McLeish
+ * @license MIT
+ *
+ * @see Key Concepts: Image Generation, Prompt Templates
+ */
+
+/**
+ * The system instruction used for the Image Generator agent.
+ * Specifies the visual style (black and white line art) and constraints (no text).
+ */
 export const IMAGE_SYSTEM_INSTRUCTION = `Create an intricate black and white ink illustration.
 Requirements:
 - Pure white background

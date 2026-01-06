@@ -1,3 +1,13 @@
+/**
+ * @file src/app/api/score/route.ts
+ * @description Calculates a fidelity score between the rough notes and the generated letter to ensure all key points were covered.
+ * @author Thomas J McLeish
+ * @copyright (c) 2026 Thomas J McLeish
+ * @license MIT
+ *
+ * @see Key Concepts: Vector Similarity, Fidelity Checks, Automated Evaluation
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createOpenAIClient, AGENTS } from '@/lib/models';
 
@@ -14,6 +24,13 @@ function cosineSimilarity(vecA: number[], vecB: number[]) {
     return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
+/**
+ * Calculates a fidelity score (0 to 1) between rough notes and the generated letter.
+ * Used to indicate how complete the letter is relative to the provided notes.
+ * 
+ * @param {NextRequest} req - The JSON request containing `{ roughNotes: string, letter: string, model?: string }`.
+ * @returns {Promise<NextResponse>} JSON response with `{ score: number }`.
+ */
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
@@ -48,10 +65,10 @@ export async function POST(req: NextRequest) {
         const embeddingB = response.data[1].embedding;
 
         const similarity = cosineSimilarity(embeddingA, embeddingB);
-        
+
         // Normalize or adjust if needed, but raw cosine similarity (-1 to 1) is requested.
         // Usually for text embeddings it's 0 to 1.
-        
+
         return NextResponse.json({ score: similarity });
 
     } catch (error) {

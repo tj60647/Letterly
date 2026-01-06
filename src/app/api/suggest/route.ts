@@ -1,3 +1,13 @@
+/**
+ * @file src/app/api/suggest/route.ts
+ * @description Acts as an "Editor Agent" to suggest improvements to the user's notes before generation, helping clarity and completeness.
+ * @author Thomas J McLeish
+ * @copyright (c) 2026 Thomas J McLeish
+ * @license MIT
+ *
+ * @see Key Concepts: Agentic Critiques, JSON Output, Proactive Assistance
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
 
@@ -16,6 +26,12 @@ Suggestions should be brief directives (e.g., "Specify the exact meeting date", 
 Return ONLY the suggestions as a JSON array of strings. Example: ["Clarify the deadline", "Add the budget figure"]
 `;
 
+/**
+ * Analyzes the current draft and notes to suggest 3 actionable improvements.
+ * 
+ * @param {NextRequest} req - The JSON request containing `{ roughNotes, context, recipient, generatedLetter, tone, length, model }`.
+ * @returns {Promise<NextResponse>} JSON response with `{ suggestions: string[], usedModel: string }`.
+ */
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
@@ -44,7 +60,7 @@ export async function POST(req: NextRequest) {
         if (model) agent.primary = model;
 
         const response = await callWithFallback(
-            openai, 
+            openai,
             [
                 { role: "system", content: SYSTEM_INSTRUCTION },
                 { role: "user", content: prompt }
@@ -54,30 +70,30 @@ export async function POST(req: NextRequest) {
         );
 
         const content = response.content;
-        
+
         console.log("--- SUGGEST Agent Output ---");
         console.log("Raw Content:", content);
         console.log("Model:", response.usedModel);
-        
+
         let suggestions = [];
         try {
             // Some models might include markdown code blocks ```json ... ```
             const cleanContent = content.replace(/```json\n?|\n?```/g, "").trim();
-            
+
             console.log("--- Suggestions Response ---");
             console.log("Raw content:", content);
             console.log("Clean content:", cleanContent);
-            
+
             const parsed = JSON.parse(cleanContent);
             suggestions = parsed.suggestions || [];
-            
+
             // If parsed is an array directly
             if (Array.isArray(parsed)) suggestions = parsed;
-            
+
         } catch (e) {
             console.error("Failed to parse suggestions JSON", e);
             console.error("Content was:", content);
-            
+
             // Try to extract suggestions from malformed JSON
             // Look for array-like content [...]
             const arrayMatch = content.match(/\[[\s\S]*\]/);
@@ -110,9 +126,9 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             suggestions,
-            usedModel: response.usedModel 
+            usedModel: response.usedModel
         });
 
     } catch (error) {

@@ -1,12 +1,30 @@
+/**
+ * @file src/components/ModelSelector.tsx
+ * @description A dropdown component for selecting the global AI model used for generation.
+ * @author Thomas J McLeish
+ * @copyright (c) 2026 Thomas J McLeish
+ * @license MIT
+ *
+ * @see Key Concepts: React Props, Event Handling, Form Elements
+ */
+
 import React from 'react';
 import styles from './ModelSelector.module.css';
 import { MODELS } from '@/lib/models';
 
 interface ModelSelectorProps {
+    /** The ID of the currently selected model. */
     value: string;
+    /** Callback function triggered when a new model is selected. */
     onChange: (value: string) => void;
 }
 
+/**
+ * A dropdown selector for choosing the primary AI model.
+ * 
+ * @param {ModelSelectorProps} props - The component props.
+ * @returns {JSX.Element} The rendered dropdown component.
+ */
 export function ModelSelector({ value, onChange }: ModelSelectorProps) {
     return (
         <div className={styles.container}>
