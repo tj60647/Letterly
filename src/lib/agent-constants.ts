@@ -115,6 +115,37 @@ IMPORTANT: Write all points in present tense, not past tense (e.g., "Express int
         type: 'embedding',
         primary: "openai/text-embedding-3-large",
         fallbacks: [],
-        systemInstruction: `Uses cosine similarity between embeddings of your rough notes and the final letter to calculate how well the letter captures your original intent. Higher scores indicate better alignment.`
+        systemInstruction: `Uses cosine similarity between embeddings of your rough notes and the final letter to calculate how well the letter captures your original intent. Higher scores indicate better alignment.`,
+        hidden: true
+    },
+    MATCH_SUGGESTIONS_SCORER: {
+        id: 'MATCH_SUGGESTIONS_SCORER',
+        name: 'Suggestion Matcher Scorer',
+        description: 'Matches chat messages to editor review suggestions using semantic similarity.',
+        type: 'embedding',
+        primary: "google/gemini-embedding-001",
+        fallbacks: ["openai/text-embedding-3-small", "mistralai/mistral-embed"],
+        systemInstruction: `Compares the semantic similarity between a chat message and editor review suggestions to identify which suggestions the user is addressing.`,
+        hidden: true
+    },
+    MATCH_SUGGESTIONS: {
+        id: 'MATCH_SUGGESTIONS',
+        name: 'Suggestion Matcher',
+        description: 'Uses AI reasoning to match chat messages to editor review suggestions.',
+        type: 'chat',
+        primary: "openai/gpt-oss-20b",
+        fallbacks: ["openai/gpt-oss-20b:free"],
+        systemInstruction: `You are analyzing whether a user's chat message addresses any of the given editor review suggestions.
+
+Compare the chat message to each suggestion and determine which suggestions (if any) the user is trying to address.
+For each match, provide a closeness score where 0.00 means very close match and 1.00 means not close at all.
+Return ONLY a JSON array of objects with index and score properties.
+
+Example:
+Chat: "make it more formal"
+Suggestions: ["Consider a more formal tone", "Add specific dates", "Clarify the budget"]
+Output: [{"index": 0, "score": 0.05}, {"index": 1, "score": 0.92}]
+
+Only include suggestions that have some relevance (score < 0.70). If no suggestions match, return an empty array: []`
     }
 } as const;

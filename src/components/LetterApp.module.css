@@ -272,7 +272,7 @@
     font-size: 0.75rem;
     color: var(--text-primary);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: opacity 0.3s, text-decoration 0.3s, background-color 0.3s, border-color 0.3s, color 0.3s, all 0.15s;
     text-align: left;
 }
 
@@ -280,6 +280,15 @@
     background-color: var(--accent-primary-alpha);
     border-color: var(--accent-primary);
     color: var(--accent-primary);
+}
+
+.suggestionChipSubmitted {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
+.suggestionChipSubmitted:hover {
+    opacity: 1;
 }
 
 .suggestionsEmpty {

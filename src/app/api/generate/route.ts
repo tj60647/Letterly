@@ -31,6 +31,8 @@ export async function POST(req: NextRequest) {
     `;
 
         console.log("Generating with OpenRouter model:", model);
+        console.log("Tone:", tone);
+        console.log("Length:", length);
         console.log("Rough Notes:", roughNotes);
 
         const openai = createOpenAIClient();

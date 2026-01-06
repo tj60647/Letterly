@@ -68,6 +68,9 @@ export default function LetterApp() {
     // Suggestions State
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [isSuggesting, setIsSuggesting] = useState(false);
+    const [addressedSuggestions, setAddressedSuggestions] = useState<Set<number>>(new Set());
+    const [suggestionScores, setSuggestionScores] = useState<Map<number, number>>(new Map());
+    const [submittedSuggestions, setSubmittedSuggestions] = useState<Set<number>>(new Set());
 
     // Score State
     const [completenessScore, setCompletenessScore] = useState<number | null>(null);
@@ -82,6 +85,73 @@ export default function LetterApp() {
     // Sync State
     const [isSyncing, setIsSyncing] = useState(false);
     const lastSyncedLetterRef = useRef<string>("");
+
+    // Debounced suggestion matching
+    const matchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    const handleChatInputChange = (value: string) => {
+        setChatInput(value);
+
+        // Clear existing timeout
+        if (matchTimeoutRef.current) {
+            clearTimeout(matchTimeoutRef.current);
+        }
+
+        // If input is empty, clear addressed suggestions
+        if (!value.trim()) {
+            setAddressedSuggestions(new Set());
+            setSuggestionScores(new Map());
+            return;
+        }
+
+        // Only match if there are suggestions and a letter exists
+        if (suggestions.length === 0 || !generatedLetter) {
+            return;
+        }
+
+        // Debounce the match API call - use agent-based with longer debounce
+        matchTimeoutRef.current = setTimeout(async () => {
+            try {
+                // Try agent-based matching first
+                const response = await fetch("/api/match-suggestions-agent", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        chatInput: value,
+                        suggestions,
+                        model: getModelFor(AGENTS.MATCH_SUGGESTIONS.id)
+                    }),
+                });
+                const data = await response.json();
+                if (data.matchedSuggestions && Array.isArray(data.matchedSuggestions)) {
+                    const indices = data.matchedSuggestions.map((m: { index: number; score: number }) => m.index);
+                    const scores = new Map<number, number>(
+                        data.matchedSuggestions.map((m: { index: number; score: number }) => [m.index, m.score] as [number, number])
+                    );
+                    setAddressedSuggestions(new Set(indices));
+                    setSuggestionScores(scores);
+                } else {
+                    // Fallback to embedding-based matching
+                    const embeddingResponse = await fetch("/api/match-suggestions", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            chatInput: value,
+                            suggestions,
+                            model: getModelFor(AGENTS.MATCH_SUGGESTIONS_SCORER.id)
+                        }),
+                    });
+                    const embeddingData = await embeddingResponse.json();
+                    if (embeddingData.matchedIndices && Array.isArray(embeddingData.matchedIndices)) {
+                        setAddressedSuggestions(new Set(embeddingData.matchedIndices));
+                        setSuggestionScores(new Map());
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to match suggestions:", error);
+            }
+        }, 800); // 800ms debounce for agent-based approach
+    };
 
     // Effect to fetch recommended length when rough notes change
     React.useEffect(() => {
@@ -157,7 +227,9 @@ export default function LetterApp() {
                 body: JSON.stringify({ 
                     roughNotes: currentRoughNotes, 
                     context: "Letter", 
-                    recipient, 
+                    recipient,
+                    tone,
+                    length,
                     generatedLetter: currentLetter,
                     model: getModelFor(AGENTS.SUGGEST.id)
                 }),
@@ -253,6 +325,9 @@ export default function LetterApp() {
         setError(null);
         setGeneratedLetter("");
         setSuggestions([]); // Clear old suggestions
+        setAddressedSuggestions(new Set()); // Clear addressed suggestions
+        setSuggestionScores(new Map()); // Clear scores
+        setSubmittedSuggestions(new Set()); // Clear submitted suggestions
 
         try {
             const response = await fetch("/api/generate", {
@@ -341,6 +416,12 @@ export default function LetterApp() {
         const newChatEntry = { role: 'user' as const, text: instructions };
         const updatedChatHistory = [...chatHistory, newChatEntry];
         
+        // Capture currently addressed suggestions before clearing chat input
+        const currentlyAddressed = new Set(addressedSuggestions);
+        
+        // Mark currently addressed suggestions as submitted
+        setSubmittedSuggestions(prev => new Set([...prev, ...currentlyAddressed]));
+        
         setChatInput("");
         setChatHistory(updatedChatHistory);
         
@@ -409,6 +490,12 @@ export default function LetterApp() {
                 setHistoryIndex(newHistory.length - 1);
                 return newHistory;
             });
+
+            // Remove addressed suggestions after successful refinement
+            setSuggestions(prev => prev.filter((_, i) => !currentlyAddressed.has(i)));
+            setAddressedSuggestions(new Set());
+            setSuggestionScores(new Map());
+            setSubmittedSuggestions(new Set());
 
             // Automatically fetch suggestions for the new rough notes
             fetchSuggestions(newRoughNotes, text);
@@ -705,11 +792,29 @@ export default function LetterApp() {
                         </div>
                         {suggestions.length > 0 ? (
                             <div className={styles.suggestionsList}>
-                                {suggestions.map((s, i) => (
-                                    <button key={i} onClick={() => handleApplySuggestion(s)} className={styles.suggestionChip}>
-                                        + {s}
-                                    </button>
-                                ))}
+                                {suggestions.map((s, i) => {
+                                    const score = suggestionScores.get(i);
+                                    const isAddressed = addressedSuggestions.has(i);
+                                    const isSubmitted = submittedSuggestions.has(i);
+                                    const tintOpacity = score !== undefined ? score : 0;
+                                    
+                                    return (
+                                        <button 
+                                            key={i} 
+                                            onClick={() => handleApplySuggestion(s)} 
+                                            className={`${styles.suggestionChip} ${isSubmitted ? styles.suggestionChipSubmitted : ''}`}
+                                            style={isAddressed && score !== undefined ? {
+                                                opacity: tintOpacity,
+                                                backgroundColor: `rgba(var(--accent-primary-rgb), ${1 - tintOpacity})`,
+                                                borderColor: `rgba(var(--accent-primary-rgb), ${1 - tintOpacity})`,
+                                                color: 'white'
+                                            } : undefined}
+                                            title={isAddressed ? `Match confidence: ${Math.round((1 - tintOpacity) * 100)}%` : undefined}
+                                        >
+                                            + {s}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         ) : (
                             <p className={styles.suggestionsEmpty}>
@@ -741,7 +846,7 @@ export default function LetterApp() {
                             className={styles.chatInput}
                             placeholder={generatedLetter ? "Refine draft (e.g. 'Add more urgency')..." : "Generate a draft first to refine"}
                             value={chatInput}
-                            onChange={(e) => setChatInput(e.target.value)}
+                            onChange={(e) => handleChatInputChange(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleChatSubmit()}
                             disabled={isChatLoading || isLoading || !generatedLetter}
                         />
