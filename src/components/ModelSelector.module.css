@@ -1,7 +1,8 @@
 .container {
     display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .label {
@@ -10,10 +11,13 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-secondary);
+    min-width: 40px;
+    margin-bottom: 0;
 }
 
 .selectWrapper {
     position: relative;
+    flex-grow: 1;
 }
 
 .select {

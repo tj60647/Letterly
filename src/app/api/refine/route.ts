@@ -1,19 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
-import OpenAI from "openai";
+import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
 
 export async function POST(req: NextRequest) {
+    console.log("POST /api/refine called");
     try {
         const body = await req.json();
-        const { draft, instructions, model } = body;
+        const { roughNotes, instructions, conversationHistory, model } = body;
+
+        // Format conversation history if available
+        let historyContext = "";
+        if (conversationHistory && Array.isArray(conversationHistory) && conversationHistory.length > 0) {
+            historyContext = "\n\nPREVIOUS CONVERSATION:\n" + conversationHistory
+                .filter((msg: { role: string }) => msg.role === 'user') // Only include user requests to avoid noise
+                .map((msg: { text: string }) => `- User: ${msg.text}`)
+                .join("\n");
+        }
 
         const fullPrompt = `
       You are a writing assistant helping a user refine their rough notes for a letter.
             
       CURRENT ROUGH NOTES:
-      ${draft}
+      ${roughNotes}
+      ${historyContext}
 
-      USER FEEDBACK/REQUEST:
+      LATEST USER FEEDBACK/REQUEST:
       ${instructions}
 
       INSTRUCTIONS:
@@ -24,41 +34,36 @@ export async function POST(req: NextRequest) {
     `;
 
         console.log("Refining with OpenRouter model:", model);
+        console.log("Rough Notes:", roughNotes);
 
-        const apiKey = process.env.OPENROUTER_API_KEY;
-        if (!apiKey) {
-            return NextResponse.json({
-                text: "[DEMO MODE: OpenRouter Key Missing]\n\nPlease configure OPENROUTER_API_KEY to use the chat refinement feature."
-            });
-        }
+        const openai = createOpenAIClient();
 
-        const openai = new OpenAI({
-            baseURL: "https://openrouter.ai/api/v1",
-            apiKey: apiKey,
-            defaultHeaders: {
-                "HTTP-Referer": "http://localhost:3000",
-                "X-Title": "Letterly",
-            }
-        });
+        const agent = { ...AGENTS.REFINE };
+        if (model) agent.primary = model;
 
         try {
-            const completion = await openai.chat.completions.create({
-                model: model || "google/gemini-2.0-flash-exp:free",
-                messages: [
+            const response = await callWithFallback(
+                openai,
+                [
                     { role: "system", content: "You are a helpful AI writing assistant." },
                     { role: "user", content: fullPrompt }
                 ],
+                agent
+            );
+
+            return NextResponse.json({ 
+                text: response.content,
+                usedModel: response.usedModel 
             });
 
-            const generatedText = completion.choices[0].message.content || "";
-            return NextResponse.json({ text: generatedText });
-
-        } catch (err: any) {
-            console.error("OpenRouter Refine Error:", err);
-            return NextResponse.json({ error: err.message || "Failed to refine draft." }, { status: 500 });
+        } catch (err: unknown) {
+            console.error("OpenRouter API Error:", err);
+            const errorMessage = err instanceof Error ? err.message : "Failed to refine content";
+            return NextResponse.json({ error: errorMessage }, { status: 500 });
         }
-    } catch (error: any) {
+    } catch (error) {
         console.error("Refine Request Error:", error);
-        return NextResponse.json({ error: error.message || "Failed to process request." }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : "Failed to process request.";
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }

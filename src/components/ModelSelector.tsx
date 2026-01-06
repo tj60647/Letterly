@@ -1,18 +1,11 @@
 import React from 'react';
 import styles from './ModelSelector.module.css';
+import { MODELS } from '@/lib/models';
 
 interface ModelSelectorProps {
     value: string;
     onChange: (value: string) => void;
 }
-
-export const MODELS = [
-    { id: 'google/gemini-2.0-flash-exp:free', name: 'Google Gemini 2.0 Flash (Free)' },
-    { id: 'google/gemini-exp-1206:free', name: 'Google Gemini Exp 1206 (Free)' },
-    { id: 'openai/gpt-4o', name: 'OpenAI GPT-4o' },
-    { id: 'anthropic/claude-3.5-sonnet', name: 'Anthropic Claude 3.5 Sonnet' },
-    { id: 'meta-llama/llama-3.2-90b-vision-instruct', name: 'Llama 3.2 90B' },
-];
 
 export function ModelSelector({ value, onChange }: ModelSelectorProps) {
     return (
