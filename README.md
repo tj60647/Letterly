@@ -1,5 +1,13 @@
 # Letterly: AI Prototyping Example
 
+
+> [!IMPORTANT]
+> **TODO List for Author:**
+> - [ ] Create separate video tutorials for Git and Node.js installation.
+> - [ ] Create guide for getting OpenRouter and Google API keys.
+> - [ ] Improve the Mermaid workflow diagram (make it less cluttered).
+> - [ ] Add more "Style Match" examples for testing.
+
 **Welcome, Students!** 👋
 
 Letterly is an example project designed to teach you about **AI Prototyping**. It demonstrates how to build a real-world application that uses Artificial Intelligence to help people write better letters.
@@ -22,6 +30,8 @@ Not all agents work the same way:
 -   **In Series:** The **Refinement Editor** and **Draft Generator** work as a tag team. When you ask for changes, the Editor updates the plan first, and then the Writer rewrites the letter.
 -   **In the Background:** The **Suggestions**, **Length Analyst**, and **Similarity Scorer** agents work independently to analyze your work without interrupting you.
 -   **On Demand:** The **Line Art Generator** only steps in when specifically invited.
+
+
 
 This team works together to give you the best result!
 
@@ -75,17 +85,54 @@ These files mostly live in `src/app/api/`. They are the "kitchen" where the work
 Want to run this on your own machine? Follow these steps:
 
 ### Prerequisites
-- **Node.js**: You need to have Node.js installed (software that runs JavaScript outside the browser).
-- **API Keys**: You will need keys for **OpenRouter** (to access AI models) and optional **Google** keys for images.
+- **Node.js**: You need to have Node.js installed. **This includes `npm` (the tool we use to install other things).** (See separate tutorial for installation steps).
+    - [Download Node.js here](https://nodejs.org/) (Choose the "LTS" version).
+- **Git**: You need Git to clone the repository.
+    - [Download Git here](https://git-scm.com/downloads).
+    - **Note:** VS Code requires this to be installed to handle your code versions. (See separate tutorial for installation steps).
+- **API Keys**: You will need keys for **OpenRouter** (to access AI models) and optional **Google** keys for images. (See separate tutorial for obtaining these keys).
 
 ### Installation
 
-1.  **Download the Code**: Clone the repository or download the ZIP file.
-2.  **Install Dependencies**: Open your terminal (command prompt), navigate to the folder, and run:
-    ```bash
+1.  **Open VS Code**: Open Visual Studio Code on your computer.
+
+2.  **Open the Terminal**:
+    -   Look at the top menu bar.
+    -   Click **Terminal** -> **New Terminal**.
+    -   A box should appear at the bottom of your screen. This is where you talk to the computer.
+
+3.  **Choose a Location**:
+    It is best practice to keep your code in a dedicated folder (not on your Desktop!).
+    
+    Type these commands one by one and hit `Enter` after each:
+    ```sh
+    # Go to your home user folder
+    cd ~
+
+    # Create a 'repos' folder (if you don't have one)
+    mkdir repos
+
+    # Enter the folder
+    cd repos
+    ```
+
+4.  **Clone the Repository**:
+    Copy and paste this command into the terminal and hit `Enter`:
+    ```sh
+    git clone https://github.com/tj60647/Letterly.git
+    ```
+
+5.  **Go into the Folder**:
+    Now tell the terminal to go inside the folder we just downloaded:
+    ```sh
+    cd Letterly
+    ```
+
+6.  **Install Dependencies**:
+    Run this command to download all the "furniture" and tools we need:
+    ```sh
     npm install
     ```
-    This downloads all the "furniture" and tools we need.
 
 3.  **Set Up Keys**:
     Create a file named `.env.local` in the main folder and add your keys like this:
