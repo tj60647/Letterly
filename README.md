@@ -25,6 +25,16 @@ Instead of one single AI doing everything, Letterly uses a **Writers' Room** app
 6.  **Notes Sync:** Updates your rough notes to match any manual edits you make to the draft letter.
 7.  **Similarity Scorer:** Calculates how accurately the draft letter matches your rough notes.
 
+### Customizing Your Agents
+Each agent comes with default instructions that define how it behaves. You can **customize these instructions** to change how any agent works:
+
+-   **Access the Writers' Room:** Click the gear icon (⚙️) in the top right corner to open the agent settings modal.
+-   **Edit Instructions:** Click the gear icon next to any agent to enter edit mode. Modify the system instructions to change the agent's behavior (e.g., add "Always sign off with 'Cheerio!'" to make the Draft Generator include that signature).
+-   **Save or Reset:** Save your custom instructions, or reset to the default behavior at any time. Custom instructions are stored locally in your browser.
+-   **Visual Indicators:** Agents with custom instructions display a blue "✓ Custom Instructions" badge, while default agents show a gray "Default Instructions" badge.
+
+This flexibility lets you personalize the AI team to match your writing style and preferences!
+
 ### How They Collaborate
 Not all agents work the same way:
 -   **In Series:** The **Refinement Editor** and **Draft Generator** work as a tag team. When you ask for changes, the Editor updates the plan first, and then the Writer rewrites the letter.
@@ -64,16 +74,17 @@ Here are some words you will see often in the code:
 Here is a quick tour of the most important files you should look at:
 
 ### The Visuals (Frontend)
-- **`src/components/LetterApp.tsx`**: The heart of the app. This single file contains almost all the logic for the user interface. It handles what happens when you click "Generate".
-- **`src/components/AgentModelSettings.tsx`**: A menu that lets you choose which AI "brain" controls which part of the app.
+- **`src/components/LetterApp.tsx`**: The heart of the app. This single file contains almost all the logic for the user interface. It handles what happens when you click "Generate" and manages custom agent instructions.
+- **`src/components/AgentModelSettings.tsx`**: A modal interface that lets you choose which AI "brain" controls which part of the app, and customize system instructions for each agent.
 - **`src/app/page.tsx`**: The entry point. When you visit the website, this file tells the browser to load `LetterApp`.
 
 ### The Intelligence (Backend/API)
 These files mostly live in `src/app/api/`. They are the "kitchen" where the work happens.
-- **`api/generate/route.ts`**: The main writer. It takes your notes and writes the letter.
-- **`api/refine/route.ts`**: The editor. It takes your feedback (e.g., "Make it shorter") and updates the notes.
-- **`api/suggest/route.ts`**: The critic. It looks at your draft and suggests improvements.
-- **`api/detect-tone/route.ts`**: A detective. It acts invisibly to figure out if you asked for a specific tone (like "Sarcastic").
+- **`api/generate/route.ts`**: The main writer. It takes your notes and writes the letter. Supports custom system instructions.
+- **`api/refine/route.ts`**: The editor. It takes your feedback (e.g., "Make it shorter") and updates the notes. Supports custom system instructions.
+- **`api/suggest/route.ts`**: The critic. It looks at your draft and suggests improvements. Supports custom system instructions.
+- **`api/detect-tone/route.ts`**: A detective. It acts invisibly to figure out if you asked for a specific tone (like "Sarcastic"). Supports custom system instructions.
+- **Note:** All API routes accept an optional `systemInstruction` parameter to override the default agent behavior.
 
 ### The Configuration (The Brains)
 - **`src/lib/agent-constants.ts`**: This is the "character sheet" for our AI agents. It defines who they are (e.g., "You are an expert editor") and what they should do. **This is the most important file for prompt engineering.**
