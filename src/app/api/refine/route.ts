@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     console.log("POST /api/refine called");
     try {
         const body = await req.json();
-        const { roughNotes, instructions, conversationHistory, model, currentTone, existingTones } = body;
+        const { roughNotes, instructions, conversationHistory, model, currentTone, existingTones, systemInstruction } = body;
 
         // Detect tone change requests using agent
         let detectedTone: string | null = null;
@@ -69,6 +69,7 @@ ${instructions}
 
         const agent = { ...AGENTS.REFINE };
         if (model) agent.primary = model;
+        if (systemInstruction) agent.systemInstruction = systemInstruction; // Override default
 
         try {
             const response = await callWithFallback(

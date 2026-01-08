@@ -19,7 +19,7 @@ import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
  */
 export async function POST(req: NextRequest) {
     try {
-        const { message, model } = await req.json();
+        const { message, model, systemInstruction } = await req.json();
 
         if (!message || typeof message !== "string") {
             return NextResponse.json(
@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
 
         const agent = { ...AGENTS.DETECT_IMAGE_REQUEST };
         if (model) agent.primary = model;
+        if (systemInstruction) agent.systemInstruction = systemInstruction; // Override default
 
         const response = await callWithFallback(
             openai,

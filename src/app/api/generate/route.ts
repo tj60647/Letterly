@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     console.log("POST /api/generate called");
     try {
         const body = await req.json();
-        const { recipient, sender, tone, length, language, roughNotes, styleExample, model } = body;
+        const { recipient, sender, tone, length, language, roughNotes, styleExample, model, systemInstruction } = body;
 
         if (!roughNotes || typeof roughNotes !== 'string') {
             return NextResponse.json({ error: "Rough notes are required" }, { status: 400 });
@@ -135,6 +135,7 @@ export async function POST(req: NextRequest) {
 
         const agent = { ...AGENTS.GENERATE };
         if (model) agent.primary = model;
+        if (systemInstruction) agent.systemInstruction = systemInstruction; // Override default
 
         try {
             const response = await callWithFallback(

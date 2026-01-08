@@ -68,12 +68,30 @@ export default function LetterApp() {
 
     // Model State
     const [agentModels, setAgentModels] = useState<Record<string, string>>({});
+    const [customInstructions, setCustomInstructions] = useState<Record<string, string>>({});
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     // Helper to get model for specific agent
     const getModelFor = useCallback((agentId: string) => {
         return agentModels[agentId] || AGENTS[agentId as keyof typeof AGENTS]?.primary;
     }, [agentModels]);
+
+    // Load custom instructions from localStorage on mount
+    React.useEffect(() => {
+        const stored = localStorage.getItem('letterly-custom-instructions');
+        if (stored) {
+            try {
+                setCustomInstructions(JSON.parse(stored));
+            } catch (e) {
+                console.error('Failed to parse custom instructions from localStorage:', e);
+            }
+        }
+    }, []);
+
+    // Save custom instructions to localStorage whenever they change
+    React.useEffect(() => {
+        localStorage.setItem('letterly-custom-instructions', JSON.stringify(customInstructions));
+    }, [customInstructions]);
 
     // Output State
     const [generatedLetter, setGeneratedLetter] = useState("");
@@ -153,7 +171,8 @@ export default function LetterApp() {
                     body: JSON.stringify({
                         chatInput: value,
                         suggestions,
-                        model: getModelFor(AGENTS.MATCH_SUGGESTIONS.id)
+                        model: getModelFor(AGENTS.MATCH_SUGGESTIONS.id),
+                        systemInstruction: customInstructions[AGENTS.MATCH_SUGGESTIONS.id]
                     }),
                 });
                 const data = await response.json();
@@ -196,7 +215,8 @@ export default function LetterApp() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         roughNotes,
-                        model: getModelFor(AGENTS.RECOMMEND_LENGTH.id)
+                        model: getModelFor(AGENTS.RECOMMEND_LENGTH.id),
+                        systemInstruction: customInstructions[AGENTS.RECOMMEND_LENGTH.id]
                     }),
                 })
                     .then(res => res.json())
@@ -210,7 +230,7 @@ export default function LetterApp() {
         }, 1000); // Debounce for 1 second
 
         return () => clearTimeout(timer);
-    }, [roughNotes, getModelFor]);
+    }, [roughNotes, getModelFor, customInstructions]);
 
     // Auto-generate when tone, length, language, or model changes (if rough notes exist)
     React.useEffect(() => {
@@ -274,7 +294,8 @@ export default function LetterApp() {
                     length,
                     generatedLetter: currentLetter,
                     styleExample,
-                    model: getModelFor(AGENTS.SUGGEST.id)
+                    model: getModelFor(AGENTS.SUGGEST.id),
+                    systemInstruction: customInstructions[AGENTS.SUGGEST.id]
                 }),
             });
             const data = await response.json();
@@ -309,7 +330,8 @@ export default function LetterApp() {
                 body: JSON.stringify({
                     roughNotes: roughNotes,
                     editedLetter: generatedLetter,
-                    model: getModelFor(AGENTS.SYNC_NOTES.id)
+                    model: getModelFor(AGENTS.SYNC_NOTES.id),
+                    systemInstruction: customInstructions[AGENTS.SYNC_NOTES.id]
                 }),
             });
 
@@ -385,7 +407,8 @@ export default function LetterApp() {
                     language,
                     roughNotes,
                     styleExample,
-                    model: getModelFor(AGENTS.GENERATE.id)
+                    model: getModelFor(AGENTS.GENERATE.id),
+                    systemInstruction: customInstructions[AGENTS.GENERATE.id]
                 }),
             });
 
@@ -491,7 +514,8 @@ export default function LetterApp() {
                     conversationHistory: updatedChatHistory,
                     currentTone: tone,
                     existingTones: toneOptions,
-                    model: getModelFor(AGENTS.REFINE.id)
+                    model: getModelFor(AGENTS.REFINE.id),
+                    systemInstruction: customInstructions[AGENTS.REFINE.id]
                 }),
             });
 
@@ -537,7 +561,8 @@ export default function LetterApp() {
                     language,
                     roughNotes: newRoughNotes, // use updated rough notes
                     styleExample,
-                    model: getModelFor(AGENTS.GENERATE.id)
+                    model: getModelFor(AGENTS.GENERATE.id),
+                    systemInstruction: customInstructions[AGENTS.GENERATE.id]
                 }),
             });
 
@@ -973,6 +998,8 @@ export default function LetterApp() {
                 onClose={() => setIsSettingsOpen(false)}
                 assignments={agentModels}
                 onAssignmentChange={(agentId, modelId) => setAgentModels(prev => ({ ...prev, [agentId]: modelId }))}
+                customInstructions={customInstructions}
+                onInstructionChange={(agentId, instruction) => setCustomInstructions(prev => ({ ...prev, [agentId]: instruction }))}
             />
         </div>
     );

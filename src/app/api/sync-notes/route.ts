@@ -20,7 +20,7 @@ import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { editedLetter, roughNotes, model } = body;
+        const { editedLetter, roughNotes, model, systemInstruction } = body;
 
         if (!editedLetter || !roughNotes) {
             return NextResponse.json({ newPoints: "" });
@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
 
         const agent = { ...AGENTS.SYNC_NOTES };
         if (model) agent.primary = model;
+        if (systemInstruction) agent.systemInstruction = systemInstruction; // Override default
 
         const response = await callWithFallback(
             openai,

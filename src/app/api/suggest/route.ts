@@ -23,7 +23,7 @@ Focus on:
 
 Provide no more than 3 specific, actionable suggestions for the user to add or clarify in their notes to improve the next iteration.
 Suggestions should be brief directives (e.g., "Specify the exact meeting date", "Mention the project name explicitly", "Adjust tone to be more formal").
-Return ONLY the suggestions as a JSON array of strings. Example: ["Clarify the deadline", "Add the budget figure"]
+Return ONLY valid JSON in this exact format: {"suggestions": ["Suggestion 1", "Suggestion 2", "Suggestion 3"]}
 `;
 
 /**
@@ -35,7 +35,7 @@ Return ONLY the suggestions as a JSON array of strings. Example: ["Clarify the d
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { roughNotes, context, recipient, generatedLetter, tone, length, model, styleExample } = body;
+        const { roughNotes, context, recipient, generatedLetter, tone, length, model, styleExample, systemInstruction } = body;
 
         if (!roughNotes || roughNotes.trim().length < 5) {
             return NextResponse.json({ suggestions: [] });
@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
 
         const agent = { ...AGENTS.SUGGEST };
         if (model) agent.primary = model;
+        if (systemInstruction) agent.systemInstruction = systemInstruction; // Override default
 
         const response = await callWithFallback(
             openai,
@@ -113,7 +114,7 @@ export async function POST(req: NextRequest) {
             if (arrayMatch) {
                 try {
                     // Try to fix common JSON issues
-                    let fixedJson = arrayMatch[0]
+                    const fixedJson = arrayMatch[0]
                         .replace(/'/g, '"')  // Replace single quotes with double quotes
                         .replace(/,\s*]/g, ']')  // Remove trailing commas
                         .replace(/,\s*}/g, '}'); // Remove trailing commas in objects

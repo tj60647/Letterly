@@ -25,12 +25,13 @@
     background: white;
     padding: 24px;
     border-radius: 12px;
-    width: 90%;
-    max-width: 1100px;
+    width: 95%;
+    max-width: 1200px;
     max-height: 85vh;
     display: flex;
     flex-direction: column;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
 }
 
 .header {
@@ -38,7 +39,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 2px solid #cbd5e1;
     padding-bottom: 10px;
 }
 
@@ -46,6 +47,7 @@
     margin: 0;
     font-size: 1.25rem;
     font-weight: 600;
+    color: #0f172a;
 }
 
 .closeButton {
@@ -71,6 +73,7 @@
 
 .agentList {
     overflow-y: auto;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -81,7 +84,7 @@
     grid-template-columns: 1fr 2fr;
     gap: 24px;
     padding-bottom: 12px;
-    border-bottom: 2px solid #dee2e6;
+    border-bottom: 2px solid #cbd5e1;
     margin-bottom: 8px;
 }
 
@@ -89,7 +92,7 @@
 .rightHeader {
     font-weight: 600;
     font-size: 0.9rem;
-    color: #495057;
+    color: #475569;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -100,6 +103,7 @@
     gap: 24px;
     padding: 16px 0;
     border-bottom: 1px solid #f5f5f5;
+    min-width: 0;
 }
 
 .row:last-child {
@@ -116,10 +120,74 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    background: #f8f9fa;
+    background: #f8fafc;
     padding: 12px;
     border-radius: 8px;
-    border: 1px solid #e9ecef;
+    border: 1px solid #e2e8f0;
+    min-width: 0;
+}
+
+/* Instruction header area */
+.instructionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+}
+
+/* Modified label */
+.modifiedLabel {
+    background: #e0f2fe;
+    border: 1px solid #0284c7;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #0369a1;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+/* Default label */
+.defaultLabel {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #64748b;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.resetButton,
+.resetBadgeButton {
+    background-color: #fff;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    height: 32px;
+    display: flex;
+    align-items: center;
+}
+
+.resetButton:hover,
+.resetBadgeButton:hover {
+    background-color: #e0f2fe;
+    border-color: #0284c7;
+    color: #0369a1;
 }
 
 .label {
@@ -138,6 +206,10 @@
     font-size: 0.75rem;
     color: #6c757d;
     line-height: 1.6;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     white-space: pre-wrap;
     flex: 1;
 }
@@ -159,4 +231,143 @@
     outline: none;
     border-color: #0066cc;
     box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+/* Modified row indicator */
+.row.modified {
+    background-color: #f0f9ff;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 0 -8px;
+}
+
+/* Gear button */
+.gearButton {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    height: 32px;
+    width: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gearButton svg {
+    width: 16px;
+    height: 16px;
+}
+
+.gearButton:hover {
+    background: #0284c7;
+    border-color: #0284c7;
+    color: white;
+}
+
+.gearButton.gearActive {
+    background: #e0f2fe;
+    border-color: #0284c7;
+    color: #0284c7;
+}
+
+.gearButton.gearActive:hover {
+    background: #0284c7;
+    border-color: #0284c7;
+    color: white;
+}
+
+/* Edit mode */
+.editMode {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.75rem;
+    line-height: 1.6;
+    resize: vertical;
+    min-height: 120px;
+    box-sizing: border-box;
+}
+
+.textarea:focus {
+    outline: none;
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+}
+
+/* Button group */
+.buttonGroup {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.saveButton,
+.cancelButton {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.saveButton {
+    background-color: #fff;
+    color: #0369a1;
+    border-color: #0284c7;
+}
+
+.saveButton:hover {
+    background-color: #0284c7;
+    color: white;
+}
+
+.cancelButton {
+    background-color: #fff;
+    color: #475569;
+    border-color: #64748b;
+}
+
+.cancelButton:hover {
+    background-color: #64748b;
+    color: white;
+}
+
+/* Modified badge */
+.modifiedBadge {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #e0f2fe;
+    border: 1px solid #0284c7;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #0369a1;
+    flex: 1;
+}
+
+.modifiedBadge span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }

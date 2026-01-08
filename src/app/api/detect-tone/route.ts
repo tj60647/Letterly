@@ -21,7 +21,7 @@ import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { message, existingTones, model } = body;
+        const { message, existingTones, model, systemInstruction } = body;
 
         if (!message) {
             return NextResponse.json({ tone: null, isNewTone: false });
@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
         const openai = createOpenAIClient();
         const agent = { ...AGENTS.DETECT_TONE_REQUEST };
         if (model) agent.primary = model;
+        if (systemInstruction) agent.systemInstruction = systemInstruction; // Override default
 
         const tonesList = existingTones && existingTones.length > 0
             ? existingTones.join(", ")

@@ -21,7 +21,7 @@ import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { chatInput, suggestions, model } = body;
+        const { chatInput, suggestions, model, systemInstruction } = body;
 
         if (!chatInput || !suggestions || suggestions.length === 0) {
             return NextResponse.json({ matchedSuggestions: [] });
@@ -50,6 +50,7 @@ Return a JSON array of matched indices.`;
 
         const agent = { ...AGENTS.MATCH_SUGGESTIONS };
         if (model) agent.primary = model;
+        if (systemInstruction) agent.systemInstruction = systemInstruction; // Override default
 
         const result = await callWithFallback(
             openai,
