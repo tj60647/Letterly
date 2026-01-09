@@ -36,6 +36,7 @@
     "jest-environment-jsdom": "^30.2.0",
     "msw": "^2.12.7",
     "next-test-api-route-handler": "^5.0.3",
+    "sharp": "^0.34.5",
     "ts-node": "^10.9.2",
     "typescript": "^5"
   }
