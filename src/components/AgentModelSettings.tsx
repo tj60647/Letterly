@@ -9,8 +9,9 @@
  */
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { AGENTS, MODELS } from '@/lib/agent-constants';
-import { SettingsIcon } from './ui/icons';
+import { SettingsIcon, BeakerIcon } from './ui/icons';
 import styles from './AgentModelSettings.module.css';
 
 interface AgentModelSettingsProps {
@@ -92,6 +93,10 @@ export function AgentModelSettings({
             <div className={styles.modal}>
                 <div className={styles.header}>
                     <h2>Writers&apos; Room Agents</h2>
+                    <Link href="/eval" className={styles.evalLink}>
+                        <BeakerIcon />
+                        Agent Testing
+                    </Link>
                     <button className={styles.closeButton} onClick={onClose}>×</button>
                 </div>
                 <div className={styles.content}>

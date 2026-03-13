@@ -1,0 +1,274 @@
+'use client';
+
+/**
+ * @file src/components/eval/ComparisonMode.tsx
+ * @description Comparison Mode for the Agent Eval Suite. Allows running individual test cases
+ * against agents and comparing expected vs actual output with assertion evaluation.
+ */
+
+import React, { useState, useCallback } from 'react';
+import { AGENTS } from '@/lib/agent-constants';
+import { TestCase, TestResult, Assertion, AssertionType } from '@/lib/eval-types';
+import { PREDEFINED_TESTS, TEST_SUITES } from '@/lib/eval-tests';
+import { runTest } from '@/lib/eval-runner';
+import { PlayIcon, PlusIcon, RefreshIcon } from '@/components/ui/icons';
+import styles from './EvalSuite.module.css';
+
+const ASSERTION_TYPE_LABELS: Record<AssertionType, string> = {
+  contains: 'Contains',
+  excludes: 'Excludes',
+  length_between: 'Length Between',
+  regex_match: 'Regex Match',
+  json_valid: 'JSON Valid',
+};
+
+const visibleAgents = Object.values(AGENTS).filter(a => !('hidden' in a) || !a.hidden);
+
+export function ComparisonMode() {
+  const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
+  const [selectedAgentId, setSelectedAgentId] = useState<string>('GENERATE');
+  const [promptValue, setPromptValue] = useState<string>('');
+  const [jsonMode, setJsonMode] = useState(false);
+  const [assertions, setAssertions] = useState<Assertion[]>([]);
+  const [newAssertionType, setNewAssertionType] = useState<AssertionType>('contains');
+  const [newAssertionValue, setNewAssertionValue] = useState('');
+  const [newAssertionExtra, setNewAssertionExtra] = useState('');
+  const [newAssertionLabel, setNewAssertionLabel] = useState('');
+  const [result, setResult] = useState<TestResult | null>(null);
+  const [running, setRunning] = useState(false);
+  const [activeSuite, setActiveSuite] = useState<string>('all');
+
+  const suiteTests = PREDEFINED_TESTS.filter(t =>
+    TEST_SUITES[activeSuite]?.testIds.includes(t.id)
+  );
+
+  const loadTest = useCallback((test: TestCase) => {
+    setSelectedTestId(test.id);
+    setSelectedAgentId(test.agentId);
+    setPromptValue(test.prompt);
+    setAssertions(test.assertions);
+    setJsonMode(true);
+    setResult(null);
+  }, []);
+
+  const addAssertion = () => {
+    if (!newAssertionValue && newAssertionType !== 'json_valid') return;
+    const assertion: Assertion = {
+      id: `custom-${Date.now()}`,
+      type: newAssertionType,
+      value: newAssertionValue,
+      extraValue: newAssertionExtra || undefined,
+      label: newAssertionLabel || `${ASSERTION_TYPE_LABELS[newAssertionType]}: ${newAssertionValue}`,
+    };
+    setAssertions(prev => [...prev, assertion]);
+    setNewAssertionValue('');
+    setNewAssertionExtra('');
+    setNewAssertionLabel('');
+  };
+
+  const removeAssertion = (id: string) => {
+    setAssertions(prev => prev.filter(a => a.id !== id));
+  };
+
+  const handleRun = async () => {
+    setRunning(true);
+    setResult(null);
+    const testCase: TestCase = {
+      id: selectedTestId || 'custom',
+      name: 'Custom Test',
+      description: '',
+      agentId: selectedAgentId,
+      prompt: promptValue,
+      assertions,
+      tags: [],
+    };
+    const res = await runTest(testCase);
+    setResult(res);
+    setRunning(false);
+  };
+
+  return (
+    <div className={styles.comparisonLayout}>
+      {/* Left Sidebar */}
+      <aside className={styles.sidebar}>
+        <div className={styles.sidebarSection}>
+          <h3 className={styles.sidebarTitle}>Test Suites</h3>
+          <div className={styles.suiteList}>
+            {Object.entries(TEST_SUITES).map(([key, suite]) => (
+              <button
+                key={key}
+                className={`${styles.suiteButton} ${activeSuite === key ? styles.suiteButtonActive : ''}`}
+                onClick={() => setActiveSuite(key)}
+              >
+                <span>{suite.name}</span>
+                <span className={styles.suiteBadge}>{suite.testIds.length}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.sidebarSection}>
+          <h3 className={styles.sidebarTitle}>Tests</h3>
+          <div className={styles.testList}>
+            {suiteTests.map(test => (
+              <button
+                key={test.id}
+                className={`${styles.testItem} ${selectedTestId === test.id ? styles.testItemActive : ''}`}
+                onClick={() => loadTest(test)}
+              >
+                <span className={styles.testItemName}>{test.name}</span>
+                <span className={styles.testItemAgent}>{test.agentId}</span>
+                <span className={styles.testItemDesc}>{test.description}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Panel */}
+      <main className={styles.mainPanel}>
+        <div className={styles.configSection}>
+          {/* Agent Selector */}
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel}>Agent</label>
+            <select
+              className={styles.select}
+              value={selectedAgentId}
+              onChange={e => { setSelectedAgentId(e.target.value); setResult(null); }}
+            >
+              {visibleAgents.map(agent => (
+                <option key={agent.id} value={agent.id}>{agent.name} ({agent.id})</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Prompt Input */}
+          <div className={styles.fieldGroup}>
+            <div className={styles.fieldLabelRow}>
+              <label className={styles.fieldLabel}>Prompt</label>
+              <button
+                className={`${styles.toggleChip} ${jsonMode ? styles.toggleChipActive : ''}`}
+                onClick={() => setJsonMode(v => !v)}
+              >
+                Advanced JSON Mode
+              </button>
+            </div>
+            <textarea
+              className={`${styles.promptTextarea} ${jsonMode ? styles.monoFont : ''}`}
+              value={promptValue}
+              onChange={e => setPromptValue(e.target.value)}
+              placeholder={jsonMode
+                ? '{\n  "recipient": "Manager",\n  "roughNotes": "..."\n}'
+                : 'Enter your prompt here…'}
+              rows={8}
+            />
+          </div>
+
+          {/* Assertion Builder */}
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel}>Assertions</label>
+            <div className={styles.assertionList}>
+              {assertions.map(a => (
+                <div key={a.id} className={styles.assertionChip}>
+                  <span className={styles.assertionChipType}>{ASSERTION_TYPE_LABELS[a.type]}</span>
+                  <span className={styles.assertionChipLabel}>{a.label}</span>
+                  <button className={styles.assertionRemove} onClick={() => removeAssertion(a.id)}>×</button>
+                </div>
+              ))}
+            </div>
+            <div className={styles.assertionBuilder}>
+              <select
+                className={styles.selectSm}
+                value={newAssertionType}
+                onChange={e => setNewAssertionType(e.target.value as AssertionType)}
+              >
+                {Object.entries(ASSERTION_TYPE_LABELS).map(([k, v]) => (
+                  <option key={k} value={k}>{v}</option>
+                ))}
+              </select>
+              {newAssertionType !== 'json_valid' && (
+                <input
+                  className={styles.inputSm}
+                  placeholder={newAssertionType === 'length_between' ? 'Min' : 'Value'}
+                  value={newAssertionValue}
+                  onChange={e => setNewAssertionValue(e.target.value)}
+                />
+              )}
+              {newAssertionType === 'length_between' && (
+                <input
+                  className={styles.inputSm}
+                  placeholder="Max"
+                  value={newAssertionExtra}
+                  onChange={e => setNewAssertionExtra(e.target.value)}
+                />
+              )}
+              <input
+                className={styles.inputSm}
+                placeholder="Label (optional)"
+                value={newAssertionLabel}
+                onChange={e => setNewAssertionLabel(e.target.value)}
+              />
+              <button className={styles.addAssertionBtn} onClick={addAssertion}>
+                <PlusIcon /> Add
+              </button>
+            </div>
+          </div>
+
+          {/* Run Button */}
+          <div className={styles.runRow}>
+            <button
+              className={styles.runButton}
+              onClick={handleRun}
+              disabled={running || !promptValue}
+            >
+              {running ? <><RefreshIcon /> Running…</> : <><PlayIcon /> Run Test</>}
+            </button>
+            {result && (
+              <span className={result.passed ? styles.passBadge : styles.failBadge}>
+                {result.passed ? '✓ PASS' : '✗ FAIL'}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Results Panel */}
+        {result && (
+          <div className={styles.resultsPanel}>
+            {/* Metadata Bar */}
+            <div className={styles.metaBar}>
+              <span className={styles.metaItem}><strong>Model:</strong> {result.model}</span>
+              <span className={styles.metaItem}><strong>Latency:</strong> {result.latencyMs}ms</span>
+              <span className={styles.metaItem}><strong>Timestamp:</strong> {new Date(result.timestamp).toLocaleTimeString()}</span>
+            </div>
+
+            {result.error && (
+              <div className={styles.errorBox}>{result.error}</div>
+            )}
+
+            {/* Side-by-side columns */}
+            <div className={styles.compareColumns}>
+              <div className={styles.compareCol}>
+                <h4 className={styles.compareColTitle}>Actual Output</h4>
+                <pre className={styles.outputPre}>{result.actualOutput || '(empty)'}</pre>
+              </div>
+              <div className={styles.compareCol}>
+                <h4 className={styles.compareColTitle}>Assertion Results</h4>
+                <div className={styles.assertionResults}>
+                  {result.assertionResults.map((ar, i) => (
+                    <div key={i} className={`${styles.assertionResult} ${ar.passed ? styles.assertionPassed : styles.assertionFailed}`}>
+                      <span className={styles.assertionResultIcon}>{ar.passed ? '✓' : '✗'}</span>
+                      <div>
+                        <div className={styles.assertionResultLabel}>{ar.assertion.label}</div>
+                        <div className={styles.assertionResultMsg}>{ar.message}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
