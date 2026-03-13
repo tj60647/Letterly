@@ -10,7 +10,8 @@
 
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
+import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import styles from "./LetterApp.module.css";
 // ModelSelector removed in favor of AgentModelSettings
@@ -53,6 +54,8 @@ interface HistoryItem {
  * @returns {JSX.Element} The full single-page application UI.
  */
 export default function LetterApp() {
+    const router = useRouter();
+
     // Config State
     const [recipient, setRecipient] = useState("");
     const [sender, setSender] = useState("");
@@ -70,6 +73,18 @@ export default function LetterApp() {
     const [agentModels, setAgentModels] = useState<Record<string, string>>({});
     const [customInstructions, setCustomInstructions] = useState<Record<string, string>>({});
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+    // Keyboard shortcut: Ctrl+Shift+E / Cmd+Shift+E → open Agent Eval Suite
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.code === 'KeyE') {
+                e.preventDefault();
+                router.push('/eval');
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [router]);
 
     // Helper to get model for specific agent
     const getModelFor = useCallback((agentId: string) => {

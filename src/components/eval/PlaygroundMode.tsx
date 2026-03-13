@@ -115,8 +115,17 @@ export function PlaygroundMode() {
     setObservations([]);
   };
 
+  const freshStep = (s: Step): Step => ({
+    ...s,
+    status: 'pending' as StepStatus,
+    output: undefined,
+    model: undefined,
+    latencyMs: undefined,
+    error: undefined,
+  });
+
   const resetSteps = () => {
-    setSteps(prev => prev.map(s => ({ ...s, status: 'pending', output: undefined, model: undefined, latencyMs: undefined, error: undefined })));
+    setSteps(prev => prev.map(freshStep));
     setObservations([]);
   };
 
@@ -137,8 +146,8 @@ export function PlaygroundMode() {
 
   const runAll = async () => {
     abortRef.current = false;
-    // Capture current steps before any state updates to avoid stale closure
-    const currentSteps = steps.map(s => ({ ...s, status: 'pending' as StepStatus, output: undefined, model: undefined, latencyMs: undefined, error: undefined }));
+    // Use freshStep helper to reset all steps consistently before running
+    const currentSteps = steps.map(freshStep);
     setSteps(currentSteps);
     setObservations([]);
     setRunning(true);

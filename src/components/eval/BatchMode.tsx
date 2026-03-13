@@ -6,7 +6,7 @@
  * in sequence and presents results organized by agent with summary statistics.
  */
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { TestResult, BatchRunResult } from '@/lib/eval-types';
 import { PREDEFINED_TESTS, TEST_SUITES } from '@/lib/eval-tests';
 import { runTest } from '@/lib/eval-runner';
@@ -88,7 +88,13 @@ export function BatchMode() {
   const abortRef = useRef(false);
 
   const suiteTestIds = TEST_SUITES[selectedSuite]?.testIds ?? [];
-  const suiteTests = PREDEFINED_TESTS.filter(t => suiteTestIds.includes(t.id));
+  // suiteTests is derived entirely from selectedSuite via the TEST_SUITES lookup.
+  // Using selectedSuite (not suiteTestIds) as the dependency avoids a new array reference
+  // on every render while still updating whenever the suite selection changes.
+  const suiteTests = useMemo(
+    () => PREDEFINED_TESTS.filter(t => (TEST_SUITES[selectedSuite]?.testIds ?? []).includes(t.id)),
+    [selectedSuite]
+  );
 
   const completedCount = suiteTestIds.filter(id => results[id]).length;
   const passedCount = suiteTestIds.filter(id => results[id]?.passed).length;
@@ -104,7 +110,7 @@ export function BatchMode() {
   const toggleAgent = (agentId: string) => {
     setCollapsedAgents(prev => {
       const next = new Set(prev);
-      next.has(agentId) ? next.delete(agentId) : next.add(agentId);
+      if (next.has(agentId)) { next.delete(agentId); } else { next.add(agentId); }
       return next;
     });
   };
@@ -157,7 +163,7 @@ export function BatchMode() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `eval-results-${selectedSuite}-${Date.now()}.json`;
+    a.download = `eval-results-${selectedSuite}-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
