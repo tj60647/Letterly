@@ -371,3 +371,21 @@
     align-items: center;
     gap: 4px;
 }
+
+.evalLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--accent-light);
+    color: var(--accent-primary);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.15s;
+}
+
+.evalLink:hover {
+    background: #dbeafe;
+}
