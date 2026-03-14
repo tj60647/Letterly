@@ -59,7 +59,17 @@ Ensure the flow is logical and polished.
 If the rough draft is fragmented, expand it into full coherent sentences.
 Use standard letter formatting (salutation, body, closing).
 You may use markdown for emphasis (e.g., *italics* for subtle emphasis) when appropriate, but use sparingly.
-IMPORTANT: Do NOT wrap normal text in backticks or code blocks. Only use code formatting (backticks or triple backticks) if the letter content actually includes technical code or commands that need to be shown.`
+IMPORTANT: Do NOT wrap normal text in backticks or code blocks. Only use code formatting (backticks or triple backticks) if the letter content actually includes technical code or commands that need to be shown.`,
+        inputSchema: {
+            roughNotes: 'Required — key points for the letter as bullet points',
+            recipient: 'Optional — who the letter is addressed to (e.g. "Manager")',
+            sender: 'Optional — who is writing the letter (e.g. "Employee")',
+            tone: 'Optional — tone style (e.g. "Professional", "Casual", "Formal")',
+            length: 'Optional — target length: "Short", "Medium", or "Long"',
+            language: 'Optional — language for the letter (default: "English")',
+            styleExample: 'Optional — example text to mimic the writing style',
+        },
+        outputDescription: 'Full draft letter as formatted plain text',
     },
     REFINE: {
         id: 'REFINE',
@@ -86,7 +96,14 @@ INSTRUCTIONS:
 11. Examples of GOOD notes: "Ask about project timeline", "Mention budget constraints", "Request meeting next week"
 12. Examples of BAD notes: "Excitedly ask about the project timeline", "Politely mention budget constraints", "Warmly request a meeting"
 13. The tone will be applied when generating the letter, NOT in the notes.
-14. IGNORE tone change requests (e.g., "make it more formal", "be sarcastic"). Tone is handled separately - do NOT add tone instructions to the notes.`
+14. IGNORE tone change requests (e.g., "make it more formal", "be sarcastic"). Tone is handled separately - do NOT add tone instructions to the notes.`,
+        inputSchema: {
+            roughNotes: 'Required — current bullet-point notes for the letter',
+            instructions: 'Required — what to add, change, or remove from the notes',
+            conversationHistory: 'Optional — prior chat history as an array of message objects',
+            existingTones: 'Optional — list of tone names currently available (e.g. ["Professional", "Casual"])',
+        },
+        outputDescription: 'Updated bullet-point notes as plain text',
     },
     SUGGEST: {
         id: 'SUGGEST',
@@ -108,7 +125,15 @@ Suggestions should be brief directives (e.g., "Specify the exact meeting date", 
 Return ONLY the suggestions as a plain JSON array of strings. Do not wrap it in an object (like {"suggestions": ...}).
 
 Example Output:
-["Clarify the deadline", "Add the budget figure", "Specify the recipient"]`
+["Clarify the deadline", "Add the budget figure", "Specify the recipient"]`,
+        inputSchema: {
+            roughNotes: 'Required — original rough notes the letter was based on',
+            generatedLetter: 'Optional — the current draft letter text',
+            recipient: 'Optional — who the letter is addressed to',
+            tone: 'Optional — tone of the letter (e.g. "Professional")',
+            length: 'Optional — length setting used for the letter',
+        },
+        outputDescription: 'JSON array of up to 3 actionable suggestion strings',
     },
     RECOMMEND_LENGTH: {
         id: 'RECOMMEND_LENGTH',
@@ -125,7 +150,11 @@ Criteria:
 - "Medium": Standard correspondence, multiple points to cover, or moderate complexity.
 - "Long": Detailed explanations, complex arguments, sensitive topics requiring nuance, or many distinct points.
 
-Return ONLY one word: "Short", "Medium", or "Long". Do not use Markdown formatting.`
+Return ONLY one word: "Short", "Medium", or "Long". Do not use Markdown formatting.`,
+        inputSchema: {
+            roughNotes: 'Required — the rough notes to analyze for recommended letter length',
+        },
+        outputDescription: 'Single word: "Short", "Medium", or "Long"',
     },
     SYNC_NOTES: {
         id: 'SYNC_NOTES',
@@ -142,7 +171,12 @@ Return ONLY the new points as a bulleted list (e.g., "- New point here").
 If there is no new information, return an empty string.
 Do not repeat points that are already in the rough notes.
 Keep the points concise and succinct - aim for 5-10 words per bullet point maximum.
-IMPORTANT: Write all points in present tense, not past tense (e.g., "Express interest in..." not "Expressed interest in...", "Add budget details" not "Added budget details").`
+IMPORTANT: Write all points in present tense, not past tense (e.g., "Express interest in..." not "Expressed interest in...", "Add budget details" not "Added budget details").`,
+        inputSchema: {
+            roughNotes: 'Required — current bullet-point notes for the letter',
+            editedLetter: 'Required — the manually edited letter text to sync from',
+        },
+        outputDescription: 'Bulleted list of new points found in the edited letter but absent from the notes, or empty string if none',
     },
     SCORED: {
         id: 'SCORED',
@@ -152,6 +186,11 @@ IMPORTANT: Write all points in present tense, not past tense (e.g., "Express int
         primary: "openai/text-embedding-3-large",
         fallbacks: [],
         systemInstruction: `Uses cosine similarity between embeddings of your rough notes and the final letter to calculate how well the letter captures your original intent. Higher scores indicate better alignment.`,
+        inputSchema: {
+            roughNotes: 'Required — original rough notes',
+            letter: 'Required — generated letter to score against the notes',
+        },
+        outputDescription: 'Cosine similarity score (0.0–1.0) reflecting how well the letter captures the original notes',
         hidden: true
     },
     MATCH_SUGGESTIONS_SCORER: {
@@ -162,6 +201,11 @@ IMPORTANT: Write all points in present tense, not past tense (e.g., "Express int
         primary: "google/gemini-embedding-001",
         fallbacks: ["openai/text-embedding-3-small", "mistralai/mistral-embed"],
         systemInstruction: `Compares the semantic similarity between a chat message and editor review suggestions to identify which suggestions the user is addressing.`,
+        inputSchema: {
+            chatInput: 'Required — user chat message to match against suggestions',
+            suggestions: 'Required — array of suggestion strings to compare against',
+        },
+        outputDescription: 'Array of matched suggestion indices based on semantic similarity',
         hidden: true
     },
     MATCH_SUGGESTIONS: {
@@ -182,7 +226,12 @@ Chat: "make it more formal"
 Suggestions: ["Consider a more formal tone", "Add specific dates", "Clarify the budget"]
 Output: [{"index": 0, "score": 0.05}, {"index": 1, "score": 0.92}]
 
-Only include suggestions that have some relevance (score < 0.70). If no suggestions match, return an empty array: []`
+Only include suggestions that have some relevance (score < 0.70). If no suggestions match, return an empty array: []`,
+        inputSchema: {
+            chatInput: 'Required — user chat message to analyze',
+            suggestions: 'Required — array of suggestion strings to match against',
+        },
+        outputDescription: 'JSON array of {index, score} objects for matched suggestions (score < 0.70 means relevant); empty array if no matches',
     },
     DETECT_TONE_REQUEST: {
         id: 'DETECT_TONE_REQUEST',
@@ -209,6 +258,11 @@ Examples:
 - If user says "make it formal" and "Professional" exists → return "Professional"
 - If user says "be sarcastic" and no similar tone exists → return "Sarcastic"
 - If user says "add more details" → return "" (empty, not a tone request)`,
+        inputSchema: {
+            message: 'Required — user chat message to analyze for a tone change request',
+            existingTones: 'Optional — array of currently available tone names (e.g. ["Professional", "Casual"])',
+        },
+        outputDescription: 'Tone name string if a tone change was requested, or empty string if not',
         hidden: true
     },
     DETECT_IMAGE_REQUEST: {
@@ -232,6 +286,10 @@ Examples:
 - "put an illustration of a compass" → return "a compass"
 - "make it more formal" → return "" (empty, not an image request)
 - "add more details about the timeline" → return "" (empty, not an image request)`,
+        inputSchema: {
+            message: 'Required — user chat message to analyze for an image request',
+        },
+        outputDescription: 'Image subject description string if an image was requested, or empty string if not',
         hidden: true
     },
     IMAGE: {
@@ -249,6 +307,10 @@ Requirements:
 - Highly detailed contours
 - Professional botanical or technical drawing style
 - No gray tones or digital gradients, only black ink techniques`,
+        inputSchema: {
+            subject: 'Required — description of the illustration subject (e.g. "a rose", "mountain landscape")',
+        },
+        outputDescription: 'Black and white line art illustration as image data',
         hidden: false
     }
 } as const;

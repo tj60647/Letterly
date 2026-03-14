@@ -14,6 +14,45 @@ import { runTest } from '@/lib/eval-runner';
 import { PlayIcon, PlusIcon, RefreshIcon, InfoIcon } from '@/components/ui/icons';
 import styles from './EvalSuite.module.css';
 
+/**
+ * Ready-to-use JSON prompt templates for each agent, reflecting their specific input requirements.
+ */
+const PROMPT_TEMPLATES: Record<string, Record<string, unknown>> = {
+  GENERATE: {
+    roughNotes: '- Key point 1\n- Key point 2',
+    recipient: 'Manager',
+    sender: 'Employee',
+    tone: 'Professional',
+    length: 'Medium',
+    language: 'English',
+  },
+  REFINE: {
+    roughNotes: '- Existing note 1\n- Existing note 2',
+    instructions: 'What to add or change in the notes',
+    conversationHistory: [],
+  },
+  SUGGEST: {
+    roughNotes: '- Original rough note',
+    generatedLetter: 'Dear Manager,\n\n...\n\nBest regards,\nEmployee',
+    recipient: 'Manager',
+    tone: 'Professional',
+  },
+  RECOMMEND_LENGTH: {
+    roughNotes: '- Topic or key points to analyze',
+  },
+  SYNC_NOTES: {
+    roughNotes: '- Existing note 1\n- Existing note 2',
+    editedLetter: 'Dear Manager,\n\n...\n\nBest regards,\nEmployee',
+  },
+  MATCH_SUGGESTIONS: {
+    chatInput: 'User chat message',
+    suggestions: ['Suggestion 1', 'Suggestion 2', 'Suggestion 3'],
+  },
+  IMAGE: {
+    subject: 'a rose',
+  },
+};
+
 const ASSERTION_TYPE_LABELS: Record<AssertionType, string> = {
   contains: 'Contains',
   excludes: 'Excludes',
@@ -42,6 +81,26 @@ export function ComparisonMode() {
   const suiteTests = PREDEFINED_TESTS.filter(t =>
     TEST_SUITES[activeSuite]?.testIds.includes(t.id)
   );
+
+  const selectedAgent = visibleAgents.find(a => a.id === selectedAgentId);
+  const agentInputSchema = selectedAgent && 'inputSchema' in selectedAgent ? selectedAgent.inputSchema as Record<string, string> : null;
+  const agentOutputDescription = selectedAgent && 'outputDescription' in selectedAgent ? selectedAgent.outputDescription as string : null;
+
+  const getJsonPlaceholder = () => {
+    const template = PROMPT_TEMPLATES[selectedAgentId];
+    if (template) {
+      return JSON.stringify(template, null, 2);
+    }
+    return '{\n  "roughNotes": "..."\n}';
+  };
+
+  const handleUseTemplate = () => {
+    const template = PROMPT_TEMPLATES[selectedAgentId];
+    if (template) {
+      setPromptValue(JSON.stringify(template, null, 2));
+      setJsonMode(true);
+    }
+  };
 
   const loadTest = useCallback((test: TestCase) => {
     setSelectedTestId(test.id);
@@ -156,24 +215,59 @@ export function ComparisonMode() {
             </select>
           </div>
 
+          {/* Agent Role Card */}
+          {selectedAgent && (
+            <div className={styles.agentRoleCard}>
+              <p className={styles.agentRoleDescription}>{selectedAgent.description}</p>
+              {agentInputSchema && (
+                <div className={styles.agentRoleSection}>
+                  <span className={styles.agentRoleSectionLabel}>Input fields</span>
+                  <ul className={styles.agentInputFieldList}>
+                    {Object.entries(agentInputSchema).map(([field, desc]) => (
+                      <li key={field} className={styles.agentInputFieldItem}>
+                        <code className={styles.agentInputFieldName}>{field}</code>
+                        <span className={styles.agentInputFieldDesc}>{desc}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {agentOutputDescription && (
+                <div className={styles.agentRoleSection}>
+                  <span className={styles.agentRoleSectionLabel}>Returns</span>
+                  <span className={styles.agentRoleOutput}>{agentOutputDescription}</span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Prompt Input */}
           <div className={styles.fieldGroup}>
             <div className={styles.fieldLabelRow}>
               <label className={styles.fieldLabel}>Prompt</label>
-              <button
-                className={`${styles.toggleChip} ${jsonMode ? styles.toggleChipActive : ''}`}
-                onClick={() => setJsonMode(v => !v)}
-              >
-                Advanced JSON Mode
-              </button>
+              <div className={styles.promptControls}>
+                {PROMPT_TEMPLATES[selectedAgentId] && (
+                  <button
+                    className={styles.templateButton}
+                    onClick={handleUseTemplate}
+                    title="Populate the prompt with a ready-to-use JSON template for this agent"
+                  >
+                    Use template
+                  </button>
+                )}
+                <button
+                  className={`${styles.toggleChip} ${jsonMode ? styles.toggleChipActive : ''}`}
+                  onClick={() => setJsonMode(v => !v)}
+                >
+                  Advanced JSON Mode
+                </button>
+              </div>
             </div>
             <textarea
               className={`${styles.promptTextarea} ${jsonMode ? styles.monoFont : ''}`}
               value={promptValue}
               onChange={e => setPromptValue(e.target.value)}
-              placeholder={jsonMode
-                ? '{\n  "recipient": "Manager",\n  "roughNotes": "..."\n}'
-                : 'Enter your prompt here…'}
+              placeholder={jsonMode ? getJsonPlaceholder() : 'Enter your prompt here…'}
               rows={8}
             />
           </div>
@@ -299,7 +393,10 @@ export function ComparisonMode() {
                 Start in the left panel by selecting a suite and test. This preloads an agent, prompt, and assertions. If you want a custom test, choose your agent and write your own prompt.
               </p>
               <p>
-                Use Advanced JSON Mode for routes that expect structured request bodies. Keep your payload shape aligned with the target API route contract for reliable results.
+                Each agent has specific input requirements — the <strong>Agent Role Card</strong> shown below the agent selector lists the expected input fields and what the agent returns. Use the <strong>Use template</strong> button to populate the prompt with a ready-to-use JSON structure for the selected agent.
+              </p>
+              <p>
+                Use Advanced JSON Mode when the agent expects structured input (most agents do). Keep your payload shape aligned with the fields listed in the role card for reliable results.
               </p>
               <p>
                 Add multiple assertions to represent evidence of correctness. Prefer specific assertions instead of one broad check so failures are easier to diagnose.
