@@ -24,6 +24,9 @@ Instead of one single AI doing everything, Letterly uses a **Writers' Room** app
 5.  **Line Art Generator:** Draws a custom illustration if your rough notes explicitly request a drawing or image.
 6.  **Notes Sync:** Updates your rough notes to match any manual edits you make to the draft letter.
 7.  **Similarity Scorer:** Calculates how accurately the draft letter matches your rough notes.
+8.  **Tone Detector:** Analyzes your chat messages to detect when you're requesting a tone change (e.g., "make it more formal").
+9.  **Image Request Detector:** Identifies requests for illustrations or images in your rough notes.
+10. **Suggestion Matcher:** Intelligently matches your chat input to relevant editor suggestions using AI reasoning or semantic similarity.
 
 ### Customizing Your Agents
 Each agent comes with default instructions that define how it behaves. You can **customize these instructions** to change how any agent works:
@@ -80,14 +83,33 @@ Here is a quick tour of the most important files you should look at:
 
 ### The Intelligence (Backend/API)
 These files mostly live in `src/app/api/`. They are the "kitchen" where the work happens.
+
+**Main Workflow Routes:**
 - **`api/generate/route.ts`**: The main writer. It takes your notes and writes the letter. Supports custom system instructions.
 - **`api/refine/route.ts`**: The editor. It takes your feedback (e.g., "Make it shorter") and updates the notes. Supports custom system instructions.
 - **`api/suggest/route.ts`**: The critic. It looks at your draft and suggests improvements. Supports custom system instructions.
-- **`api/detect-tone/route.ts`**: A detective. It acts invisibly to figure out if you asked for a specific tone (like "Sarcastic"). Supports custom system instructions.
-- **Note:** All API routes accept an optional `systemInstruction` parameter to override the default agent behavior.
+- **`api/sync-notes/route.ts`**: The synchronizer. Detects changes made directly in the letter editor and syncs them back to your rough notes. Supports custom system instructions.
+
+**Helper/Detection Routes:**
+- **`api/detect-tone/route.ts`**: Analyzes chat messages to detect tone change requests (e.g., "make it more formal"). Supports custom system instructions.
+- **`api/detect-image/route.ts`**: Identifies image/illustration requests in your rough notes. Supports custom system instructions.
+- **`api/recommend-length/route.ts`**: Analyzes notes complexity to recommend optimal letter length (Short/Medium/Long). Supports custom system instructions.
+- **`api/score/route.ts`**: Calculates semantic similarity score between rough notes and generated letter using embeddings.
+
+**Suggestion Matching Routes:**
+- **`api/match-suggestions/route.ts`**: Uses vector embeddings and cosine similarity to match chat input against editor suggestions.
+- **`api/match-suggestions-agent/route.ts`**: Alternative approach using AI reasoning to intelligently match suggestions. Supports custom system instructions.
+
+**Note:** All routes that use LLM agents accept an optional `systemInstruction` parameter to override the default agent behavior. Embedding-based routes (`score`, `match-suggestions`) use model selection instead.
 
 ### The Configuration (The Brains)
 - **`src/lib/agent-constants.ts`**: This is the "character sheet" for our AI agents. It defines who they are (e.g., "You are an expert editor") and what they should do. **This is the most important file for prompt engineering.**
+- **`src/lib/models.ts`**: Handles AI model communication, including fallback logic, OpenRouter integration, and the shared client creation.
+
+### The Tests
+- **`src/__tests__/api/`**: Unit tests for API routes using Jest and MSW (Mock Service Worker) to test agent behavior with default and custom instructions.
+- **`e2e/`**: End-to-end tests using Model Context Protocol (MCP) browser automation to test the full user workflow.
+- **`jest.config.ts`** and **`jest.setup.ts`**: Testing configuration files.
 
 ---
 
@@ -145,20 +167,69 @@ Want to run this on your own machine? Follow these steps:
     npm install
     ```
 
-3.  **Set Up Keys**:
+7.  **Set Up Keys**:
     Create a file named `.env.local` in the main folder and add your keys like this:
     ```env
     OPENROUTER_API_KEY=sk-or-v1-...
     GOOGLE_API_KEY=AIzaSy...
     ```
 
-4.  **Run the App**:
+8.  **Run the App**:
     Type this command to start the server:
     ```bash
     npm run dev
     ```
 
-5.  **Open It**: Go to [http://localhost:3000](http://localhost:3000) in your web browser.
+9.  **Open It**: Go to [http://localhost:3000](http://localhost:3000) in your web browser.
+
+---
+
+## 🧪 Testing
+
+Letterly includes two types of tests to ensure quality and reliability:
+
+### Unit Tests (API Routes)
+
+Run automated tests for the API routes:
+
+```bash
+# Run all tests once
+npm test
+
+# Run tests in watch mode (re-runs on file changes)
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+```
+
+**What's tested:**
+- API route responses with default agent instructions
+- Custom system instruction overrides
+- Error handling for invalid inputs
+- Model selection and fallback behavior
+
+**Test files:**
+- `src/__tests__/api/generate.test.ts` - Tests letter generation
+- `src/__tests__/api/refine.test.ts` - Tests note refinement
+- `src/__tests__/api/suggest.test.ts` - Tests suggestion generation
+
+### End-to-End Tests (Browser Automation)
+
+E2E tests use MCP browser automation to test the complete user workflow:
+
+```bash
+# Note: Currently requires manual execution with MCP tools
+npm run test:e2e
+```
+
+**What's tested:**
+- Custom agent instruction workflow (edit, save, persist, reset)
+- Visual feedback and UI state changes
+- LocalStorage persistence across page refreshes
+- Complete generation workflow with custom instructions
+
+See `e2e/README.md` for detailed execution instructions.
 
 ---
 
