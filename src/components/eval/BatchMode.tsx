@@ -10,7 +10,7 @@ import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { TestResult, BatchRunResult } from '@/lib/eval-types';
 import { PREDEFINED_TESTS, TEST_SUITES } from '@/lib/eval-tests';
 import { runTest } from '@/lib/eval-runner';
-import { PlayIcon, StopIcon, DownloadIcon, RefreshIcon } from '@/components/ui/icons';
+import { PlayIcon, StopIcon, DownloadIcon, RefreshIcon, InfoIcon } from '@/components/ui/icons';
 import styles from './EvalSuite.module.css';
 
 interface TestResultRowProps {
@@ -85,6 +85,7 @@ export function BatchMode() {
   const [currentTestId, setCurrentTestId] = useState<string | null>(null);
   const [batchHistory, setBatchHistory] = useState<BatchRunResult[]>([]);
   const [collapsedAgents, setCollapsedAgents] = useState<Set<string>>(new Set());
+  const [showHelp, setShowHelp] = useState(false);
   const abortRef = useRef(false);
 
   const suiteTestIds = TEST_SUITES[selectedSuite]?.testIds ?? [];
@@ -170,6 +171,19 @@ export function BatchMode() {
 
   return (
     <div className={styles.batchLayout}>
+      <div className={styles.modeIntroCard}>
+        <div>
+          <h3 className={styles.modeIntroTitle}>Batch Regression Runner</h3>
+          <p className={styles.modeIntroText}>
+            Validate broad behavior across many tests in one run. This runner is optimized for confidence checks after prompt, model, or agent configuration changes.
+          </p>
+        </div>
+        <button className={styles.infoButton} onClick={() => setShowHelp(true)} aria-label="Open batch instructions" title="Open batch instructions">
+          <InfoIcon />
+          Instructions
+        </button>
+      </div>
+
       {/* Header Controls */}
       <div className={styles.batchHeader}>
         <div className={styles.fieldGroup} style={{ flex: 1, maxWidth: 300 }}>
@@ -294,6 +308,34 @@ export function BatchMode() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {showHelp && (
+        <div className={styles.modalOverlay} onClick={() => setShowHelp(false)}>
+          <div className={styles.helpModal} onClick={e => e.stopPropagation()}>
+            <div className={styles.helpModalHeader}>
+              <h3 className={styles.helpModalTitle}>Batch Mode Guide</h3>
+              <button className={styles.helpModalClose} onClick={() => setShowHelp(false)} aria-label="Close batch guide">×</button>
+            </div>
+            <div className={styles.helpModalBody}>
+              <p>
+                Batch Mode is your high-level quality gate. It runs an entire suite and surfaces regressions by agent, allowing you to quickly assess release readiness.
+              </p>
+              <p>
+                Choose the suite scope first, then run all tests. The progress bar and grouped panels make it easy to monitor run health in real time.
+              </p>
+              <p>
+                Expand failed test rows to inspect assertion diagnostics and output excerpts. This level of detail helps separate true regressions from noisy or overly strict assertions.
+              </p>
+              <p>
+                Use summary metrics to evaluate quality at a glance: pass rate, failed count, and historical runs. Repeatability matters more than one-off green runs.
+              </p>
+              <p>
+                Export results when you need durable records, stakeholder updates, or side-by-side comparisons between different model and prompt configurations.
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </div>

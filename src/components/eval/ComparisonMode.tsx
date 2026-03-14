@@ -11,7 +11,7 @@ import { AGENTS } from '@/lib/agent-constants';
 import { TestCase, TestResult, Assertion, AssertionType } from '@/lib/eval-types';
 import { PREDEFINED_TESTS, TEST_SUITES } from '@/lib/eval-tests';
 import { runTest } from '@/lib/eval-runner';
-import { PlayIcon, PlusIcon, RefreshIcon } from '@/components/ui/icons';
+import { PlayIcon, PlusIcon, RefreshIcon, InfoIcon } from '@/components/ui/icons';
 import styles from './EvalSuite.module.css';
 
 const ASSERTION_TYPE_LABELS: Record<AssertionType, string> = {
@@ -37,6 +37,7 @@ export function ComparisonMode() {
   const [result, setResult] = useState<TestResult | null>(null);
   const [running, setRunning] = useState(false);
   const [activeSuite, setActiveSuite] = useState<string>('all');
+  const [showHelp, setShowHelp] = useState(false);
 
   const suiteTests = PREDEFINED_TESTS.filter(t =>
     TEST_SUITES[activeSuite]?.testIds.includes(t.id)
@@ -89,6 +90,19 @@ export function ComparisonMode() {
 
   return (
     <div className={styles.comparisonLayout}>
+      <div className={styles.modeIntroCard}>
+        <div>
+          <h3 className={styles.modeIntroTitle}>Comparison Workspace</h3>
+          <p className={styles.modeIntroText}>
+            Evaluate one prompt against one agent at a time. This workspace is designed for precise, epistemic testing where you define explicit success criteria through assertions and inspect the response in detail.
+          </p>
+        </div>
+        <button className={styles.infoButton} onClick={() => setShowHelp(true)} aria-label="Open comparison instructions" title="Open comparison instructions">
+          <InfoIcon />
+          Instructions
+        </button>
+      </div>
+
       {/* Left Sidebar */}
       <aside className={styles.sidebar}>
         <div className={styles.sidebarSection}>
@@ -269,6 +283,34 @@ export function ComparisonMode() {
           </div>
         )}
       </main>
+
+      {showHelp && (
+        <div className={styles.modalOverlay} onClick={() => setShowHelp(false)}>
+          <div className={styles.helpModal} onClick={e => e.stopPropagation()}>
+            <div className={styles.helpModalHeader}>
+              <h3 className={styles.helpModalTitle}>Comparison Mode Guide</h3>
+              <button className={styles.helpModalClose} onClick={() => setShowHelp(false)} aria-label="Close comparison guide">×</button>
+            </div>
+            <div className={styles.helpModalBody}>
+              <p>
+                Comparison Mode is best when you need focused validation. You test one scenario at a time and define exactly what counts as success.
+              </p>
+              <p>
+                Start in the left panel by selecting a suite and test. This preloads an agent, prompt, and assertions. If you want a custom test, choose your agent and write your own prompt.
+              </p>
+              <p>
+                Use Advanced JSON Mode for routes that expect structured request bodies. Keep your payload shape aligned with the target API route contract for reliable results.
+              </p>
+              <p>
+                Add multiple assertions to represent evidence of correctness. Prefer specific assertions instead of one broad check so failures are easier to diagnose.
+              </p>
+              <p>
+                After running, inspect metadata, output, and assertion messages together. If a test fails, adjust either prompt wording or assertion strictness depending on your intended behavior.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

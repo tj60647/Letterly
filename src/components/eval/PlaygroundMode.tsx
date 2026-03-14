@@ -9,7 +9,7 @@
 import React, { useState, useRef } from 'react';
 import { AGENTS } from '@/lib/agent-constants';
 import { runTest } from '@/lib/eval-runner';
-import { PlayIcon, StopIcon, RefreshIcon } from '@/components/ui/icons';
+import { PlayIcon, StopIcon, RefreshIcon, InfoIcon } from '@/components/ui/icons';
 import styles from './EvalSuite.module.css';
 
 type StepStatus = 'pending' | 'running' | 'complete' | 'error';
@@ -107,6 +107,7 @@ export function PlaygroundMode() {
   const [running, setRunning] = useState(false);
   const [customAgentId, setCustomAgentId] = useState('GENERATE');
   const [customPrompt, setCustomPrompt] = useState('');
+  const [showHelp, setShowHelp] = useState(false);
   const abortRef = useRef(false);
 
   const loadScenario = (key: string) => {
@@ -194,6 +195,19 @@ export function PlaygroundMode() {
 
   return (
     <div className={styles.playgroundLayout}>
+      <div className={styles.modeIntroCard}>
+        <div>
+          <h3 className={styles.modeIntroTitle}>Playground Workflow Lab</h3>
+          <p className={styles.modeIntroText}>
+            Explore multi-agent behavior as a chain. This lab helps you see how outputs evolve step-by-step, where handoffs weaken, and how instruction changes affect downstream quality.
+          </p>
+        </div>
+        <button className={styles.infoButton} onClick={() => setShowHelp(true)} aria-label="Open playground instructions" title="Open playground instructions">
+          <InfoIcon />
+          Instructions
+        </button>
+      </div>
+
       {/* Header Controls */}
       <div className={styles.playgroundHeader}>
         <div className={styles.fieldGroup} style={{ flex: 1 }}>
@@ -302,6 +316,34 @@ export function PlaygroundMode() {
           }
         </div>
       </div>
+
+      {showHelp && (
+        <div className={styles.modalOverlay} onClick={() => setShowHelp(false)}>
+          <div className={styles.helpModal} onClick={e => e.stopPropagation()}>
+            <div className={styles.helpModalHeader}>
+              <h3 className={styles.helpModalTitle}>Playground Mode Guide</h3>
+              <button className={styles.helpModalClose} onClick={() => setShowHelp(false)} aria-label="Close playground guide">×</button>
+            </div>
+            <div className={styles.helpModalBody}>
+              <p>
+                Playground Mode is designed for sequence-level testing. Instead of validating a single response, you evaluate how one agent output influences the next step.
+              </p>
+              <p>
+                Begin with a predefined scenario to establish a baseline. Scenarios are intentionally opinionated examples that model common writing workflows.
+              </p>
+              <p>
+                Add custom steps when you need to test alternate paths, edge cases, or interventions. Each step should include enough context for the target agent to perform reliably.
+              </p>
+              <p>
+                Use the timeline to diagnose where quality degrades. Latency spikes, malformed output, or brittle transitions often identify prompt boundaries that need tightening.
+              </p>
+              <p>
+                Capture observations during each run. Treat observations as your qualitative lab notes so you can connect result patterns to prompt changes over repeated experiments.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
