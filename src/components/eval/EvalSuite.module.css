@@ -409,6 +409,99 @@
 
 /* ── Field Helpers ────────────────────────────────────────────────────── */
 
+/* ── Agent Role Card ──────────────────────────────────────────────────── */
+
+.agentRoleCard {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.agentRoleDescription {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.agentRoleSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.agentRoleSectionLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+
+.agentInputFieldList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.agentInputFieldItem {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.agentInputFieldName {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.agentInputFieldDesc {
+  color: var(--text-secondary);
+}
+
+.agentRoleOutput {
+  font-size: 0.8rem;
+  color: var(--text-primary);
+}
+
+/* ── Prompt Controls ──────────────────────────────────────────────────── */
+
+.promptControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.templateButton {
+  padding: 3px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.templateButton:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+
 .fieldGroup {
   display: flex;
   flex-direction: column;
