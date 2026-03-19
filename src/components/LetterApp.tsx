@@ -750,6 +750,17 @@ export default function LetterApp() {
                                 </button>
                             ))}
                         </div>
+                        <div className={styles.toggleGroup} style={{ marginTop: "0.25rem" }}>
+                            {["Japanese", "Korean"].map((lang) => (
+                                <button
+                                    key={lang}
+                                    onClick={() => setLanguage(lang)}
+                                    className={`${styles.toggleBtn} ${language === lang ? styles.toggleBtnActive : ''}`}
+                                >
+                                    {lang}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     <div style={{ marginTop: "1rem" }}>
