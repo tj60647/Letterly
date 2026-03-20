@@ -12,7 +12,6 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { AGENTS, MODELS } from '@/lib/agent-constants';
 import { SettingsIcon, BeakerIcon, DiagramIcon } from './ui/icons';
-import { SystemDiagram } from './eval/SystemDiagram';
 import styles from './AgentModelSettings.module.css';
 
 interface AgentModelSettingsProps {
@@ -32,21 +31,20 @@ interface AgentModelSettingsProps {
 
 /**
  * A modal dialog that allows sophisticated users to configure which AI model powers each specific agent.
- * 
+ *
  * @param {AgentModelSettingsProps} props - The component props.
  * @returns {JSX.Element | null} The rendered modal or null if not open.
  */
-export function AgentModelSettings({ 
-    isOpen, 
-    onClose, 
-    assignments, 
+export function AgentModelSettings({
+    isOpen,
+    onClose,
+    assignments,
     onAssignmentChange,
     customInstructions,
-    onInstructionChange 
+    onInstructionChange
 }: AgentModelSettingsProps) {
     const [editingAgent, setEditingAgent] = useState<string | null>(null);
     const [editedInstruction, setEditedInstruction] = useState<string>('');
-    const [showDiagram, setShowDiagram] = useState(false);
 
     if (!isOpen) return null;
 
@@ -73,55 +71,40 @@ export function AgentModelSettings({
 
     const handleReset = (agentId: string) => {
         const agent = AGENTS[agentId as keyof typeof AGENTS];
-        // Delete the custom instruction by setting it to undefined (we'll filter this out)
-        // Actually, we need to communicate removal to parent. Let's use empty string as a signal.
-        // Better: pass the default back or have a separate reset handler
-        // For simplicity, we'll just set it back to the default
         onInstructionChange(agentId, agent.systemInstruction);
         setEditingAgent(null);
         setEditedInstruction('');
     };
 
     const isModified = (agentId: string) => {
-        return customInstructions[agentId] !== undefined && 
+        return customInstructions[agentId] !== undefined &&
                customInstructions[agentId] !== AGENTS[agentId as keyof typeof AGENTS].systemInstruction;
     };
 
     return (
         <div className={styles.overlay} onClick={(e) => {
-            // Close on overlay click
             if (e.target === e.currentTarget) onClose();
         }}>
             <div className={styles.modal}>
                 <div className={styles.header}>
                     <h2>Writers&apos; Room Agents</h2>
-                    <button
-                        className={`${styles.evalLink} ${showDiagram ? styles.evalLinkActive : ''}`}
-                        onClick={() => setShowDiagram(v => !v)}
-                    >
+                    <Link href="/eval?tab=diagram" className={`${styles.evalLink} ${styles.evalLinkExternal}`}>
                         <DiagramIcon />
                         System Diagram
-                    </button>
-                    <Link href="/eval" className={styles.evalLink}>
+                    </Link>
+                    <Link href="/eval" className={`${styles.evalLink} ${styles.evalLinkExternal}`} title="Open Agent Eval Suite (Ctrl+Shift+E)">
                         <BeakerIcon />
                         Agent Testing
                     </Link>
                     <button className={styles.closeButton} onClick={onClose}>×</button>
                 </div>
                 <div className={styles.content}>
-                    {showDiagram ? (
-                        <SystemDiagram />
-                    ) : (
-                    <>
                     <div className={styles.headerRow}>
                         <div className={styles.leftHeader}>Agent</div>
                         <div className={styles.rightHeader}>System Instructions</div>
                     </div>
                     <div className={styles.agentList}>
                         {agentsToList.map((agent) => {
-                            // Filter models based on agent type (chat vs embedding)
-                            // If agent has no type defined (legacy), assume chat ? Or check defaults.
-                            // But we just added types to all agents.
                             const compatibleModels = MODELS.filter(m => m.type === agent.type);
                             const isEditing = editingAgent === agent.id;
                             const modified = isModified(agent.id);
@@ -157,19 +140,19 @@ export function AgentModelSettings({
                                             )}
                                             {isEditing && (
                                                 <div className={styles.buttonGroup}>
-                                                    <button 
+                                                    <button
                                                         className={styles.saveButton}
                                                         onClick={() => handleSave(agent.id)}
                                                     >
                                                         Save
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         className={styles.cancelButton}
                                                         onClick={handleCancel}
                                                     >
                                                         Cancel
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         className={styles.resetButton}
                                                         onClick={() => handleReset(agent.id)}
                                                     >
@@ -178,7 +161,7 @@ export function AgentModelSettings({
                                                 </div>
                                             )}
                                             {!isEditing && modified && (
-                                                <button 
+                                                <button
                                                     className={styles.resetBadgeButton}
                                                     onClick={() => handleReset(agent.id)}
                                                     title="Reset to default"
@@ -186,7 +169,7 @@ export function AgentModelSettings({
                                                     ↺ Reset
                                                 </button>
                                             )}
-                                            <button 
+                                            <button
                                                 className={`${styles.gearButton} ${modified ? styles.gearActive : ''}`}
                                                 onClick={() => isEditing ? handleCancel() : handleEditClick(agent.id)}
                                                 title={isEditing ? "Close editor" : "Edit instruction"}
@@ -213,8 +196,6 @@ export function AgentModelSettings({
                             );
                         })}
                     </div>
-                    </>
-                    )}
                 </div>
             </div>
         </div>

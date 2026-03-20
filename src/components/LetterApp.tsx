@@ -11,7 +11,7 @@
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import styles from "./LetterApp.module.css";
 // ModelSelector removed in favor of AgentModelSettings
@@ -55,6 +55,7 @@ interface HistoryItem {
  */
 export default function LetterApp() {
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     // Config State
     const [recipient, setRecipient] = useState("");
@@ -73,6 +74,14 @@ export default function LetterApp() {
     const [agentModels, setAgentModels] = useState<Record<string, string>>({});
     const [customInstructions, setCustomInstructions] = useState<Record<string, string>>({});
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+    // Open Writers' Room modal when returning from /eval with ?modal=writers-room
+    useEffect(() => {
+        if (searchParams.get('modal') === 'writers-room') {
+            setIsSettingsOpen(true);
+            router.replace('/');
+        }
+    }, [searchParams, router]);
 
     // Keyboard shortcut: Ctrl+Shift+E / Cmd+Shift+E → open Agent Eval Suite
     useEffect(() => {
@@ -773,7 +782,7 @@ export default function LetterApp() {
                         <button
                             className={styles.writersRoomBtn}
                             onClick={() => setIsSettingsOpen(true)}
-                            title="Configure AI Models"
+                            title="Writers' Room"
                         >
                             <TeamIcon />
                             Writers&apos; Room

@@ -391,12 +391,14 @@
     background: #dbeafe;
 }
 
-.evalLinkActive {
-    background: var(--accent-primary);
-    color: #ffffff;
-    border-color: var(--accent-hover);
+/* External link variant — navigates away from the modal */
+.evalLinkExternal {
+    border-color: var(--border-subtle);
 }
 
-.evalLinkActive:hover {
-    background: var(--accent-hover);
+.evalLinkExternal::after {
+    content: '↗';
+    font-size: 0.75rem;
+    opacity: 0.6;
+    margin-left: 2px;
 }

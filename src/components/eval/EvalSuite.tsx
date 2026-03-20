@@ -3,18 +3,19 @@
 /**
  * @file src/components/eval/EvalSuite.tsx
  * @description Main container for the Agent Eval Suite. Provides header navigation,
- * tabbed interface for Comparison, Playground, and Batch modes.
+ * tabbed interface for Comparison, Playground, Batch, and System Diagram.
  */
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { BeakerIcon, ArrowLeftIcon, DownloadIcon, InfoIcon } from '@/components/ui/icons';
+import { BeakerIcon, ArrowLeftIcon, DownloadIcon, InfoIcon, TeamIcon, DiagramIcon } from '@/components/ui/icons';
 import { ComparisonMode } from './ComparisonMode';
 import { PlaygroundMode } from './PlaygroundMode';
 import { BatchMode } from './BatchMode';
+import { SystemDiagram } from './SystemDiagram';
 import styles from './EvalSuite.module.css';
 
-type Tab = 'comparison' | 'playground' | 'batch';
+type Tab = 'comparison' | 'playground' | 'batch' | 'diagram';
 
 const TABS: { id: Tab; label: string; headline: string; summary: string; helpTitle: string; helpBody: string[] }[] = [
   {
@@ -56,13 +57,31 @@ const TABS: { id: Tab; label: string; headline: string; summary: string; helpTit
       'Export run data to JSON for archival, handoff, or later analysis. Use recent run history to compare stability and pass-rate trends over time.'
     ],
   },
+  {
+    id: 'diagram',
+    label: 'System Diagram',
+    headline: 'Agent Architecture Overview',
+    summary: 'See every AI agent in the Writers\u2019 Room, when each one fires, what data it receives, and where its output appears in the UI.',
+    helpTitle: '',
+    helpBody: [],
+  },
 ];
 
 export function EvalSuite() {
   const [activeTab, setActiveTab] = useState<Tab>('comparison');
   const [showTabHelp, setShowTabHelp] = useState(false);
 
+  // Read ?tab= from the URL on mount to support deep-linking
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab') as Tab | null;
+    if (tab && TABS.some(t => t.id === tab)) {
+      setActiveTab(tab);
+    }
+  }, []);
+
   const activeTabConfig = TABS.find(tab => tab.id === activeTab) || TABS[0];
+  const isDiagramTab = activeTab === 'diagram';
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -104,10 +123,16 @@ export function EvalSuite() {
           </h1>
         </div>
         <div className={styles.evalHeaderActions}>
-          <button className={styles.secondaryButton} onClick={handleExport}>
-            <DownloadIcon />
-            Export
-          </button>
+          <Link href="/?modal=writers-room" className={styles.secondaryButton}>
+            <TeamIcon />
+            Writers&apos; Room
+          </Link>
+          {!isDiagramTab && (
+            <button className={styles.secondaryButton} onClick={handleExport}>
+              <DownloadIcon />
+              Export
+            </button>
+          )}
         </div>
       </header>
 
@@ -119,6 +144,7 @@ export function EvalSuite() {
             className={`${styles.tab} ${activeTab === tab.id ? styles.tabActive : ''}`}
             onClick={() => setActiveTab(tab.id)}
           >
+            {tab.id === 'diagram' && <DiagramIcon />}
             <span className={styles.tabLabel}>{tab.label}</span>
             <span className={styles.tabSummary}>{tab.headline}</span>
           </button>
@@ -130,15 +156,17 @@ export function EvalSuite() {
           <h2 className={styles.tabOverviewHeadline}>{activeTabConfig.headline}</h2>
           <p className={styles.tabOverviewSummary}>{activeTabConfig.summary}</p>
         </div>
-        <button
-          className={styles.infoButton}
-          onClick={() => setShowTabHelp(true)}
-          aria-label={`Open ${activeTabConfig.label} instructions`}
-          title={`Open ${activeTabConfig.label} instructions`}
-        >
-          <InfoIcon />
-          How It Works
-        </button>
+        {!isDiagramTab && (
+          <button
+            className={styles.infoButton}
+            onClick={() => setShowTabHelp(true)}
+            aria-label={`Open ${activeTabConfig.label} instructions`}
+            title={`Open ${activeTabConfig.label} instructions`}
+          >
+            <InfoIcon />
+            How It Works
+          </button>
+        )}
       </section>
 
       {/* Tab Content */}
@@ -146,6 +174,7 @@ export function EvalSuite() {
         {activeTab === 'comparison' && <ComparisonMode />}
         {activeTab === 'playground' && <PlaygroundMode />}
         {activeTab === 'batch' && <BatchMode />}
+        {activeTab === 'diagram' && <SystemDiagram />}
       </div>
 
       {showTabHelp && (

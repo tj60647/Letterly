@@ -8,6 +8,7 @@
  * @see Key Concepts: Next.js Pages, React Components, Home Route
  */
 
+import { Suspense } from "react";
 import LetterApp from "@/components/LetterApp";
 
 /**
@@ -19,7 +20,9 @@ import LetterApp from "@/components/LetterApp";
 export default function Home() {
   return (
     <main>
-      <LetterApp />
+      <Suspense>
+        <LetterApp />
+      </Suspense>
     </main>
   );
 }
