@@ -1,0 +1,118 @@
+/**
+ * @file src/components/eval/SystemDiagram.module.css
+ * @description Styles for the SystemDiagram component.
+ */
+
+.diagramWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Intro text ──────────────────────────────────────────────────────────── */
+
+.diagramIntro {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 14px 18px;
+}
+
+.diagramIntro p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ── SVG canvas ──────────────────────────────────────────────────────────── */
+
+.diagramScroll {
+  overflow-x: auto;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.svg {
+  display: block;
+  min-width: 600px;
+}
+
+/* ── Info panel ──────────────────────────────────────────────────────────── */
+
+.infoPanel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 10px 16px;
+}
+
+.infoBadge {
+  flex-shrink: 0;
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: monospace;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+}
+
+.infoText {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.infoPlaceholder {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* ── Legend ──────────────────────────────────────────────────────────────── */
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.legendSwatch {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1.5px solid;
+  flex-shrink: 0;
+}
+
+.legendSwatchDashed {
+  display: inline-block;
+  width: 30px;
+  height: 0;
+  border-top: 2px dashed #94a3b8;
+  flex-shrink: 0;
+}
+
+.legendLabel {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
