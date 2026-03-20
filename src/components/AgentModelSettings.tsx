@@ -100,9 +100,9 @@ export function AgentModelSettings({
                         onClick={() => setShowDiagram(v => !v)}
                     >
                         <DiagramIcon />
-                        System Diagram
+                        {showDiagram ? '← Agents' : 'System Diagram'}
                     </button>
-                    <Link href="/eval" className={styles.evalLink}>
+                    <Link href="/eval" className={`${styles.evalLink} ${styles.evalLinkExternal}`} title="Open Agent Eval Suite (Ctrl+Shift+E)">
                         <BeakerIcon />
                         Agent Testing
                     </Link>
@@ -110,7 +110,7 @@ export function AgentModelSettings({
                 </div>
                 <div className={styles.content}>
                     {showDiagram ? (
-                        <SystemDiagram />
+                        <SystemDiagram assignments={assignments} />
                     ) : (
                     <>
                     <div className={styles.headerRow}>

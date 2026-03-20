@@ -44,7 +44,7 @@
 
 .infoPanel {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   min-height: 38px;
   background: var(--bg-primary);
@@ -61,14 +61,38 @@
   font-size: 0.75rem;
   font-family: monospace;
   font-weight: 600;
-  color: #ffffff;
   letter-spacing: 0.02em;
+  margin-top: 2px;
+}
+
+.infoBody {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
 }
 
 .infoText {
   font-size: 0.875rem;
   color: var(--text-primary);
   line-height: 1.5;
+}
+
+.infoModel {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-family: monospace;
+}
+
+.infoPinned {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 2px 6px;
+  align-self: center;
 }
 
 .infoPlaceholder {

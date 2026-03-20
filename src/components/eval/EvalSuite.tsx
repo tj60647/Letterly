@@ -8,7 +8,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { BeakerIcon, ArrowLeftIcon, DownloadIcon, InfoIcon } from '@/components/ui/icons';
+import { BeakerIcon, ArrowLeftIcon, DownloadIcon, InfoIcon, TeamIcon } from '@/components/ui/icons';
 import { ComparisonMode } from './ComparisonMode';
 import { PlaygroundMode } from './PlaygroundMode';
 import { BatchMode } from './BatchMode';
@@ -104,6 +104,10 @@ export function EvalSuite() {
           </h1>
         </div>
         <div className={styles.evalHeaderActions}>
+          <Link href="/?modal=writers-room" className={styles.secondaryButton}>
+            <TeamIcon />
+            Writers&apos; Room
+          </Link>
           <button className={styles.secondaryButton} onClick={handleExport}>
             <DownloadIcon />
             Export
