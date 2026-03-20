@@ -136,6 +136,14 @@
   flex-shrink: 0;
 }
 
+.legendSwatchLoop {
+  display: inline-block;
+  width: 30px;
+  height: 0;
+  border-top: 2px solid #c2410c;
+  flex-shrink: 0;
+}
+
 .legendLabel {
   font-size: 0.8rem;
   color: var(--text-secondary);

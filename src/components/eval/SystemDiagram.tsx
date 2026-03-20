@@ -33,6 +33,8 @@ interface DiagramEdge {
   label?: string;
   dashed?: boolean;
   path: string;
+  /** True for orange user-feedback-loop arrows that go from outputs back to inputs. */
+  userLoop?: boolean;
 }
 
 // ── Color scheme ──────────────────────────────────────────────────────────────
@@ -308,9 +310,25 @@ const EDGES: DiagramEdge[] = [
     path: 'M 838,600 H 1094',
     dashed: true,
   },
+
+  // ── User feedback loops (orange) ────────────────────────────────────────────
+  // You read the letter / suggestions → type feedback in chat
+  {
+    from: 'outputLetter', to: 'userChat',
+    userLoop: true,
+    path: 'M 1215,224 C 1248,224 1248,5 1215,5 H 45 C 12,5 12,5 12,372 C 12,382 16,390 20,390',
+  },
+  // You read the letter → edit it directly
+  {
+    from: 'outputLetter', to: 'letterEdit',
+    userLoop: true,
+    path: 'M 1215,236 C 1248,236 1248,736 1215,736 H 45 C 12,736 12,736 12,698 C 12,686 16,680 20,680',
+  },
 ];
 
 // ── Component ─────────────────────────────────────────────────────────────────
+
+const LOOP_COLOR = '#c2410c'; // orange-700
 
 interface SystemDiagramProps {
   /** Current model assignments from the parent Writers' Room modal. */
@@ -348,16 +366,16 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
           {' '}<strong>Solid borders</strong> run during the main Generate or Chat flow.
           {' '}<strong>Dashed borders</strong> run silently in the background or only when a specific trigger is detected.
           {' '}Green nodes on the right show where each agent&rsquo;s output appears in the UI.
+          {' '}<strong style={{ color: LOOP_COLOR }}>Orange arrows</strong> show your feedback loop — where you read the outputs and respond, completing the cycle.
           {' '}<strong>Hover</strong> any node to preview its description, or <strong>click</strong> to pin it.
-          Your settings are saved locally in your browser — no data is stored on Letterly&rsquo;s servers beyond the duration of each API call.
         </p>
       </div>
 
       <div className={styles.diagramScroll}>
         <svg
-          viewBox="0 0 1260 740"
+          viewBox="0 0 1260 744"
           width="1260"
-          height="740"
+          height="744"
           className={styles.svg}
           aria-label="Letterly agent system diagram"
           role="img"
@@ -375,10 +393,27 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
             <marker id="arrow-output" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
               <path d="M 0,0 L 8,3 L 0,6 Z" fill="#16a34a" />
             </marker>
+            {/* User loop arrowhead (orange) */}
+            <marker id="arrow-loop" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+              <path d="M 0,0 L 8,3 L 0,6 Z" fill={LOOP_COLOR} />
+            </marker>
           </defs>
 
           {/* ── Edges ──────────────────────────────────────────────── */}
           {EDGES.map((edge, i) => {
+            if (edge.userLoop) {
+              return (
+                <path
+                  key={i}
+                  d={edge.path}
+                  fill="none"
+                  stroke={LOOP_COLOR}
+                  strokeWidth={1.5}
+                  markerEnd="url(#arrow-loop)"
+                  opacity={0.75}
+                />
+              );
+            }
             const toNode = nodeById[edge.to];
             const isOutputEdge = toNode?.type === 'output';
             const stroke = isOutputEdge ? '#16a34a' : (edge.dashed ? '#94a3b8' : '#64748b');
@@ -480,22 +515,30 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
 
           {/* ── Section labels ─────────────────────────────────────── */}
           {[
-            { x: 90,   label: 'USER' },
+            { x: 90,   label: 'YOU' },
             { x: 320,  label: 'PROCESSING' },
             { x: 555,  label: 'GENERATION' },
             { x: 760,  label: 'ANALYSIS' },
             { x: 950,  label: 'MATCHING' },
             { x: 1155, label: 'OUTPUT' },
           ].map(({ x, label }) => (
-            <text key={label} x={x} y={18} textAnchor="middle" fill="#94a3b8" fontSize={10} fontWeight="600" fontFamily="system-ui, sans-serif" letterSpacing="0.08em">
+            <text key={label} x={x} y={22} textAnchor="middle" fill="#94a3b8" fontSize={10} fontWeight="600" fontFamily="system-ui, sans-serif" letterSpacing="0.08em">
               {label}
             </text>
           ))}
 
           {/* ── Column dividers ────────────────────────────────────── */}
           {[200, 430, 650, 850, 1060].map(divX => (
-            <line key={divX} x1={divX} y1={25} x2={divX} y2={715} stroke="#e2e8f0" strokeWidth={1} strokeDasharray="4 4" />
+            <line key={divX} x1={divX} y1={28} x2={divX} y2={718} stroke="#e2e8f0" strokeWidth={1} strokeDasharray="4 4" />
           ))}
+
+          {/* ── User loop arc labels ────────────────────────────────── */}
+          <text x={632} y={14} textAnchor="middle" fill={LOOP_COLOR} fontSize={8.5} fontWeight="600" fontFamily="system-ui, sans-serif" opacity={0.85}>
+            you read → type feedback
+          </text>
+          <text x={632} y={742} textAnchor="middle" fill={LOOP_COLOR} fontSize={8.5} fontWeight="600" fontFamily="system-ui, sans-serif" opacity={0.85}>
+            you read → edit directly
+          </text>
         </svg>
       </div>
 
@@ -532,6 +575,10 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
         <div className={styles.legendItem}>
           <span className={styles.legendSwatchDashed} />
           <span className={styles.legendLabel}>Background / on-demand</span>
+        </div>
+        <div className={styles.legendItem}>
+          <span className={styles.legendSwatchLoop} />
+          <span className={styles.legendLabel}>Your feedback loop</span>
         </div>
       </div>
     </div>
