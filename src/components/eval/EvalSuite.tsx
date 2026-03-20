@@ -12,10 +12,9 @@ import { BeakerIcon, ArrowLeftIcon, DownloadIcon, InfoIcon } from '@/components/
 import { ComparisonMode } from './ComparisonMode';
 import { PlaygroundMode } from './PlaygroundMode';
 import { BatchMode } from './BatchMode';
-import { SystemDiagram } from './SystemDiagram';
 import styles from './EvalSuite.module.css';
 
-type Tab = 'comparison' | 'playground' | 'batch' | 'diagram';
+type Tab = 'comparison' | 'playground' | 'batch';
 
 const TABS: { id: Tab; label: string; headline: string; summary: string; helpTitle: string; helpBody: string[] }[] = [
   {
@@ -55,19 +54,6 @@ const TABS: { id: Tab; label: string; headline: string; summary: string; helpTit
       'Select a suite, run all tests, and follow progress while results stream in. Outcomes are grouped by agent so you can identify concentrated failure areas.',
       'Expand a failed test row to inspect assertion-level diagnostics and actual output excerpts. This helps you understand whether failures are format, content, or model-quality issues.',
       'Export run data to JSON for archival, handoff, or later analysis. Use recent run history to compare stability and pass-rate trends over time.'
-    ],
-  },
-  {
-    id: 'diagram',
-    label: 'System Diagram',
-    headline: 'Agent Roles & Relationships',
-    summary: 'Visual map of every agent in the system, their responsibilities, and how they connect — including all user input entry points.',
-    helpTitle: 'How To Read the System Diagram',
-    helpBody: [
-      'The diagram shows every AI agent in the Letterly "Writers\' Room" and how they collaborate to produce a polished letter from your rough notes.',
-      'Nodes are color-coded by type: blue for user inputs, purple for core writing agents, amber for detection agents, teal for embedding agents, pink for the image agent, and cyan for matching agents.',
-      'Solid node borders mean the agent runs as part of the main synchronous request flow. Dashed borders mean the agent runs in the background or is triggered on-demand.',
-      'Hover any node to read a brief description of that agent\'s role and the data it expects as input.'
     ],
   },
 ];
@@ -160,7 +146,6 @@ export function EvalSuite() {
         {activeTab === 'comparison' && <ComparisonMode />}
         {activeTab === 'playground' && <PlaygroundMode />}
         {activeTab === 'batch' && <BatchMode />}
-        {activeTab === 'diagram' && <SystemDiagram />}
       </div>
 
       {showTabHelp && (

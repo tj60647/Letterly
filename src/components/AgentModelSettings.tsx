@@ -11,7 +11,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { AGENTS, MODELS } from '@/lib/agent-constants';
-import { SettingsIcon, BeakerIcon } from './ui/icons';
+import { SettingsIcon, BeakerIcon, DiagramIcon } from './ui/icons';
+import { SystemDiagram } from './eval/SystemDiagram';
 import styles from './AgentModelSettings.module.css';
 
 interface AgentModelSettingsProps {
@@ -45,6 +46,7 @@ export function AgentModelSettings({
 }: AgentModelSettingsProps) {
     const [editingAgent, setEditingAgent] = useState<string | null>(null);
     const [editedInstruction, setEditedInstruction] = useState<string>('');
+    const [showDiagram, setShowDiagram] = useState(false);
 
     if (!isOpen) return null;
 
@@ -93,6 +95,13 @@ export function AgentModelSettings({
             <div className={styles.modal}>
                 <div className={styles.header}>
                     <h2>Writers&apos; Room Agents</h2>
+                    <button
+                        className={`${styles.evalLink} ${showDiagram ? styles.evalLinkActive : ''}`}
+                        onClick={() => setShowDiagram(v => !v)}
+                    >
+                        <DiagramIcon />
+                        System Diagram
+                    </button>
                     <Link href="/eval" className={styles.evalLink}>
                         <BeakerIcon />
                         Agent Testing
@@ -100,6 +109,10 @@ export function AgentModelSettings({
                     <button className={styles.closeButton} onClick={onClose}>×</button>
                 </div>
                 <div className={styles.content}>
+                    {showDiagram ? (
+                        <SystemDiagram />
+                    ) : (
+                    <>
                     <div className={styles.headerRow}>
                         <div className={styles.leftHeader}>Agent</div>
                         <div className={styles.rightHeader}>System Instructions</div>
@@ -200,6 +213,8 @@ export function AgentModelSettings({
                             );
                         })}
                     </div>
+                    </>
+                    )}
                 </div>
             </div>
         </div>
