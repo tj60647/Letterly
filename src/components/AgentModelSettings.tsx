@@ -100,7 +100,7 @@ export function AgentModelSettings({
                         onClick={() => setShowDiagram(v => !v)}
                     >
                         <DiagramIcon />
-                        {showDiagram ? '← Agents' : 'System Diagram'}
+                        System Diagram
                     </button>
                     <Link href="/eval" className={`${styles.evalLink} ${styles.evalLinkExternal}`} title="Open Agent Eval Suite (Ctrl+Shift+E)">
                         <BeakerIcon />
@@ -109,19 +109,12 @@ export function AgentModelSettings({
                     <button className={styles.closeButton} onClick={onClose}>×</button>
                 </div>
                 <div className={styles.content}>
-                    {showDiagram ? (
-                        <SystemDiagram assignments={assignments} />
-                    ) : (
-                    <>
                     <div className={styles.headerRow}>
                         <div className={styles.leftHeader}>Agent</div>
                         <div className={styles.rightHeader}>System Instructions</div>
                     </div>
                     <div className={styles.agentList}>
                         {agentsToList.map((agent) => {
-                            // Filter models based on agent type (chat vs embedding)
-                            // If agent has no type defined (legacy), assume chat ? Or check defaults.
-                            // But we just added types to all agents.
                             const compatibleModels = MODELS.filter(m => m.type === agent.type);
                             const isEditing = editingAgent === agent.id;
                             const modified = isModified(agent.id);
@@ -157,19 +150,19 @@ export function AgentModelSettings({
                                             )}
                                             {isEditing && (
                                                 <div className={styles.buttonGroup}>
-                                                    <button 
+                                                    <button
                                                         className={styles.saveButton}
                                                         onClick={() => handleSave(agent.id)}
                                                     >
                                                         Save
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         className={styles.cancelButton}
                                                         onClick={handleCancel}
                                                     >
                                                         Cancel
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         className={styles.resetButton}
                                                         onClick={() => handleReset(agent.id)}
                                                     >
@@ -178,7 +171,7 @@ export function AgentModelSettings({
                                                 </div>
                                             )}
                                             {!isEditing && modified && (
-                                                <button 
+                                                <button
                                                     className={styles.resetBadgeButton}
                                                     onClick={() => handleReset(agent.id)}
                                                     title="Reset to default"
@@ -186,7 +179,7 @@ export function AgentModelSettings({
                                                     ↺ Reset
                                                 </button>
                                             )}
-                                            <button 
+                                            <button
                                                 className={`${styles.gearButton} ${modified ? styles.gearActive : ''}`}
                                                 onClick={() => isEditing ? handleCancel() : handleEditClick(agent.id)}
                                                 title={isEditing ? "Close editor" : "Edit instruction"}
@@ -213,10 +206,25 @@ export function AgentModelSettings({
                             );
                         })}
                     </div>
-                    </>
-                    )}
                 </div>
             </div>
+
+            {/* System Diagram — separate modal stacked above the Writers' Room */}
+            {showDiagram && (
+                <div className={styles.diagramOverlay} onClick={(e) => {
+                    if (e.target === e.currentTarget) setShowDiagram(false);
+                }}>
+                    <div className={styles.diagramModal}>
+                        <div className={styles.diagramModalHeader}>
+                            <h2>System Diagram</h2>
+                            <button className={styles.closeButton} onClick={() => setShowDiagram(false)}>×</button>
+                        </div>
+                        <div className={styles.diagramModalContent}>
+                            <SystemDiagram assignments={assignments} />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
