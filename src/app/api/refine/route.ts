@@ -24,6 +24,14 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const { roughNotes, instructions, conversationHistory, model, currentTone, existingTones, systemInstruction } = body;
 
+        if (!roughNotes || typeof roughNotes !== 'string' || roughNotes.trim().length === 0) {
+            return NextResponse.json({ error: "Rough notes are required" }, { status: 400 });
+        }
+
+        if (!instructions || typeof instructions !== 'string' || instructions.trim().length === 0) {
+            return NextResponse.json({ error: "Instructions are required" }, { status: 400 });
+        }
+
         // Detect tone change requests using agent
         let detectedTone: string | null = null;
         try {

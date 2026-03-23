@@ -1,11 +1,10 @@
 # Letterly: AI Prototyping Example
 
 
-> [!IMPORTANT]
-> **TODO List for Author:**
+> [!NOTE]
+> **Author Roadmap:**
 > - [ ] Create separate video tutorials for Git and Node.js installation.
 > - [ ] Create guide for getting OpenRouter and Google API keys.
-> - [ ] Improve the Mermaid workflow diagram (make it less cluttered).
 > - [ ] Add more "Style Match" examples for testing.
 
 **Welcome, Students!** 👋
@@ -107,9 +106,19 @@ These files mostly live in `src/app/api/`. They are the "kitchen" where the work
 - **`src/lib/models.ts`**: Handles AI model communication, including fallback logic, OpenRouter integration, and the shared client creation.
 
 ### The Tests
-- **`src/__tests__/api/`**: Unit tests for API routes using Jest and MSW (Mock Service Worker) to test agent behavior with default and custom instructions.
-- **`e2e/`**: End-to-end tests using Model Context Protocol (MCP) browser automation to test the full user workflow.
+- **`src/__tests__/api/`**: Unit tests for API routes using Jest to test agent behavior with default and custom instructions.
+- **`src/__tests__/utils/test-helpers.ts`**: Shared test utilities (mock request builder, sample data). Not a test suite itself.
+- **`e2e/`**: End-to-end test stubs for browser-based workflow testing. These are currently manual-execution outlines — see `e2e/README.md` for details.
 - **`jest.config.ts`** and **`jest.setup.ts`**: Testing configuration files.
+
+### The Eval Suite
+Letterly includes a built-in **Agent Eval Suite** for testing and debugging your AI agents. Access it at [http://localhost:3000/eval](http://localhost:3000/eval) (or press `Ctrl+Shift+E` / `Cmd+Shift+E` from the main app).
+
+**Tabs available:**
+- **Comparison** — Run a single test, define assertions (contains, excludes, length, regex, valid JSON), and get immediate pass/fail feedback. Great for prompt tuning.
+- **Playground** — Build multi-step agent chains, inspect each step's output, and log observations. Ideal for testing agent handoffs.
+- **Batch** — Run a full suite of predefined regression tests against any agent. Track pass rates over time.
+- **System Diagram** — Interactive diagram of all agents, their models, types, and relationships.
 
 ---
 
@@ -168,11 +177,12 @@ Want to run this on your own machine? Follow these steps:
     ```
 
 7.  **Set Up Keys**:
-    Create a file named `.env.local` in the main folder and add your keys like this:
+    Create a file named `.env.local` in the main folder and add your API keys:
     ```env
     OPENROUTER_API_KEY=sk-or-v1-...
     GOOGLE_API_KEY=AIzaSy...
     ```
+    > **Note:** `OPENROUTER_API_KEY` is required. `GOOGLE_API_KEY` is **optional** — it is only needed if you want the Line Art Generator to produce images. If it is missing, image generation is silently skipped and the rest of the app works normally.
 
 8.  **Run the App**:
     Type this command to start the server:
@@ -216,14 +226,14 @@ npm run test:coverage
 
 ### End-to-End Tests (Browser Automation)
 
-E2E tests use MCP browser automation to test the complete user workflow:
+The `e2e/` folder contains test outlines for a full browser workflow using MCP browser tools. These are **manual execution guides**, not automated test runners — each test function is documented with the steps an MCP agent or human tester should follow.
 
 ```bash
-# Note: Currently requires manual execution with MCP tools
+# Prints instructions for manual/MCP execution — does not run tests automatically
 npm run test:e2e
 ```
 
-**What's tested:**
+**Scenarios covered (manual steps):**
 - Custom agent instruction workflow (edit, save, persist, reset)
 - Visual feedback and UI state changes
 - LocalStorage persistence across page refreshes
