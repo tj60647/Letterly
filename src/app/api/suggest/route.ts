@@ -11,21 +11,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
 
-const SYSTEM_INSTRUCTION = `
-Act as an expert editor reviewing a draft letter against the user's original rough notes.
-Your goal is to identify specific improvements to make the letter more precise, effective, or aligned with the user's intent.
-Focus on:
-1. Ambiguities (e.g., "soon" instead of a date).
-2. Missing details present in notes but missed in the draft.
-3. Tone mismatches (does the draft match the requested tone?).
-4. Length appropriateness (does the draft match the requested length?).
-5. Logical gaps.
-
-Provide no more than 3 specific, actionable suggestions for the user to add or clarify in their notes to improve the next iteration.
-Suggestions should be brief directives (e.g., "Specify the exact meeting date", "Mention the project name explicitly", "Adjust tone to be more formal").
-Return ONLY valid JSON in this exact format: {"suggestions": ["Suggestion 1", "Suggestion 2", "Suggestion 3"]}
-`;
-
 /**
  * Analyzes the current draft and notes to suggest 3 actionable improvements.
  * 
@@ -38,7 +23,7 @@ export async function POST(req: NextRequest) {
         const { roughNotes, context, recipient, generatedLetter, tone, length, model, styleExample, systemInstruction } = body;
 
         if (!roughNotes || roughNotes.trim().length < 5) {
-            return NextResponse.json({ suggestions: [] });
+            return NextResponse.json({ error: "Rough notes are required" }, { status: 400 });
         }
 
         const openai = createOpenAIClient();
@@ -65,7 +50,7 @@ export async function POST(req: NextRequest) {
         const response = await callWithFallback(
             openai,
             [
-                { role: "system", content: SYSTEM_INSTRUCTION },
+                { role: "system", content: agent.systemInstruction },
                 { role: "user", content: prompt }
             ],
             agent,

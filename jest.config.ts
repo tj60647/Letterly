@@ -30,6 +30,7 @@ const config: Config = {
     '<rootDir>/.next/',
     '<rootDir>/node_modules/',
     '<rootDir>/e2e/',
+    '<rootDir>/src/__tests__/utils/',
   ],
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',

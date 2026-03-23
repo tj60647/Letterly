@@ -20,7 +20,7 @@ import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { roughNotes, systemInstruction } = body;
+        const { roughNotes, model, systemInstruction } = body;
 
         if (!roughNotes || roughNotes.trim().length < 10) {
             return NextResponse.json({ recommendation: "Short" });
@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
         const openai = createOpenAIClient();
 
         const agent = { ...AGENTS.RECOMMEND_LENGTH };
+        if (model) agent.primary = model;
         if (systemInstruction) agent.systemInstruction = systemInstruction; // Override default
 
         const response = await callWithFallback(
