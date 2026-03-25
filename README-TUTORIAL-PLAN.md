@@ -11,9 +11,9 @@ Restructure the README to function as a tutorial on designing an agentic applica
 2. Bodystorm the activity.
 3. Use bodystorming to understand:
 - role decisions
-- boundaries
-- handoffs
-- knowledge base
+- role boundaries
+- role handoffs
+- role knowledge base
 4. Document the activity using your document framework.
 5. Use those documents to build an app.
 6. Improve chapter titles so they are accurate and descriptive.
@@ -21,7 +21,7 @@ Restructure the README to function as a tutorial on designing an agentic applica
 ## Proposed Chapter Structure (Draft)
 1. Introduction: What This Tutorial Teaches
 2. Choose the Activity
-3. Bodystorm the Activity to Define Role Decisions, Boundaries, Handoffs, and Knowledge Base
+3. Bodystorm the Activity to Define Role Decisions, Role Boundaries, Role Handoffs, and Role Knowledge Base
 4. Document the Activity Using the Framework
 5. Translate the Documents into an Agentic Application
 6. Inspect and Refine Agent Behavior
@@ -49,14 +49,14 @@ Include:
 Output:
 - one selected activity with a clear goal
 
-### 3) Bodystorm the Activity to Define Role Decisions, Boundaries, Handoffs, and Knowledge Base
+### 3) Bodystorm the Activity to Define Role Decisions, Role Boundaries, Role Handoffs, and Role Knowledge Base
 Purpose:
 - run bodystorming as the main discovery method
 
 Include:
 - role enactment instructions
 - staged reveal structure
-- observer prompts focused on role decisions, boundaries, handoffs, and knowledge base needs
+- observer prompts focused on role decisions, role boundaries, role handoffs, and role knowledge base needs
 
 Output:
 - raw observations organized by those four focus areas
@@ -81,9 +81,9 @@ Purpose:
 
 Mapping focus:
 - role decisions -> agent responsibilities
-- boundaries -> instruction constraints
-- handoffs -> workflow sequencing
-- knowledge base -> context and source choices
+- role boundaries -> instruction constraints
+- role handoffs -> workflow sequencing
+- role knowledge base -> context and source choices
 
 Output:
 - a documented design-to-implementation map
@@ -94,7 +94,7 @@ Purpose:
 
 Include:
 - behavior checks tied to the document framework
-- revision loop when outputs do not match role decisions or boundaries
+- revision loop when outputs do not match role decisions or role boundaries
 
 Output:
 - revised instructions and updated documents where needed
