@@ -4,7 +4,7 @@
 
 This repository documents a full design trajectory — from embodied, hands-on prototyping to a working AI application. You will move through three stages:
 
-1. **Bodystorming** — Physically enact the system to discover where judgment is required, where boundaries are unclear, and where authority must be defined.
+1. **Bodystorming** — Physically enact the system to discover where judgment is required, where role boundaries are unclear, and where authority must be defined.
 2. **Role Decomposition** — Break a single overloaded role into a structured set of collaborating agents. Define their names, purposes, rules, inputs, and outputs.
 3. **Building with AI Studio** — Use a coding assistant to translate your role cards and relationship diagrams directly into a running agentic application.
 
@@ -23,7 +23,7 @@ Bodystorming is a viable technique for prototyping agentic systems and for desig
 When roles are enacted under real-time conditions — using incomplete information, shifting constraints, and competing responsibilities — participants experience:
 
 - where judgment is required
-- where boundaries are unclear
+- where role boundaries are unclear
 - where authority must be defined
 
 Rather than scripting responses, designers witness how behavior emerges from role definition, inputs, and context. This allows them to articulate not just what a system should produce, but **how it should operate** — how it asks, escalates, refuses, coordinates, and adapts.
@@ -38,10 +38,10 @@ The artifacts generated through bodystorming in the following workshop correspon
 
 - purpose
 - inputs
-- knowledge
+- role knowledge base
 - behavioral rules
 - outputs
-- boundaries
+- role boundaries
 
 These artifacts can be translated into:
 
@@ -146,7 +146,7 @@ One person previously acted as the entire assistant.
 - asking questions
 - tone decisions
 - risk management
-- enforcing boundaries
+- enforcing role boundaries
 - producing text
 
 **Real AI systems:**
@@ -201,14 +201,14 @@ For each role define:
 | Role Name | — |
 | Purpose | — |
 | Behavioral rules | — |
-| Boundaries / Does not do | — |
-| Knowledge | — |
+| Role Boundaries / Does not do | — |
+| Role Knowledge Base | — |
 | Required inputs | — |
 | Outputs | — |
 
 Also:
 
-- Draw handoffs
+- Draw role handoffs
 - Complete: *"Role A cannot do its job until Role B provides: ___"*
 
 **Time limit: 15 minutes**
@@ -217,7 +217,7 @@ Also:
 
 ### Slide 11 — Sample Role Card
 
-Same fields as Slide 10, presented as a visual role card template (name, purpose, behavioral rules, boundaries, knowledge, inputs, outputs).
+Same fields as Slide 10, presented as a visual role card template (name, purpose, behavioral rules, role boundaries, role knowledge base, inputs, outputs).
 
 ---
 
