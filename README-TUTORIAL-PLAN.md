@@ -96,14 +96,45 @@ Output:
 
 ### 6) Inspect and Refine Agent Behavior
 Purpose:
-- verify that implementation matches design
+- verify that implementation matches design across three levels: settings, structure, and behavior
 
-Include:
-- behavior checks tied to the document framework
-- revision loop when outputs do not match role decisions or role boundaries
+This chapter has three distinct verification steps, each exposed by a specific part of the Letterly UI.
+
+#### Step 1: Verify system instructions and model settings match the design documents
+How to do it:
+- Open the **Writers' Room modal** by clicking the "Writers' Room" button in the main Letterly sidebar.
+- For each agent, read the displayed system instructions and confirm they reflect the role decisions, role boundaries, handoff logic, and KB usage guidance from your design documents.
+- Confirm the model assignment matches the judgment demands of that role.
+- Edit, reset, or override any instruction that has drifted from the design.
+
+In Letterly:
+- Triggered by the "Writers' Room" button in the main app sidebar.
+- Shows each agent's name, model dropdown, and system instructions side by side.
+- A gear icon opens an inline editor for each agent's instructions; a reset button restores defaults.
+
+#### Step 2: Verify system structure and flow
+How to do it:
+- Open the **System Diagram** to confirm that the agents, their sequence, their inputs and outputs, and the handoffs between them match your Handoff Map.
+- Check that no expected agent is missing and that the data flowing between steps matches what your Role Cards describe.
+
+In Letterly:
+- Accessible via the "System Diagram" link in the Writers' Room modal header, or by navigating to `/eval` and selecting the "System Diagram" tab.
+- Shows every agent in the Writers' Room, when each one fires, what data it receives, and where its output appears in the UI.
+
+#### Step 3: Verify agent behavior and system behavior
+How to do it:
+- Run **epistemic evaluations** to verify that individual agents know what they are supposed to know and produce correct output for a given input (e.g., does the tone detector correctly classify the letter's register?).
+- Run **mechanistic evaluations** to verify that the full agent chain handles handoffs correctly end to end (e.g., does the critic's output correctly feed the revision stage?).
+
+In Letterly:
+- Both evaluation types are available in the **Agent Eval Suite** at `/eval`.
+- Use the **Comparison tab** for epistemic evaluation: run a single test against one agent, add assertions (contains, excludes, length, regex, JSON), and get immediate pass/fail feedback for targeted prompt tuning.
+- Use the **Playground tab** for mechanistic evaluation: chain multiple agent steps, run them in sequence, and inspect each step's status, latency, and output in a visual timeline to diagnose handoff failures.
+- Use the **Batch tab** to run full regression suites across all agents, monitor pass rates, and export results before shipping prompt or model changes.
+- The Eval Suite is also accessible from the "Agent Testing" link in the Writers' Room modal header.
 
 Output:
-- revised instructions and updated documents where needed
+- revised system instructions and updated design documents where behavior does not match design
 
 ### 7) Optional Technical Setup and Run Instructions
 Purpose:
@@ -133,9 +164,8 @@ Changes:
 
 ## Review Questions
 1. Are these chapter titles aligned with your tutorial language?
-2. Should chapter 6 focus only on behavior testing, or include model/settings decisions too?
-3. Do you want all current goal cards in the core flow, or some moved to optional exercises?
-4. Should this remain one README, or split into README plus a separate tutorial file later?
+2. Do you want all current goal cards in the core flow, or some moved to optional exercises?
+3. Should this remain one README, or split into README plus a separate tutorial file later?
 
 ## Next Step (After Your Approval)
 Apply this structure directly to README.md in a single pass, preserving your existing content where possible and only restructuring/relabeling for tutorial clarity.
