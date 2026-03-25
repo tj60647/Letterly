@@ -27,26 +27,26 @@ Technical setup and a glossary are available at the end for readers who want to 
 
 ## Chapter 2 — Choose the Activity
 
-The first step is to select a real-world activity to model. A good activity for this tutorial has the following qualities:
+The first step is to select a real-world activity to model. Start with this question:
 
-- It involves **multiple distinct decisions** — not all of the same kind.
-- It requires **judgment**, not just procedure. The person doing it must weigh options, handle incomplete information, or navigate competing priorities.
-- It has a **clear output**: something is produced at the end that can be evaluated.
-- It is **familiar enough** to be enacted without prior training.
+> **What is something you already do — where you would genuinely benefit from a coach, a collaborator, or a team of experts helping you do it better?**
+
+Think about activities where:
+- You have some knowledge but the stakes are high enough that outside perspective would help.
+- Getting it right requires navigating competing priorities, incomplete information, or difficult judgment calls.
+- You would trust a knowledgeable person to advise you, but you still want to be in control of the final result.
+
+This framing matters. You are not looking for an activity that can be fully automated — you are looking for one where a capable support team would make you better at it.
 
 **Worked Example: Letter Writing**
 
-Letter writing meets all of these criteria. Writing a letter requires deciding what to say, how to say it, what tone is appropriate, what constraints apply (length, audience, stakes), and how to handle information the sender finds difficult to disclose.
-
-The activity produces a concrete artifact — a letter — that can be assessed against the sender's original intent.
+Writing a letter is a good example of this kind of activity. Most people can write a letter on their own, but when the stakes are high — resigning from a job, making an apology, filing a formal complaint — the assistance of someone who can help you figure out what to say, how to say it, what tone to use, and what risks to watch for is genuinely valuable.
 
 This tutorial uses letter writing as its worked example throughout.
 
 ---
 
 ## Chapter 3 — Bodystorm the Activity to Define Role Decisions, Role Boundaries, Role Handoffs, and Role Knowledge Base
-
-> Before opening any code, you enacted the system. The slides below document the full workshop sequence.
 
 Bodystorming is a viable technique for prototyping agentic systems and for designing behavior. It makes behavioral assumptions observable in action.
 
