@@ -1,11 +1,5 @@
 # Letterly: Prototyping agentic systems
 
-> [!NOTE]
-> **Author Roadmap:**
-> - [ ] Create separate video tutorials for Git and Node.js installation.
-> - [ ] Create guide for getting OpenRouter and Google API keys.
-> - [ ] Add more "Style Match" examples for testing.
-
 **Welcome, Students!** 👋
 
 This repository documents a full design trajectory — from embodied, hands-on prototyping to a working AI application. You will move through three stages:
@@ -821,5 +815,11 @@ See `e2e/README.md` for detailed execution instructions.
 ## ⚖️ License
 This project is open-source and available under the **MIT License**.
 Author: **Thomas J McLeish** (c) 2026.
+
+> [!NOTE]
+> **Author Roadmap:**
+> - [ ] Create separate video tutorials for Git and Node.js installation.
+> - [ ] Create guide for getting OpenRouter and Google API keys.
+> - [ ] Add more "Style Match" examples for testing.
 
 
