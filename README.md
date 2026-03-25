@@ -814,7 +814,7 @@ See `e2e/README.md` for detailed execution instructions.
 
 ## ⚖️ License
 This project is open-source and available under the **MIT License**.
-Author: **Thomas J McLeish** (c) 2026.
+Author: **Thomas J McLeish**
 
 > [!NOTE]
 > **Author Roadmap:**
