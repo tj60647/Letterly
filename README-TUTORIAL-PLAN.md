@@ -79,14 +79,20 @@ Output:
 Purpose:
 - map each design document to implementation choices
 
-Mapping focus:
-- role decisions -> agent responsibilities
-- role boundaries -> instruction constraints
-- role handoffs -> workflow sequencing
-- role knowledge base -> context and source choices
+The dominant output of your design documents is system instructions.
+System instructions are not a single field — they have a role composed of many facets:
+- the agent's identity and purpose (from role decisions)
+- behavioral rules and what the agent will and will not do (from role boundaries)
+- handoff logic and sequencing (from role handoffs)
+- how and when to use the knowledge base (from role knowledge base)
+
+The small set of things that live outside the system instructions:
+- model selection (chosen based on the judgment demands of the role)
+- model parameters such as temperature (tuned based on how precise or creative the role needs to be)
+- the knowledge base documents themselves (attached as a separate control; instructions about how to use them go in the system instructions)
 
 Output:
-- a documented design-to-implementation map
+- a documented design-to-implementation map showing which design decisions become which facets of the system instructions
 
 ### 6) Inspect and Refine Agent Behavior
 Purpose:
