@@ -64,7 +64,7 @@ The raw observations produced by this session — organized by role decisions, r
 
 ---
 
-### Slide 1 — Design Artifacts
+### Workshop Orientation — Design Artifacts
 
 The artifacts generated through bodystorming in the following workshop correspond directly to the primary design surfaces of agentic systems:
 
@@ -85,7 +85,7 @@ Forming a structured foundation for building an agentic application.
 
 ---
 
-### Slide 2 — Enact the System
+### Phase 1 — Enact the System
 
 You have been given:
 
@@ -114,23 +114,23 @@ You have been given:
 
 ---
 
-### Slide 3 — Enact the System (Stage 2)
+### Phase 2 — Enact the System (Stage 2)
 
-Same as Slide 2, plus:
+Same as Phase 1, plus:
 
 > At minute 5: The User reveals one additional note.
 
 ---
 
-### Slide 4 — Enact the System (Stage 3)
+### Phase 3 — Enact the System (Stage 3)
 
-Same as Slide 3, plus:
+Same as Phase 2, plus:
 
 > At minute 8: The User introduces a new constraint.
 
 ---
 
-### Slide 5 — Reflection & Debrief
+### Phase 4 — Reflection & Debrief
 
 **First: Individual teams process (3 min)**
 
@@ -157,9 +157,9 @@ Observers: Select 2–3 key Post-its.
 
 ---
 
-### Slide 6 — Debrief (Extended Questions)
+### Extended Debrief Questions
 
-Same as Slide 5, plus:
+Same as Phase 4, plus:
 
 Additional questions:
 
@@ -170,7 +170,7 @@ Additional questions:
 
 ---
 
-### Slides 15–17 — Workshop Activity Photos
+### Workshop Activity Photos
 
 *(Photos of teams collaborating, Post-it observations, and role decomposition sketches from the live session.)*
 
@@ -337,7 +337,7 @@ A complete document set is the output of this chapter. These documents drive eve
 
 ---
 
-### Slide 7 — Role Decomposition
+### Phase 1 — Role Decomposition
 
 One person previously acted as the entire assistant.
 
@@ -360,7 +360,7 @@ One person previously acted as the entire assistant.
 
 ---
 
-### Slide 8 — Decomposition as Design Decision
+### Phase 2 — Decomposition as Design Decision
 
 Decomposition is a design decision, not a correctness problem.
 
@@ -381,9 +381,9 @@ Decomposition is a design decision, not a correctness problem.
 
 ---
 
-### Slide 9 — Decomposition Discussion
+### Phase 3 — Decomposition Discussion
 
-Same as Slide 8, plus:
+Same as Phase 2, plus:
 
 **Discussion prompt:**
 
@@ -391,7 +391,7 @@ Same as Slide 8, plus:
 
 ---
 
-### Slide 10 — Homework 1: Role Definition
+### Exercise 1 — Role Definition
 
 For each role define:
 
@@ -414,13 +414,13 @@ Also:
 
 ---
 
-### Slide 11 — Sample Role Card
+### Sample Role Card
 
-Same fields as Slide 10, presented as a visual role card template (name, purpose, behavioral rules, role boundaries, role knowledge base, inputs, outputs).
+Same fields as Exercise 1, presented as a visual role card template (name, purpose, behavioral rules, role boundaries, role knowledge base, inputs, outputs).
 
 ---
 
-### Slide 12 — Sample Relationship Diagram
+### Sample Relationship Diagram
 
 ```
 User
@@ -432,7 +432,7 @@ User
 
 ---
 
-### Slide 18 — Homework Submission Sample
+### Submission Example
 
 *(Visual example illustrating a completed system design submission.)*
 
@@ -461,7 +461,7 @@ The output of this chapter is a documented design-to-implementation map: each de
 
 ---
 
-### Slide 13 — Homework 2: Run with Decomposed Roles
+### Exercise 1 — Run with Decomposed Roles
 
 Run with decomposed roles:
 
@@ -484,7 +484,7 @@ Run with decomposed roles:
 
 ---
 
-### Slide 14 — Homework 3: Use AI Studio
+### Exercise 2 — Use AI Studio
 
 Use **AI Studio** (or your assigned coding assistant) to test what you designed.
 
@@ -505,7 +505,7 @@ Use **AI Studio** (or your assigned coding assistant) to test what you designed.
 
 ---
 
-### Slide 19 — System Diagram Example
+### System Diagram Example
 
 An example multi-agent letter writing system with the following roles:
 
