@@ -48,7 +48,7 @@ describe('SystemDiagram', () => {
 
   it('shows when a wire fires on hover', () => {
     render(<SystemDiagram />);
-    const wire = LETTERLY_FLOW.wires.find(w => w.id === 'SYNC_NOTES.newPoints->notes.newPoints')!;
+    const wire = LETTERLY_FLOW.wires.find(w => w.id === 'SYNC_NOTES.newPoints->left-panel-out.roughNotes')!;
     fireEvent.mouseEnter(svg().querySelector(`[data-wire="${wire.id}"]`)!);
     expect(screen.getByText(wire.when)).toBeInTheDocument();
   });
@@ -64,7 +64,20 @@ describe('SystemDiagram', () => {
   it('starts in the columns layout, with column headings', () => {
     render(<SystemDiagram />);
     expect(screen.getByRole('button', { name: 'Columns' })).toHaveAttribute('aria-pressed', 'true');
-    expect(within(svg()).getByText('USER')).toBeInTheDocument();
+    expect(within(svg()).getByText('WHAT YOU GIVE')).toBeInTheDocument();
+  });
+
+  it('highlights both copies of a panel when either is hovered', () => {
+    render(<SystemDiagram />);
+    fireEvent.mouseEnter(svg().querySelector('[data-node="left-panel-in"]')!);
+    expect(svg().querySelector('[data-node="left-panel-in"]')).toHaveAttribute('data-highlighted', 'true');
+    expect(svg().querySelector('[data-node="left-panel-out"]')).toHaveAttribute('data-highlighted', 'true');
+    expect(svg().querySelector('[data-node="center-panel-out"]')).toHaveAttribute('data-highlighted', 'false');
+  });
+
+  it('labels the interface agents change in plain words', () => {
+    render(<SystemDiagram />);
+    expect(within(svg().querySelector('[data-node="left-panel-out"]') as HTMLElement).getByText('tone dropdown')).toBeInTheDocument();
   });
 
   it('switches to the ELK layout, which has no column headings', async () => {
@@ -72,7 +85,7 @@ describe('SystemDiagram', () => {
     fireEvent.click(screen.getByRole('button', { name: 'ELK' }));
     await screen.findByRole('button', { name: 'ELK', pressed: true });
     await screen.findByTestId('layout-elk', undefined, { timeout: 10000 });
-    expect(within(svg()).queryByText('USER')).toBeNull();
+    expect(within(svg()).queryByText('WHAT YOU GIVE')).toBeNull();
     expect(svg().querySelectorAll('[data-node]')).toHaveLength(LETTERLY_FLOW.nodes.length);
   });
 });

@@ -18,6 +18,8 @@ import type { Flow, FlowNode, Kind } from '@/lib/agent-flow';
 
 export interface PortPoint {
   id: string;
+  /** What the port is called on the diagram. */
+  label: string;
   kind: Kind;
   x: number;
   y: number;
@@ -75,8 +77,8 @@ const BOTTOM_PAD = 8;
 interface NodeShape {
   width: number;
   height: number;
-  inputs: Array<{ id: string; kind: Kind; dy: number }>;
-  outputs: Array<{ id: string; kind: Kind; dy: number }>;
+  inputs: Array<{ id: string; label?: string; kind: Kind; dy: number }>;
+  outputs: Array<{ id: string; label?: string; kind: Kind; dy: number }>;
   instructionDy: number | null;
   faceDy: number | null;
 }
@@ -107,8 +109,8 @@ function placeNode(node: FlowNode, x: number, y: number): NodeBox {
     y,
     width: s.width,
     height: s.height,
-    inputs: s.inputs.map(p => ({ id: p.id, kind: p.kind, x, y: y + p.dy })),
-    outputs: s.outputs.map(p => ({ id: p.id, kind: p.kind, x: x + s.width, y: y + p.dy })),
+    inputs: s.inputs.map(p => ({ id: p.id, label: p.label ?? p.id, kind: p.kind, x, y: y + p.dy })),
+    outputs: s.outputs.map(p => ({ id: p.id, label: p.label ?? p.id, kind: p.kind, x: x + s.width, y: y + p.dy })),
     instruction: s.instructionDy === null ? null : { x, y: y + s.instructionDy },
     titleY: y + 17,
     subtitleY: y + 31,
@@ -116,7 +118,12 @@ function placeNode(node: FlowNode, x: number, y: number): NodeBox {
   };
 }
 
-const labelFor = (fromPort: string, toPort: string) => (fromPort === toPort ? toPort : `${fromPort} → ${toPort}`);
+/**
+ * A wire's label. A wire landing on the interface is labelled with the data it carries, because the port it lands on
+ * already names the interface element. Otherwise it names both ports, or one where they match.
+ */
+const labelFor = (flow: Flow, fromPort: string, toNode: string, toPort: string) =>
+  flow.nodes.find(n => n.id === toNode)?.role === 'output' || fromPort === toPort ? fromPort : `${fromPort} → ${toPort}`;
 
 /** Wire labels are 9px monospace: about 5.4px per character, plus padding. */
 export const LABEL_HEIGHT = 13;
@@ -261,7 +268,7 @@ export function layoutColumns(flow: Flow): FlowLayout {
   const unplaced: UnplacedRoute[] = flow.wires.map(w => {
     const from = boxById.get(w.from.node)!.outputs.find(p => p.id === w.from.port)!;
     const to = boxById.get(w.to.node)!.inputs.find(p => p.id === w.to.port)!;
-    const label = labelFor(w.from.port, w.to.port);
+    const label = labelFor(flow, w.from.port, w.to.node, w.to.port);
     if (to.x > from.x) {
       const dx = Math.max(40, (to.x - from.x) / 2);
       return {
@@ -290,7 +297,7 @@ export function layoutColumns(flow: Flow): FlowLayout {
   const height = nodesBottom + 20 + LANE_GAP * lane + MARGIN;
   const headings: Heading[] = columns.map((_, c) => ({
     x: MARGIN + c * (NODE_WIDTH + COLUMN_GAP) + NODE_WIDTH / 2,
-    label: c === 0 ? 'USER' : c === columnCount - 1 ? 'INTERFACE' : lastAgentColumn === 1 ? 'AGENTS' : `AGENTS · STEP ${c}`,
+    label: c === 0 ? 'WHAT YOU GIVE' : c === columnCount - 1 ? 'WHAT AGENTS CHANGE' : lastAgentColumn === 1 ? 'AGENTS' : `AGENTS · STEP ${c}`,
   }));
 
   return { width, height, nodes: boxes, wires: routes, headings };
@@ -324,7 +331,12 @@ export async function layoutElk(flow: Flow): Promise<FlowLayout> {
         id: n.id,
         width: s.width,
         height: s.height,
-        layoutOptions: { 'elk.portConstraints': 'FIXED_POS' },
+        layoutOptions: {
+          'elk.portConstraints': 'FIXED_POS',
+          // The interface appears twice: what you give is pinned to the first layer, what agents change to the last.
+          ...(n.role === 'input' ? { 'elk.layered.layering.layerConstraint': 'FIRST' } : {}),
+          ...(n.role === 'output' ? { 'elk.layered.layering.layerConstraint': 'LAST' } : {}),
+        },
         ports: [
           ...s.inputs.map(p => ({ id: portId(n.id, 'in', p.id), x: 0, y: p.dy, width: 0, height: 0, layoutOptions: { 'elk.port.side': 'WEST' } })),
           ...s.outputs.map(p => ({ id: portId(n.id, 'out', p.id), x: s.width, y: p.dy, width: 0, height: 0, layoutOptions: { 'elk.port.side': 'EAST' } })),
@@ -353,7 +365,7 @@ export async function layoutElk(flow: Flow): Promise<FlowLayout> {
     return {
       id: w.id,
       path: points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${round(p.x)},${round(p.y)}`).join(' '),
-      label: labelFor(w.from.port, w.to.port),
+      label: labelFor(flow, w.from.port, w.to.node, w.to.port),
       samples: polylineSamples(points),
       backward: to.x <= from.x,
     };

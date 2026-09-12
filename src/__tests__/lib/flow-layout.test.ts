@@ -49,6 +49,7 @@ function expectDrawable(getLayout: () => FlowLayout) {
     for (const flowNode of LETTERLY_FLOW.nodes) {
       const box = boxes.get(flowNode.id)!;
       expect(box.inputs.map(p => p.id)).toEqual(flowNode.inputs.map(p => p.id));
+      expect(box.inputs.map(p => p.label)).toEqual(flowNode.inputs.map(p => p.label ?? p.id));
       expect(box.outputs.map(p => p.id)).toEqual(flowNode.outputs.map(p => p.id));
       for (const p of box.inputs) {
         expect(p.x).toBeCloseTo(box.x);
@@ -77,7 +78,9 @@ function expectDrawable(getLayout: () => FlowLayout) {
         start: { x: expect.closeTo(from.x, 0), y: expect.closeTo(from.y, 0) },
         end: { x: expect.closeTo(to.x, 0), y: expect.closeTo(to.y, 0) },
       });
-      const label = flowWire.from.port === flowWire.to.port ? flowWire.to.port : `${flowWire.from.port} → ${flowWire.to.port}`;
+      // A wire landing on the interface is labelled with the data it carries; the port names the interface element.
+      const landsOnInterface = LETTERLY_FLOW.nodes.find(n => n.id === flowWire.to.node)!.role === 'output';
+      const label = landsOnInterface || flowWire.from.port === flowWire.to.port ? flowWire.from.port : `${flowWire.from.port} → ${flowWire.to.port}`;
       expect(route.label).toBe(label);
     }
   });
@@ -115,11 +118,15 @@ describe('layoutColumns', () => {
     }
   });
 
-  it('heads each column, from USER to INTERFACE', () => {
+  it('heads each column, from WHAT YOU GIVE to WHAT AGENTS CHANGE', () => {
     const columns = new Set(layout.nodes.map(n => n.x)).size;
     expect(layout.headings).toHaveLength(columns);
-    expect(layout.headings[0].label).toBe('USER');
-    expect(layout.headings[layout.headings.length - 1].label).toBe('INTERFACE');
+    expect(layout.headings[0].label).toBe('WHAT YOU GIVE');
+    expect(layout.headings[layout.headings.length - 1].label).toBe('WHAT AGENTS CHANGE');
+  });
+
+  it('routes every wire left to right', () => {
+    expect(layout.wires.filter(w => w.backward).map(w => w.id)).toEqual([]);
   });
 });
 
@@ -130,6 +137,17 @@ describe('layoutElk', () => {
   });
 
   expectDrawable(() => layout);
+
+  it('keeps what you give left of every agent, and what agents change right of every agent', () => {
+    const roles = new Map(LETTERLY_FLOW.nodes.map(n => [n.id, n.role]));
+    const agents = layout.nodes.filter(n => roles.get(n.id) === 'agent');
+    const leftmostAgent = Math.min(...agents.map(n => n.x));
+    const rightmostAgentEdge = Math.max(...agents.map(n => n.x + n.width));
+    for (const n of layout.nodes) {
+      if (roles.get(n.id) === 'input') expect({ node: n.id, left: n.x + n.width < leftmostAgent }).toEqual({ node: n.id, left: true });
+      if (roles.get(n.id) === 'output') expect({ node: n.id, right: n.x > rightmostAgentEdge }).toEqual({ node: n.id, right: true });
+    }
+  });
 
   it('draws no column headings, because ELK does not lay nodes out in named columns', () => {
     expect(layout.headings).toEqual([]);

@@ -23,13 +23,13 @@ import styles from './SystemDiagram.module.css';
 // ── Colour scheme ─────────────────────────────────────────────────────────────
 
 const NODE_STYLE: Record<NodeGroup, { fill: string; stroke: string; text: string; legendLabel: string }> = {
-  'user-input':   { fill: '#1d4ed8', stroke: '#1e40af', text: '#ffffff', legendLabel: 'User Input' },
+  'user-input':   { fill: '#1d4ed8', stroke: '#1e40af', text: '#ffffff', legendLabel: 'Interface: what you give' },
   'core-agent':   { fill: '#7c3aed', stroke: '#6d28d9', text: '#ffffff', legendLabel: 'Core Writing Agent' },
   'detect-agent': { fill: '#b45309', stroke: '#92400e', text: '#ffffff', legendLabel: 'Detection Agent' },
   'embed-agent':  { fill: '#0f766e', stroke: '#115e59', text: '#ffffff', legendLabel: 'Embedding Agent' },
   'image-agent':  { fill: '#be185d', stroke: '#9d174d', text: '#ffffff', legendLabel: 'Image Agent' },
   'match-agent':  { fill: '#0369a1', stroke: '#075985', text: '#ffffff', legendLabel: 'Matching Agent' },
-  'output':       { fill: '#f0fdf4', stroke: '#16a34a', text: '#15803d', legendLabel: 'Interface Agents Change' },
+  'output':       { fill: '#eff6ff', stroke: '#1d4ed8', text: '#1e3a8a', legendLabel: 'Interface: what agents change' },
 };
 
 /** Port colours by kind. Text, JSON, and number use Agent Design Studio's colours, so the two canvases read alike. */
@@ -60,6 +60,9 @@ function modelText(node: FlowNode, assignments: Record<string, string>): string 
 }
 
 const touches = (wire: Wire, nodeId: string) => wire.from.node === nodeId || wire.to.node === nodeId;
+
+/** True for the node itself, or the other copy of the same interface panel. */
+const isSelfOrTwin = (a: string, b: string) => a === b || (!!NODES.get(a)?.panel && NODES.get(a)?.panel === NODES.get(b)?.panel);
 
 export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
   const [mode, setMode] = useState<LayoutMode>('columns');
@@ -98,7 +101,7 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
       <div className={styles.diagramIntro}>
         <p>
           Letterly&rsquo;s agents collaborate with you through the interface: they read what you type and choose, and they change
-          what you see. This diagram is drawn from the code&rsquo;s own description of that wiring
+          what you see. So the interface appears twice: on the left, <strong>what you give</strong>; on the right, <strong>what agents change</strong>. This diagram is drawn from the code&rsquo;s own description of that wiring
           (<code>src/lib/agent-flow.ts</code>), so it changes when the wiring does.
           {' '}Each <strong>node</strong> has <strong>ports</strong>: inputs on the left, outputs on the right, coloured by the kind of value they carry.
           A <strong>hollow</strong> port is the instruction you can edit in the Writers&rsquo; Room.
@@ -141,7 +144,7 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
               <path d="M 0,0 L 8,3 L 0,6 Z" fill="#94a3b8" />
             </marker>
             <marker id="arrow-output" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-              <path d="M 0,0 L 8,3 L 0,6 Z" fill="#16a34a" />
+              <path d="M 0,0 L 8,3 L 0,6 Z" fill="#2563eb" />
             </marker>
           </defs>
 
@@ -160,7 +163,7 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
             const wire = WIRES.get(route.id)!;
             const toOutput = NODES.get(wire.to.node)!.role === 'output';
             const background = NODES.get(wire.from.node)!.background || NODES.get(wire.to.node)!.background;
-            const stroke = toOutput ? '#16a34a' : background ? '#94a3b8' : '#64748b';
+            const stroke = toOutput ? '#2563eb' : background ? '#94a3b8' : '#64748b';
             const marker = toOutput ? 'url(#arrow-output)' : background ? 'url(#arrow-dashed)' : 'url(#arrow)';
             const lit = wireIsLit(wire);
             const selected = focus?.type === 'wire' && focus.id === wire.id;
@@ -192,14 +195,15 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
             const node = NODES.get(box.id)!;
             const style = NODE_STYLE[node.group];
             const isOutput = node.role === 'output';
-            const focused = focus?.type === 'node' && focus.id === node.id;
-            const lit = !focus || (focus.type === 'node' ? focus.id === node.id || LETTERLY_FLOW.wires.some(w => touches(w, focus.id) && touches(w, node.id)) : touches(WIRES.get(focus.id)!, node.id));
+            const focused = focus?.type === 'node' && isSelfOrTwin(focus.id, node.id);
+            const lit = !focus || (focus.type === 'node' ? focused || LETTERLY_FLOW.wires.some(w => touches(w, focus.id) && touches(w, node.id)) : touches(WIRES.get(focus.id)!, node.id));
             const focusMe: Focus = { type: 'node', id: node.id };
-            const labelFill = isOutput ? '#166534' : style.text;
+            const labelFill = style.text;
             return (
               <g
                 key={box.id}
                 data-node={box.id}
+                data-highlighted={focused ? 'true' : 'false'}
                 style={{ cursor: 'pointer', opacity: lit ? (node.background ? 0.9 : 1) : 0.35 }}
                 onMouseEnter={() => setHovered(focusMe)}
                 onMouseLeave={() => setHovered(null)}
@@ -240,7 +244,7 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
                 {box.inputs.map(p => (
                   <g key={`in-${p.id}`} data-port={`${node.id}:in:${p.id}`}>
                     <circle cx={p.x} cy={p.y} r={4} fill={KIND_COLOURS[p.kind]} stroke="#ffffff" strokeWidth={1.5} />
-                    <text x={p.x + 10} y={p.y + 3} fill={labelFill} fontSize={9.5} fontFamily="monospace">{p.id}</text>
+                    <text x={p.x + 10} y={p.y + 3} fill={labelFill} fontSize={isOutput ? 10.5 : 9.5} fontFamily={isOutput ? 'system-ui, sans-serif' : 'monospace'}>{p.label}</text>
                   </g>
                 ))}
                 {box.instruction && (
@@ -254,7 +258,7 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
                 {box.outputs.map(p => (
                   <g key={`out-${p.id}`} data-port={`${node.id}:out:${p.id}`}>
                     <circle cx={p.x} cy={p.y} r={4} fill={KIND_COLOURS[p.kind]} stroke="#ffffff" strokeWidth={1.5} />
-                    <text x={p.x - 10} y={p.y + 3} textAnchor="end" fill={labelFill} fontSize={9.5} fontFamily="monospace">{p.id}</text>
+                    <text x={p.x - 10} y={p.y + 3} textAnchor="end" fill={labelFill} fontSize={9.5} fontFamily="monospace">{p.label}</text>
                   </g>
                 ))}
               </g>
@@ -285,7 +289,7 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
           return (
             <>
               <span className={styles.infoBadge} style={{ background: style.fill, color: style.text, border: `1px solid ${style.stroke}` }}>
-                {node.subtitle}
+                {node.role === 'agent' ? node.subtitle : `${node.title} · ${node.subtitle.toLowerCase()}`}
               </span>
               <div className={styles.infoBody}>
                 <span className={styles.infoText}>{node.description}</span>

@@ -58,6 +58,35 @@ describe('LETTERLY_FLOW', () => {
     }
   });
 
+  it('draws the interface twice: nothing flows into what the author gives, and nothing flows out of what agents change', () => {
+    for (const wire of LETTERLY_FLOW.wires) {
+      expect({ wire: wire.id, toRole: nodeById.get(wire.to.node)!.role }).not.toEqual({ wire: wire.id, toRole: 'input' });
+      expect({ wire: wire.id, fromRole: nodeById.get(wire.from.node)!.role }).not.toEqual({ wire: wire.id, fromRole: 'output' });
+    }
+  });
+
+  it('gives every interface node a panel, and titles both copies of a panel alike', () => {
+    const interfaceNodes = LETTERLY_FLOW.nodes.filter(n => n.role !== 'agent');
+    for (const node of interfaceNodes) expect({ node: node.id, panel: typeof node.panel }).toEqual({ node: node.id, panel: 'string' });
+    for (const a of interfaceNodes) {
+      for (const b of interfaceNodes) {
+        if (a.panel === b.panel) expect(a.title).toBe(b.title);
+      }
+    }
+    const panelsOnBothSides = new Set(
+      interfaceNodes.filter(n => n.role === 'input').map(n => n.panel).filter(p => interfaceNodes.some(n => n.role === 'output' && n.panel === p))
+    );
+    expect(panelsOnBothSides.size).toBeGreaterThan(0);
+  });
+
+  it('names every element of the interface agents change in plain words', () => {
+    for (const node of LETTERLY_FLOW.nodes.filter(n => n.role === 'output')) {
+      for (const port of node.inputs) {
+        expect({ port: `${node.id}:${port.id}`, label: port.label }).toEqual({ port: `${node.id}:${port.id}`, label: expect.stringMatching(/^[a-z%][a-z %]*$/) });
+      }
+    }
+  });
+
   it('names a model source that exists for every agent that borrows its caller\'s model', () => {
     for (const node of LETTERLY_FLOW.nodes) {
       if (node.modelFrom) expect(nodeById.get(node.modelFrom)?.role).toBe('agent');
