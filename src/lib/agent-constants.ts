@@ -268,7 +268,7 @@ Examples:
     DETECT_IMAGE_REQUEST: {
         id: 'DETECT_IMAGE_REQUEST',
         name: 'Image Request Detector',
-        description: 'Analyzes chat messages to detect requests for background images or illustrations.',
+        description: 'Checks rough-notes lines that ask to add or create an image, and extracts the subject for the Line Art Generator.',
         type: 'chat',
         primary: "openai/gpt-oss-20b",
         fallbacks: ["openai/gpt-oss-20b:free"],

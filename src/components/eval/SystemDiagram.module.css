@@ -25,6 +25,47 @@
   line-height: 1.6;
 }
 
+/* ── Layout toggle ───────────────────────────────────────────────────────── */
+
+.layoutToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.layoutToggleLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-right: 4px;
+}
+
+.toggleButton {
+  font-size: 0.8rem;
+  padding: 3px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.toggleButtonActive {
+  background: #1d4ed8;
+  border-color: #1e40af;
+  color: #ffffff;
+}
+
+.layoutNote {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-left: 6px;
+}
+
 /* ── SVG canvas ──────────────────────────────────────────────────────────── */
 
 .diagramScroll {
@@ -134,6 +175,20 @@
   height: 0;
   border-top: 2px dashed #94a3b8;
   flex-shrink: 0;
+}
+
+.legendPort,
+.legendPortHollow {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendPortHollow {
+  border: 2px solid #7c3aed;
+  background: transparent;
 }
 
 .legendLabel {
