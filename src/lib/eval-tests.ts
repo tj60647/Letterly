@@ -10,7 +10,7 @@ export const PREDEFINED_TESTS: TestCase[] = [
   {
     id: 'gen-short-letter',
     name: 'Short letter generation',
-    description: 'Tests basic letter generation from simple rough notes',
+    description: 'Tests basic letter generation from simple notes',
     agentId: 'GENERATE',
     prompt: JSON.stringify({
       recipient: 'Manager',

@@ -27,7 +27,7 @@ jest.mock('@/lib/models', () => ({
   AGENTS: {
     GENERATE: {
       id: 'GENERATE',
-      name: 'Draft Generator',
+      name: 'Letter Generator',
       type: 'chat',
       primary: 'test-model',
       fallbacks: [],
@@ -66,7 +66,7 @@ describe('/api/generate', () => {
     expect(data.text).toContain('Cheerio');
   });
 
-  it('should return error when rough notes are missing', async () => {
+  it('should return error when notes are missing', async () => {
     const req = createMockRequest({
       ...mockLetterData,
       roughNotes: '',
