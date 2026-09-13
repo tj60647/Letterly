@@ -58,12 +58,21 @@ export interface Heading {
   label: string;
 }
 
+/** A label inside a column that heads a group of nodes. */
+export interface Subheading {
+  x: number;
+  y: number;
+  label: string;
+}
+
 export interface FlowLayout {
   width: number;
   height: number;
   nodes: NodeBox[];
   wires: WireRoute[];
   headings: Heading[];
+  /** Group labels within a column: in the columns layout, when the author's input fields become available. */
+  subheadings: Subheading[];
 }
 
 // ── Node geometry, shared by both layouts ────────────────────────────────────
@@ -200,6 +209,7 @@ const HEADING_SPACE = 36;
 const COLUMN_GAP = 190;
 const ROW_GAP = 24;
 const LANE_GAP = 12;
+const SUBHEADING_SPACE = 22;
 
 /** A layout with the author's input on the left, agents in the middle, and the interface agents change on the right. */
 export function layoutColumns(flow: Flow): FlowLayout {
@@ -251,15 +261,28 @@ export function layoutColumns(flow: Flow): FlowLayout {
   const backwardCount = flow.wires.filter(w => column.get(w.to.node)! <= column.get(w.from.node)!).length;
   const sidePad = MARGIN + (backwardCount ? 20 + 4 * backwardCount : 0);
 
+  // The input column is grouped by when each field becomes available: from the start, then after the first draft.
+  const AVAILABILITY_ORDER = ['start', 'after-draft'] as const;
+  const AVAILABILITY_LABEL = { start: 'FROM THE START', 'after-draft': 'AFTER THE FIRST DRAFT' } as const;
+  columns[0].sort((a, b) => AVAILABILITY_ORDER.indexOf(a.available ?? 'start') - AVAILABILITY_ORDER.indexOf(b.available ?? 'start'));
+  const groupsIn = (col: FlowNode[], c: number) => (c === 0 ? new Set(col.map(n => n.available ?? 'start')).size : 0);
+
   // Stack each column, centred on the tallest.
-  const columnHeight = (col: FlowNode[]) =>
-    col.reduce((sum, n) => sum + shapeOf(n).height, 0) + ROW_GAP * Math.max(0, col.length - 1);
+  const columnHeight = (col: FlowNode[], c: number) =>
+    col.reduce((sum, n) => sum + shapeOf(n).height, 0) + ROW_GAP * Math.max(0, col.length - 1) + SUBHEADING_SPACE * groupsIn(col, c);
   const tallest = Math.max(...columns.map(columnHeight));
   const boxes: NodeBox[] = [];
+  const subheadings: Subheading[] = [];
   columns.forEach((col, c) => {
     const x = sidePad + c * (NODE_WIDTH + COLUMN_GAP);
-    let y = MARGIN + HEADING_SPACE + (tallest - columnHeight(col)) / 2;
+    let y = MARGIN + HEADING_SPACE + (tallest - columnHeight(col, c)) / 2;
+    let group: string | null = null;
     for (const n of col) {
+      if (c === 0 && (n.available ?? 'start') !== group) {
+        group = n.available ?? 'start';
+        subheadings.push({ x, y: round(y + SUBHEADING_SPACE - 8), label: AVAILABILITY_LABEL[group as keyof typeof AVAILABILITY_LABEL] });
+        y += SUBHEADING_SPACE;
+      }
       boxes.push(placeNode(n, x, round(y)));
       y += shapeOf(n).height + ROW_GAP;
     }
@@ -304,7 +327,7 @@ export function layoutColumns(flow: Flow): FlowLayout {
     label: c === 0 ? 'WHAT YOU GIVE' : c === columnCount - 1 ? 'WHAT AGENTS CHANGE' : lastAgentColumn === 1 ? 'AGENTS' : `AGENTS · STEP ${c}`,
   }));
 
-  return { width, height, nodes: boxes, wires: routes, headings };
+  return { width, height, nodes: boxes, wires: routes, headings, subheadings };
 }
 
 // ── ELK ──────────────────────────────────────────────────────────────────────
@@ -384,5 +407,6 @@ export async function layoutElk(flow: Flow): Promise<FlowLayout> {
     nodes: boxes,
     wires: routes,
     headings: [],
+    subheadings: [],
   };
 }

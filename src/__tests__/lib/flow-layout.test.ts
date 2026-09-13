@@ -125,6 +125,21 @@ describe('layoutColumns', () => {
     expect(layout.headings[layout.headings.length - 1].label).toBe('WHAT AGENTS CHANGE');
   });
 
+  it('stacks inputs available from the start above those that need a first draft, each under its sub-heading', () => {
+    const inputs = LETTERLY_FLOW.nodes.filter(n => n.role === 'input');
+    const start = inputs.filter(n => n.available === 'start').map(n => box(n.id));
+    const afterDraft = inputs.filter(n => n.available === 'after-draft').map(n => box(n.id));
+    const lastStartBottom = Math.max(...start.map(b => b.y + b.height));
+    const firstAfterTop = Math.min(...afterDraft.map(b => b.y));
+    expect(firstAfterTop).toBeGreaterThan(lastStartBottom);
+
+    const sub = (label: string) => layout.subheadings.find(s => s.label === label)!;
+    expect(layout.subheadings.map(s => s.label)).toEqual(['FROM THE START', 'AFTER THE FIRST DRAFT']);
+    expect(sub('FROM THE START').y).toBeLessThan(Math.min(...start.map(b => b.y)));
+    expect(sub('AFTER THE FIRST DRAFT').y).toBeGreaterThan(lastStartBottom);
+    expect(sub('AFTER THE FIRST DRAFT').y).toBeLessThan(firstAfterTop);
+  });
+
   it('routes every wire left to right', () => {
     expect(layout.wires.filter(w => w.backward).map(w => w.id)).toEqual([]);
   });
@@ -174,7 +189,8 @@ describe('layoutElk', () => {
     }
   });
 
-  it('draws no column headings, because ELK does not lay nodes out in named columns', () => {
+  it('draws no column headings or sub-headings, because ELK does not lay nodes out in named columns', () => {
     expect(layout.headings).toEqual([]);
+    expect(layout.subheadings).toEqual([]);
   });
 });

@@ -88,6 +88,32 @@ describe('SystemDiagram', () => {
     expect(within(svg()).getByText('WHAT YOU GIVE')).toBeInTheDocument();
   });
 
+  it('tags the inputs that exist only after the first draft, in either layout', async () => {
+    render(<SystemDiagram />);
+    const check = () => {
+      for (const node of LETTERLY_FLOW.nodes.filter(n => n.role === 'input')) {
+        const el = svg().querySelector(`[data-node="${node.id}"]`)!;
+        expect(el).toHaveAttribute('data-available', node.available);
+        const tag = within(el as HTMLElement).queryByText('after first draft');
+        expect({ node: node.id, tagged: tag !== null }).toEqual({ node: node.id, tagged: node.available === 'after-draft' });
+      }
+    };
+    check();
+    expect(within(svg()).getByText('FROM THE START')).toBeInTheDocument();
+    expect(within(svg()).getByText('AFTER THE FIRST DRAFT')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'ELK' }));
+    await screen.findByTestId('layout-elk', undefined, { timeout: 10000 });
+    check();
+  });
+
+  it('says when an input becomes available in the info panel', () => {
+    render(<SystemDiagram />);
+    fireEvent.mouseEnter(svg().querySelector('[data-node="chips-in"]')!);
+    expect(screen.getByText('Available after the first draft')).toBeInTheDocument();
+    fireEvent.mouseEnter(svg().querySelector('[data-node="rough-notes-in"]')!);
+    expect(screen.getByText('Available from the start')).toBeInTheDocument();
+  });
+
   it('highlights both copies of a field when either is hovered', () => {
     render(<SystemDiagram />);
     fireEvent.mouseEnter(svg().querySelector('[data-node="tone-in"]')!);

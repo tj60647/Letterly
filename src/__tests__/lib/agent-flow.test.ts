@@ -86,6 +86,25 @@ describe('LETTERLY_FLOW', () => {
     }
   });
 
+  it('says which input fields exist only after the first draft, matching how the app gates them', () => {
+    const letterApp = fs.readFileSync(path.join(process.cwd(), 'src', 'components', 'LetterApp.tsx'), 'utf8');
+    const chatInputNeedsLetter = /disabled=\{isChatLoading \|\| isLoading \|\| !generatedLetter\}/.test(letterApp);
+    // Evidence in LetterApp.tsx that each field waits for a draft.
+    const gatedOnDraft: Record<string, boolean> = {
+      'chat-message-in': chatInputNeedsLetter,
+      // History only grows when a chat message is sent, and the chat input is disabled until there is a letter.
+      'chat-history-in': chatInputNeedsLetter && /const handleChatSubmit[\s\S]*setChatHistory\(updatedChatHistory\)/.test(letterApp),
+      'letter-in': /\{generatedLetter && \(\s*isEditing \?/.test(letterApp),
+      'chips-in': /\{generatedLetter && \(\s*<div className=\{styles\.reviewPanel\}>/.test(letterApp),
+    };
+    for (const [id, gated] of Object.entries(gatedOnDraft)) expect({ id, gated }).toEqual({ id, gated: true });
+
+    for (const node of LETTERLY_FLOW.nodes.filter(n => n.role === 'input')) {
+      const expected = node.id in gatedOnDraft ? 'after-draft' : 'start';
+      expect({ node: node.id, available: node.available }).toEqual({ node: node.id, available: expected });
+    }
+  });
+
   it('names each labelled field exactly as the app labels it on screen', () => {
     const letterApp = fs.readFileSync(path.join(process.cwd(), 'src', 'components', 'LetterApp.tsx'), 'utf8');
     const labelled = LETTERLY_FLOW.nodes.filter(n => n.uiLabel);

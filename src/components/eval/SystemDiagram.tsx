@@ -162,6 +162,11 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
               {h.label}
             </text>
           ))}
+          {layout.subheadings.map(s => (
+            <text key={s.label} x={s.x} y={s.y} fill="#64748b" fontSize={9} fontWeight="600" fontFamily="system-ui, sans-serif" letterSpacing="0.06em">
+              {s.label}
+            </text>
+          ))}
           {dividers.map(x => (
             <line key={x} x1={x} y1={32} x2={x} y2={layout.height - 12} stroke="#e2e8f0" strokeWidth={1} strokeDasharray="4 4" />
           ))}
@@ -219,6 +224,7 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
                 key={box.id}
                 data-node={box.id}
                 data-highlighted={focused ? 'true' : 'false'}
+                data-available={node.available}
                 style={{ cursor: 'pointer', opacity: lit ? (node.background ? 0.9 : 1) : 0.35 }}
                 onMouseEnter={() => setHovered(focusMe)}
                 onMouseLeave={() => setHovered(null)}
@@ -245,6 +251,14 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
                   strokeWidth={1.5}
                   strokeDasharray={node.background ? '5 3' : undefined}
                 />
+                {node.available === 'after-draft' && (
+                  <g>
+                    <rect x={box.x + box.width - 92} y={box.y - 7} width={86} height={14} rx={7} fill="#ffffff" stroke={style.stroke} strokeWidth={1} />
+                    <text x={box.x + box.width - 49} y={box.y + 3} textAnchor="middle" fill={style.stroke} fontSize={8.5} fontWeight="600" fontFamily="system-ui, sans-serif">
+                      after first draft
+                    </text>
+                  </g>
+                )}
                 <text x={box.x + box.width / 2} y={box.titleY} textAnchor="middle" fill={style.text} fontSize={11.5} fontWeight="600" fontFamily="system-ui, sans-serif">
                   {node.title}
                 </text>
@@ -309,6 +323,9 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
               </span>
               <div className={styles.infoBody}>
                 <span className={styles.infoText}>{node.description}</span>
+                {node.available && (
+                  <span className={styles.infoModel}>{node.available === 'after-draft' ? 'Available after the first draft' : 'Available from the start'}</span>
+                )}
                 {node.triggers.length > 0 && <span className={styles.infoModel}>Fires on: {node.triggers.join(' · ')}</span>}
                 {node.role === 'agent' && <span className={styles.infoModel}>Model: {modelText(node, assignments)}</span>}
               </div>

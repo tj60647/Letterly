@@ -56,6 +56,8 @@ export interface FlowNode {
   field?: string;
   /** For interface nodes: the label the app shows for this field, where it has one. Tests check it appears in LetterApp.tsx. */
   uiLabel?: string;
+  /** For input fields: whether the author can use it from the start, or only once a first draft exists. */
+  available?: 'start' | 'after-draft';
   /** True for agents that run in the background, without the author asking. Drawn with a dashed border. */
   background?: boolean;
   /** What makes this node act. */
@@ -220,9 +222,16 @@ const agentNodes: FlowNode[] = (Object.keys(AGENTS) as AgentId[]).map(id => {
   };
 });
 
+/**
+ * Input fields that only exist once there is a draft. In LetterApp.tsx the letter and the Editor Review panel render
+ * only when a letter exists, and the chat input is disabled until then (so chat history cannot grow either).
+ */
+const AFTER_FIRST_DRAFT = new Set(['chat-message-in', 'chat-history-in', 'letter-in', 'chips-in']);
+
 /** A field of the interface, as the author gives to it: one on-screen control and the values it carries. */
 const given = (id: string, field: string, title: string, subtitle: string, description: string, triggers: string[], outputs: Port[], uiLabel?: string): FlowNode => ({
   id, field, title, subtitle, description, triggers, outputs, uiLabel, role: 'input', group: 'user-input', inputs: [],
+  available: AFTER_FIRST_DRAFT.has(id) ? 'after-draft' : 'start',
 });
 
 /** The same field, as agents change it. */
