@@ -4,10 +4,10 @@
 
 **How to use these cards**
 
-- Give each team one Goal Card and its matching Rough User Notes sheet. The person playing the User holds both.
-- The person playing the User thinks of a real moment from their own life that fits the card. See [Facilitator Notes](README.md#facilitator-notes).
+- Give each team one Goal Card. For Cards A–C, also give the matching Rough User Notes sheet; Cards D–F have their notes printed on the card. The person playing the User holds both.
+- The person playing the User thinks of a real moment from their own life that fits the card. Cards A–C ask for this directly; for D–F, the facilitator asks. See [Facilitator Notes](README.md#facilitator-notes).
 - The person playing the Assistant sees neither the card nor the notes in advance.
-- Stage 2 is revealed at minute 5 and Stage 3 at minute 8, within the same 10-minute enactment.
+- Within the same 10-minute enactment, the User reveals one Stage 2 note of their choice at minute 5, and introduces the Stage 3 constraint at minute 8.
 
 ---
 

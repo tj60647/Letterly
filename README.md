@@ -109,7 +109,7 @@ The handouts for this chapter and the next are in **[workshop/](workshop/README.
 
 > **"What makes something hard to say?"** *The user knows the goal but not the words.*
 
-**Casting.** Take a headcount for each question and have people line up: "Who has done improv?", "Who likes to write?", "Who has done UX research?" Then assemble teams of 3–4 at a table (no laptops needed). The latest session planned for about nine teams. Each team has:
+**Casting.** Take a headcount for each question and have people line up: "Who has done improv?", "Who likes to write?", "Who has done UX research?" Then assemble teams of 3–4 at a table (no laptops needed). The latest session was planned for about nine teams. Each team has:
 - Someone who likes to write (**Assistant**)
 - Someone who is less excited about writing (**User**)
 - Some **observers**
@@ -129,8 +129,7 @@ Each team is given:
 |---|---|
 | 1 User | Behave as a real user would. Answer questions honestly, but don't volunteer information. Don't organize your thoughts for the assistant. Don't diagnose what the assistant needs. |
 | 1 Letter Writing Assistant | Enact the role. |
-| Observer 1 (Interaction Lens) | What had to happen for progress to occur? |
-| Observer 2 (System Lens) | What would this role need to function reliably? |
+| 1–2 Observers | **Observer 1 (Interaction Lens):** What had to happen for progress to occur? **Observer 2 (System Lens):** What would this role need to function reliably? |
 
 **Observer Guidelines**
 - Use Post-its to capture observations
@@ -140,9 +139,9 @@ Each team is given:
 
 **Time limit: 10 minutes**, one continuous run:
 
-> **At minute 5:** The User suddenly remembers something (and reveals one additional note).
+> **At minute 5:** The User suddenly remembers something (and reveals one additional note of their choice).
 >
-> **At minute 8:** The User suddenly remembers something else (and introduces another additional note).
+> **At minute 8:** The User introduces a new constraint.
 
 Handout: [workshop/enact.md](workshop/enact.md)
 
@@ -165,17 +164,15 @@ Assistants, Users, Observers: review these questions.
 
 Observers: Select 2–3 key Post-its.
 
-**Then: Volunteer-group debrief (~3 min per team)**
+**Then: Volunteer debrief (~3 min per team, as time allows)**
 
-Rotate through all teams, one at a time:
+Teams volunteer one at a time until the debrief's time is up; not every team needs to speak. For each team:
 
 - Assistants speak first
 - Users respond
 - Observers share (read selected Post-its)
 
 *This sequence is deliberately staged to lead with assistant intention, then how it was experienced, then how it was observed.*
-
-With about nine teams, the whole debrief runs roughly half an hour.
 
 ---
 
@@ -192,9 +189,9 @@ Raised during the debrief:
 
 ### Goal Cards
 
-Each team is assigned a Goal Card before the session begins. The card gives the person playing the User a scenario and asks them to *think of a time* they needed to write that letter. It doesn't have to be a profound moment. A matching sheet of Rough User Notes holds fragments to reveal in stages ("Use these, or something from your own experience. The point being you don't remember everything at once."). The person playing the Assistant does not see the card or the notes in advance.
+Each team is assigned a Goal Card before the session begins. The current cards (A–C) give the person playing the User a scenario and ask them to *think of a time* they needed to write that letter. It doesn't have to be a profound moment. A matching sheet of Rough User Notes holds fragments to reveal in stages ("Use these, or something from your own experience. The point being you don't remember everything at once."). The person playing the Assistant does not see the card or the notes in advance.
 
-The current printed set covers three common experiences: **resignation**, **apology**, and **formal complaint**. Three earlier cards (internal recommendation, public statement, performance feedback) are kept for groups with that kind of experience.
+The current printed set covers three common experiences: **resignation**, **apology**, and **formal complaint**. Three earlier cards (internal recommendation, public statement, performance feedback) are kept for groups with that kind of experience. They use the earlier format: no *think of a time* prompt, and their staged notes are printed on the card rather than on a separate sheet.
 
 **[View the Goal Cards and Rough User Notes →](workshop/goal-cards.md)**
 
@@ -216,13 +213,106 @@ The five framework artifacts are:
 | **Handoff Map** | Which role hands off to which, and what data passes between them |
 | **Debrief Log** | Observations from the session organized by role decisions, role boundaries, role handoffs, and role knowledge base needs |
 
-A complete document set is the output of this chapter. These documents drive everything in Chapter 5.
+This chapter follows the order the workshop runs in. First describe the single assistant you enacted, test it, and present it. Then, as a follow-up, decompose it into several roles once you have seen where one role strains. The complete document set drives Chapter 5.
 
 ---
 
-### Phase 1 — Role Decomposition
+### Step 1 — Describe the Role
 
-Decomposition is a **follow-up exercise**. It comes after teams have enacted a single assistant, described it on a Role Card, and tested it in Agent Studio.
+Describe the single **Letter Writing Assistant** you enacted by filling in a Role Card:
+
+| Field | Description |
+|---|---|
+| Role Name | The name or identity of the role being defined. It may also imply a particular perspective, expertise, or persona. |
+| Purpose | Why the role exists and the outcome it is intended to help produce. |
+| Engagement Context | The situation, circumstances, or conditions in which someone approaches or engages this role. |
+| Behavioral Rules | The principles, instructions, defaults, tone, personality, and ways of responding that govern how the role behaves while performing its work. |
+| Interaction Loop | The recurring sequence the role follows to elicit what it needs, perform its work, check its understanding, respond to new information, and move the interaction toward an output. |
+| Boundaries | The limits within which the role operates, including limits of scope, authority, responsibility, or judgment. |
+| Does Not Do | The actions, decisions, responsibilities, or behaviors that are explicitly outside the role. |
+| Required Inputs | The information, materials, constraints, preferences, and decisions the role needs the user to provide in order to do its work. |
+| Outputs | The artifacts, information, recommendations, decisions, actions, or other results the role produces. |
+| Knowledge Base | The standing knowledge the role knows or has access to in order to perform its work: facts, concepts, methods, heuristics, domain patterns, terminology, examples, documents, manuals, policies, procedures, rubrics, and other authoritative reference materials. |
+
+Template: [workshop/role-card-template.md](workshop/role-card-template.md)
+
+> Your cards don't need to be perfect. You will iterate on them as you get feedback on behavior.
+
+#### Sample Role Card
+
+A fully worked card: **Cheerful MDes Thesis Feedback Ghostwriter**, a role that helps a classmate turn a half-formed critique into a feedback letter that is useful, specific, and recognizably theirs. It shows every field filled in, including a seven-step Interaction Loop and a Knowledge Base of studio-critique heuristics.
+
+Worked example: [workshop/role-card-example-ghostwriter.md](workshop/role-card-example-ghostwriter.md)
+
+---
+
+### Step 2 — Test the Role in Agent Design Studio
+
+Use **[Agent Design Studio](https://agentstudio.aroughidea.com/)** to test what you designed before moving into code. It is a sandbox for designing behavior: a reasonably model-agnostic place to adjust the main design surfaces of an agent, without needing a provider account or a developer platform:
+
+- The model powering the behavior
+- The instructions that define its role
+- The temperature that changes how consistent or exploratory it feels
+- The knowledge it can use
+- The user input it must interpret
+- The output it produces
+
+**Set up your letter writing assistant. Evaluate the feedback. Iterate on your design.**
+
+Take the contents of your Role Card and put it into Agent Studio:
+
+| Role Card field | Goes into Agent Studio as |
+|---|---|
+| Role Name | System Instructions |
+| Purpose | System Instructions |
+| Engagement Context | System Instructions |
+| Behavioral Rules | System Instructions |
+| Interaction Loop | System Instructions |
+| Boundaries | System Instructions |
+| Does Not Do | System Instructions |
+| Required Inputs | System Instructions |
+| Outputs | System Instructions |
+| Knowledge Base | Knowledge. Keep this limited to one page for now. |
+
+Then play the User from your Goal Card and see whether the agent behaves the way the card says it should.
+
+In the Agent Studio view, work through its seven steps:
+
+1. Select a model
+2. Edit system instructions
+3. Add/replace knowledge
+4. Set the temperature
+5. Edit default questions
+6. Test through conversation
+7. Download results
+
+> "We are not using Agent Design Studio because it is the final production tool. We are using it because it makes agent behavior visible, testable, and discussable without requiring code."
+
+Handout, including where Agent Design Studio fits among comparable tools: [workshop/agent-design-studio.md](workshop/agent-design-studio.md)
+
+---
+
+### Step 3 — Present Your Agent
+
+> **Design Practice Question:** *How will you present the design of your agent?*
+>
+> **A presentation that captures the design decisions you have made, why you made them, and how you have tested them.**
+
+Build it from three design artifacts that let others discuss and critique your agent:
+
+| # | Artifact | What it contains |
+|---|---|---|
+| 1 | **Design Intent** | System Instructions, Knowledge Base, parameters |
+| 2 | **System Diagram** | The agent, with what goes in and what comes out |
+| 3 | **Design Quals** | Expected responses given a prompt |
+
+These three line up with the three verification steps in Chapter 6: settings, structure, and behavior.
+
+---
+
+### Step 4 — Decompose the Role (Follow-Up Exercise)
+
+Decomposition comes after the single role has been described, tested, and presented. By then, teams have seen for themselves where one role strains.
 
 **Open by asking each team:**
 
@@ -232,6 +322,8 @@ Decomposition is a **follow-up exercise**. It comes after teams have enacted a s
 - What different things might they want to compare or think about?
 
 Then begin the decomposition exercise.
+
+#### Phase 1 — Role Decomposition
 
 One person previously acted as the entire assistant.
 
@@ -252,9 +344,7 @@ One person previously acted as the entire assistant.
 
 **Time limit: 20 minutes**
 
----
-
-### Phase 2 — Decomposition as Design Decision
+#### Phase 2 — Decomposition as Design Decision
 
 Decomposition is a design decision, not a correctness problem.
 
@@ -273,9 +363,7 @@ Decomposition is a design decision, not a correctness problem.
 | Gallery walk | Compare approaches. Mark: surprising split / same split / different approach / question | 5 min |
 | Discussion | — | 7 min |
 
----
-
-### Phase 3 — Decomposition Discussion
+#### Phase 3 — Decomposition Discussion
 
 Same as Phase 2, plus:
 
@@ -283,26 +371,9 @@ Same as Phase 2, plus:
 
 > "What different splits did teams make?"
 
----
+#### Define Each Role
 
-### Exercise 1 — Role Definition
-
-For each role, fill in a Role Card:
-
-| Field | Description |
-|---|---|
-| Role Name | The name or identity of the role being defined. It may also imply a particular perspective, expertise, or persona. |
-| Purpose | Why the role exists and the outcome it is intended to help produce. |
-| Engagement Context | The situation, circumstances, or conditions in which someone approaches or engages this role. |
-| Behavioral Rules | The principles, instructions, defaults, tone, personality, and ways of responding that govern how the role behaves while performing its work. |
-| Interaction Loop | The recurring sequence the role follows to elicit what it needs, perform its work, check its understanding, respond to new information, and move the interaction toward an output. |
-| Boundaries | The limits within which the role operates, including limits of scope, authority, responsibility, or judgment. |
-| Does Not Do | The actions, decisions, responsibilities, or behaviors that are explicitly outside the role. |
-| Required Inputs | The information, materials, constraints, preferences, and decisions the role needs the user to provide in order to do its work. |
-| Outputs | The artifacts, information, recommendations, decisions, actions, or other results the role produces. |
-| Knowledge Base | The standing knowledge the role knows or has access to in order to perform its work: facts, concepts, methods, heuristics, domain patterns, terminology, examples, documents, manuals, policies, procedures, rubrics, and other authoritative reference materials. |
-
-Template: [workshop/role-card-template.md](workshop/role-card-template.md)
+Fill in a Role Card for each new role, using the same template as Step 1.
 
 Also:
 
@@ -311,19 +382,7 @@ Also:
 
 **Time limit: 15 minutes**
 
----
-
-### Sample Role Card
-
-A fully worked card: **Cheerful MDes Thesis Feedback Ghostwriter**, a role that helps a classmate turn a half-formed critique into a feedback letter that is useful, specific, and recognizably theirs. It shows every field filled in, including a seven-step Interaction Loop and a Knowledge Base of studio-critique heuristics.
-
-Worked example: [workshop/role-card-example-ghostwriter.md](workshop/role-card-example-ghostwriter.md)
-
-> Your cards don't need to be perfect. You will iterate on them as you get feedback on behavior.
-
----
-
-### Sample Relationship Diagram
+#### Sample Relationship Diagram
 
 ```
 User
@@ -333,9 +392,7 @@ User
                                               (feedback loop)
 ```
 
----
-
-### Submission Example
+#### Submission Example
 
 *(Visual example illustrating a completed system design submission.)*
 
@@ -387,49 +444,9 @@ Run with decomposed roles:
 
 ---
 
-### Exercise 2 — Prototype the Role's Behavior
+### Exercise 2 — Test the Decomposed Roles, Then Build
 
-Use **[Agent Design Studio](https://agentstudio.aroughidea.com/)** to test what you designed before moving into code. It is a sandbox for designing behavior: a reasonably model-agnostic place to adjust the main design surfaces of an agent, without needing a provider account or a developer platform:
-
-- The model powering the behavior
-- The instructions that define its role
-- The temperature that changes how consistent or exploratory it feels
-- The knowledge it can use
-- The user input it must interpret
-- The output it produces
-
-**Set up your letter writing assistant. Evaluate the feedback. Iterate on your design.**
-
-Take the contents of your Role Card and put it into Agent Studio:
-
-| Role Card field | Goes into Agent Studio as |
-|---|---|
-| Role Name | System Instructions |
-| Purpose | System Instructions |
-| Engagement Context | System Instructions |
-| Behavioral Rules | System Instructions |
-| Interaction Loop | System Instructions |
-| Boundaries | System Instructions |
-| Does Not Do | System Instructions |
-| Required Inputs | System Instructions |
-| Outputs | System Instructions |
-| Knowledge Base | Knowledge. Keep this limited to one page for now. |
-
-Then play the User from your Goal Card and see whether the agent behaves the way the card says it should.
-
-In the Agent Studio view, work through its seven steps:
-
-1. Select a model
-2. Edit system instructions
-3. Add/replace knowledge
-4. Set the temperature
-5. Edit default questions
-6. Test through conversation
-7. Download results
-
-> "We are not using Agent Design Studio because it is the final production tool. We are using it because it makes agent behavior visible, testable, and discussable without requiring code."
-
-Handout, including where Agent Design Studio fits among comparable tools: [workshop/agent-design-studio.md](workshop/agent-design-studio.md)
+Test each new role in Agent Design Studio the same way you tested the single role ([Chapter 4, Step 2](#step-2--test-the-role-in-agent-design-studio)).
 
 When the behavior is right and the system needs to become real, move into code with **AI Studio** or your assigned coding assistant. Letterly began that way, as an AI Studio prototype.
 
@@ -447,24 +464,6 @@ When the behavior is right and the system needs to become real, move into code w
 - Where instability emerged
 - What forced decomposition
 - Why you chose your approach
-
----
-
-### Presenting Your Agent
-
-> **Design Practice Question:** *How will you present the design of your agent?*
->
-> **A presentation that captures the design decisions you have made, why you made them, and how you have tested them.**
-
-Build it from three design artifacts that an agent can be discussed and critiqued through:
-
-| # | Artifact | What it contains |
-|---|---|---|
-| 1 | **Design Intent** | System Instructions, Knowledge Base, parameters |
-| 2 | **System Diagram** | The agent, with what goes in and what comes out |
-| 3 | **Design Quals** | Expected responses given a prompt |
-
-These three line up with the three verification steps in Chapter 6: settings, structure, and behavior.
 
 ---
 
