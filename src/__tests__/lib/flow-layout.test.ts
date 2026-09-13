@@ -130,6 +130,31 @@ describe('layoutColumns', () => {
   });
 });
 
+describe('layoutColumns with wires that run backwards', () => {
+  // Letterly's flow has none, but the layout must still draw them inside the canvas if a flow does.
+  const node = (id: string, role: 'input' | 'agent' | 'output', inputs: string[], outputs: string[]) => ({
+    id, title: id, subtitle: '', description: '', role, group: 'core-agent' as const, triggers: [],
+    inputs: inputs.map(p => ({ id: p, kind: 'text' as const })), outputs: outputs.map(p => ({ id: p, kind: 'text' as const })),
+  });
+  const flow = {
+    nodes: [node('in', 'input', ['a', 'b', 'c', 'd', 'e'], ['x']), node('agent', 'agent', ['x'], ['y']), node('out', 'output', ['y'], [])],
+    wires: [
+      { id: 'in.x->agent.x', from: { node: 'in', port: 'x' }, to: { node: 'agent', port: 'x' }, when: 'w' },
+      { id: 'agent.y->out.y', from: { node: 'agent', port: 'y' }, to: { node: 'out', port: 'y' }, when: 'w' },
+      ...['a', 'b', 'c', 'd', 'e'].map(p => ({ id: `agent.y->in.${p}`, from: { node: 'agent', port: 'y' }, to: { node: 'in', port: p }, when: 'w' })),
+    ],
+  };
+
+  it('keeps every backward route inside the drawing', () => {
+    const layout = layoutColumns(flow);
+    for (const route of layout.wires) {
+      const xs = (route.path.match(/-?\d+(\.\d+)?/g) ?? []).map(Number).filter((_, i) => i % 2 === 0);
+      expect({ wire: route.id, minX: Math.min(...xs) >= 0, maxX: Math.max(...xs) <= layout.width })
+        .toEqual({ wire: route.id, minX: true, maxX: true });
+    }
+  });
+});
+
 describe('layoutElk', () => {
   let layout: FlowLayout;
   beforeAll(async () => {

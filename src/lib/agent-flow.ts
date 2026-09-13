@@ -60,7 +60,10 @@ export interface FlowNode {
   triggers: string[];
   inputs: Port[];
   outputs: Port[];
-  /** For agents: true where the route sends the instruction the author can edit in the Writers' Room. Drawn as a hollow port. */
+  /**
+   * For agents: true where an instruction the author edits in the Writers' Room actually reaches the model:
+   * the app sends it, and the agent's route uses it. Drawn as a hollow port.
+   */
   instructionPort?: boolean;
   /** For agents that run on another agent's model rather than their own. */
   modelFrom?: string;
@@ -171,7 +174,7 @@ const AGENT_FACTS: Record<AgentId, AgentDiagramFacts> = {
   MATCH_SUGGESTIONS_SCORER: {
     group: 'embed-agent',
     background: true,
-    triggers: ['Fallback only: when the Suggestion Matcher returns no list of matches'],
+    triggers: ["Fallback only: when the Suggestion Matcher's response has no match list at all, for example because it failed (an empty list does not trigger it)"],
   },
   MATCH_SUGGESTIONS: {
     group: 'match-agent',
@@ -182,14 +185,12 @@ const AGENT_FACTS: Record<AgentId, AgentDiagramFacts> = {
     group: 'detect-agent',
     background: true,
     triggers: ['Sending a chat message (inside the refine route, before the Refinement Editor runs)'],
-    instructionPort: true,
     modelFrom: 'REFINE',
   },
   DETECT_IMAGE_REQUEST: {
     group: 'detect-agent',
     background: true,
     triggers: ['Every draft, for a rough-notes line that asks to add or create an image (inside the generate route)'],
-    instructionPort: true,
     modelFrom: 'GENERATE',
   },
   IMAGE: {
@@ -333,7 +334,7 @@ const GENERATES = 'Every draft: Generate Draft, after a chat message, or when a 
 const AFTER_DRAFT = 'After every new draft';
 const CHAT_SENT = 'Sending a chat message';
 const TYPING = 'Typing: 800 ms after the last keystroke';
-const FALLBACK = 'Fallback: when the Suggestion Matcher returns no list';
+const FALLBACK = "Fallback: only when the Suggestion Matcher's response has no match list at all (an empty list does not trigger it)";
 const LETTER_EDITED = 'Clicking out of the letter after editing it';
 
 const wires: Wire[] = [
@@ -368,6 +369,7 @@ const wires: Wire[] = [
   wire('left-panel-in.recipient', 'SUGGEST.recipient', AFTER_DRAFT),
   wire('left-panel-in.tone', 'SUGGEST.tone', AFTER_DRAFT),
   wire('left-panel-in.length', 'SUGGEST.length', AFTER_DRAFT),
+  wire('left-panel-in.styleExample', 'SUGGEST.styleExample', AFTER_DRAFT),
   wire('SUGGEST.suggestions', 'right-panel-out.suggestionChips', AFTER_DRAFT),
   wire('right-panel-in.suggestion', 'left-panel-out.roughNotes', 'Clicking a chip appends it to the notes; no agent is involved'),
 

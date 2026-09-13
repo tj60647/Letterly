@@ -132,6 +132,7 @@ Example Output:
             recipient: 'Optional — who the letter is addressed to',
             tone: 'Optional — tone of the letter (e.g. "Professional")',
             length: 'Optional — length setting used for the letter',
+            styleExample: 'Optional — example text whose writing style the letter should match',
         },
         outputDescription: 'JSON array of up to 3 actionable suggestion strings',
     },

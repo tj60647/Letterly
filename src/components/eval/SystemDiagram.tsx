@@ -59,6 +59,14 @@ function modelText(node: FlowNode, assignments: Record<string, string>): string 
   return MODEL_NAMES[modelId] || modelId;
 }
 
+/** Enter and Space act like a click on an SVG element given a button role. */
+const onActivateKey = (activate: () => void) => (e: React.KeyboardEvent) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    activate();
+  }
+};
+
 const touches = (wire: Wire, nodeId: string) => wire.from.node === nodeId || wire.to.node === nodeId;
 
 /** True for the node itself, or the other copy of the same interface panel. */
@@ -175,7 +183,14 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
                 style={{ cursor: 'pointer', opacity: lit ? 1 : 0.15 }}
                 onMouseEnter={() => setHovered(focusMe)}
                 onMouseLeave={() => setHovered(null)}
+                onFocus={() => setHovered(focusMe)}
+                onBlur={() => setHovered(null)}
                 onClick={() => togglePin(focusMe)}
+                onKeyDown={onActivateKey(() => togglePin(focusMe))}
+                role="button"
+                tabIndex={0}
+                aria-label={`Wire from ${wire.from.node}.${wire.from.port} to ${wire.to.node}.${wire.to.port}: ${wire.when}`}
+                aria-pressed={pinned?.type === 'wire' && pinned.id === wire.id}
               >
                 <path d={route.path} fill="none" stroke="transparent" strokeWidth={10} />
                 <path
@@ -210,6 +225,7 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
                 onFocus={() => setHovered(focusMe)}
                 onBlur={() => setHovered(null)}
                 onClick={() => togglePin(focusMe)}
+                onKeyDown={onActivateKey(() => togglePin(focusMe))}
                 role="button"
                 tabIndex={0}
                 aria-label={`${node.title}: ${node.description}`}

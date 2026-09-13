@@ -53,6 +53,27 @@ describe('SystemDiagram', () => {
     expect(screen.getByText(wire.when)).toBeInTheDocument();
   });
 
+  it('pins a node from the keyboard with Enter or Space', () => {
+    render(<SystemDiagram />);
+    const node = svg().querySelector('[data-node="REFINE"]')!;
+    fireEvent.keyDown(node, { key: 'Enter' });
+    expect(node).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.keyDown(node, { key: ' ' });
+    expect(node).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('lets a keyboard user focus a wire, read what it joins, and pin it', () => {
+    render(<SystemDiagram />);
+    const wire = LETTERLY_FLOW.wires.find(w => w.id === 'SYNC_NOTES.newPoints->left-panel-out.roughNotes')!;
+    const group = svg().querySelector(`[data-wire="${wire.id}"]`)!;
+    expect(group).toHaveAttribute('tabindex', '0');
+    expect(group).toHaveAttribute('role', 'button');
+    expect(group.getAttribute('aria-label')).toContain(wire.when);
+    fireEvent.keyDown(group, { key: 'Enter' });
+    expect(group).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText(wire.when)).toBeInTheDocument();
+  });
+
   it("shows a node's description and triggers on hover", () => {
     render(<SystemDiagram />);
     fireEvent.mouseEnter(svg().querySelector('[data-node="RECOMMEND_LENGTH"]')!);

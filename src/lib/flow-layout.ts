@@ -247,13 +247,17 @@ export function layoutColumns(flow: Flow): FlowLayout {
     }
   }
 
+  // Wires that run backwards need room outside the columns for their return segments.
+  const backwardCount = flow.wires.filter(w => column.get(w.to.node)! <= column.get(w.from.node)!).length;
+  const sidePad = MARGIN + (backwardCount ? 20 + 4 * backwardCount : 0);
+
   // Stack each column, centred on the tallest.
   const columnHeight = (col: FlowNode[]) =>
     col.reduce((sum, n) => sum + shapeOf(n).height, 0) + ROW_GAP * Math.max(0, col.length - 1);
   const tallest = Math.max(...columns.map(columnHeight));
   const boxes: NodeBox[] = [];
   columns.forEach((col, c) => {
-    const x = MARGIN + c * (NODE_WIDTH + COLUMN_GAP);
+    const x = sidePad + c * (NODE_WIDTH + COLUMN_GAP);
     let y = MARGIN + HEADING_SPACE + (tallest - columnHeight(col)) / 2;
     for (const n of col) {
       boxes.push(placeNode(n, x, round(y)));
@@ -293,10 +297,10 @@ export function layoutColumns(flow: Flow): FlowLayout {
   });
   const routes = placeLabels(unplaced, boxes);
 
-  const width = MARGIN * 2 + columnCount * NODE_WIDTH + (columnCount - 1) * COLUMN_GAP;
+  const width = sidePad * 2 + columnCount * NODE_WIDTH + (columnCount - 1) * COLUMN_GAP;
   const height = nodesBottom + 20 + LANE_GAP * lane + MARGIN;
   const headings: Heading[] = columns.map((_, c) => ({
-    x: MARGIN + c * (NODE_WIDTH + COLUMN_GAP) + NODE_WIDTH / 2,
+    x: sidePad + c * (NODE_WIDTH + COLUMN_GAP) + NODE_WIDTH / 2,
     label: c === 0 ? 'WHAT YOU GIVE' : c === columnCount - 1 ? 'WHAT AGENTS CHANGE' : lastAgentColumn === 1 ? 'AGENTS' : `AGENTS · STEP ${c}`,
   }));
 

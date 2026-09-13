@@ -104,13 +104,40 @@ describe('instruction setting ports', () => {
     }
   });
 
-  it("shows an instruction port exactly where the route sends the agent's instruction to the model", () => {
+  it("shows an instruction port exactly where the author's edited instruction can reach the model", () => {
+    const letterApp = fs.readFileSync(path.join(process.cwd(), 'src', 'components', 'LetterApp.tsx'), 'utf8');
     for (const node of LETTERLY_FLOW.nodes.filter(n => n.role === 'agent')) {
       const source = routeSource(node.id);
-      // The route copies this agent's config (so an override can replace its instruction) AND sends that copy's instruction.
-      const copiesThisAgent = new RegExp(`\\{\\s*\\.\\.\\.AGENTS\\.${node.id}\\s*\\}`).test(source);
-      const sendsInstruction = copiesThisAgent && /content:\s*agent\.systemInstruction/.test(source);
-      expect({ agent: node.id, instructionPort: node.instructionPort === true }).toEqual({ agent: node.id, instructionPort: sendsInstruction });
+      // 1. The app sends the author's edit for this agent,
+      const appSendsEdit = letterApp.includes(`customInstructions[AGENTS.${node.id}.id]`);
+      // 2. the route copies this agent's config so the edit can replace its instruction,
+      const routeCopiesAgent = new RegExp(`\\{\\s*\\.\\.\\.AGENTS\\.${node.id}\\s*\\}`).test(source);
+      // 3. and the route sends that copy's instruction to the model.
+      const routeSendsCopy = /content:\s*agent\.systemInstruction/.test(source);
+      const reaches = appSendsEdit && routeCopiesAgent && routeSendsCopy;
+      expect({ agent: node.id, instructionPort: node.instructionPort === true }).toEqual({ agent: node.id, instructionPort: reaches });
+    }
+  });
+});
+
+describe('agent input ports', () => {
+  /** Request fields a route reads that are settings or unused, not data an agent works on. */
+  const NOT_INPUTS: Record<string, string[]> = {
+    '*': ['model', 'systemInstruction'],
+    refine: ['currentTone'], // read from the body but never used by the route
+    suggest: ['context'], // a fixed label ("Letter") sent by the app, not author data
+  };
+
+  it("match the fields each agent's own route reads from the request", () => {
+    for (const [id, agent] of Object.entries(AGENTS)) {
+      const route = AGENT_ROUTES[id as keyof typeof AGENT_ROUTES];
+      if (id === 'IMAGE') continue; // called inside the generate route, not through its own request
+      const source = fs.readFileSync(path.join(process.cwd(), 'src', 'app', 'api', route, 'route.ts'), 'utf8');
+      const destructured = source.match(/const \{([^}]+)\} = (?:body|await req\.json\(\))/);
+      expect({ route, found: destructured !== null }).toEqual({ route, found: true });
+      const ignored = new Set([...NOT_INPUTS['*'], ...(NOT_INPUTS[route] ?? [])]);
+      const fields = destructured![1].split(',').map(f => f.trim()).filter(f => f && !ignored.has(f)).sort();
+      expect({ agent: id, fields }).toEqual({ agent: id, fields: Object.keys(agent.inputSchema).sort() });
     }
   });
 });
