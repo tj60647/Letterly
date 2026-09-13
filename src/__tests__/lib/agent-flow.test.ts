@@ -105,6 +105,13 @@ describe('LETTERLY_FLOW', () => {
     }
   });
 
+  it('explains, for every agent without an instruction port, why its instruction cannot be edited', () => {
+    for (const node of LETTERLY_FLOW.nodes.filter(n => n.role === 'agent')) {
+      const hasNote = typeof node.instructionNote === 'string' && node.instructionNote.length > 0;
+      expect({ agent: node.id, hasNote }).toEqual({ agent: node.id, hasNote: node.instructionPort !== true });
+    }
+  });
+
   it('names each labelled field exactly as the app labels it on screen', () => {
     const letterApp = fs.readFileSync(path.join(process.cwd(), 'src', 'components', 'LetterApp.tsx'), 'utf8');
     const labelled = LETTERLY_FLOW.nodes.filter(n => n.uiLabel);

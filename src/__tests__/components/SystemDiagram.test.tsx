@@ -114,6 +114,72 @@ describe('SystemDiagram', () => {
     expect(screen.getByText('Available from the start')).toBeInTheDocument();
   });
 
+  it('draws no subtitle on nodes, and shows it in the info panel instead', () => {
+    render(<SystemDiagram />);
+    expect(within(svg().querySelector('[data-node="GENERATE"]') as HTMLElement).queryByText('GENERATE')).toBeNull();
+    expect(within(svg().querySelector('[data-node="chips-in"]') as HTMLElement).queryByText('Right panel')).toBeNull();
+    fireEvent.mouseEnter(svg().querySelector('[data-node="chips-in"]')!);
+    expect(screen.getByText('Right panel', { exact: false })).toBeInTheDocument();
+  });
+
+  describe('agent settings', () => {
+    beforeEach(() => localStorage.clear());
+    const gear = (id: string) => svg().querySelector(`[data-node="${id}"] [data-gear]`) as HTMLElement | null;
+
+    it('puts a gear on every agent node, and on no interface node', () => {
+      render(<SystemDiagram />);
+      for (const node of LETTERLY_FLOW.nodes) {
+        expect({ node: node.id, gear: gear(node.id) !== null }).toEqual({ node: node.id, gear: node.role === 'agent' });
+      }
+    });
+
+    it("opens an agent's settings from its gear, with its model and instruction", () => {
+      render(<SystemDiagram />);
+      fireEvent.click(gear('GENERATE')!);
+      const dialog = screen.getByRole('dialog', { name: `${AGENTS.GENERATE.name} settings` });
+      expect(within(dialog).getByText(MODELS.find(m => m.id === AGENTS.GENERATE.primary)!.name)).toBeInTheDocument();
+      expect(within(dialog).getByRole('textbox', { name: 'System instruction' })).toHaveValue(AGENTS.GENERATE.systemInstruction);
+      expect(within(dialog).getByText('Default')).toBeInTheDocument();
+      // Opening settings is not the same as pinning the node.
+      expect(svg().querySelector('[data-node="GENERATE"]')).toHaveAttribute('aria-pressed', 'false');
+    });
+
+    it('saves an edited instruction where the Writers’ Room reads it, and resets it to the default', () => {
+      render(<SystemDiagram />);
+      fireEvent.click(gear('GENERATE')!);
+      const dialog = screen.getByRole('dialog', { name: `${AGENTS.GENERATE.name} settings` });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Edit' }));
+      fireEvent.change(within(dialog).getByRole('textbox', { name: 'System instruction' }), { target: { value: 'Always sign off with "Cheerio!"' } });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+      expect(JSON.parse(localStorage.getItem('letterly-custom-instructions')!)).toEqual({ GENERATE: 'Always sign off with "Cheerio!"' });
+      expect(within(dialog).getByText('Custom')).toBeInTheDocument();
+
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Reset to default' }));
+      expect(JSON.parse(localStorage.getItem('letterly-custom-instructions')!)).toEqual({});
+      expect(within(dialog).getByRole('textbox', { name: 'System instruction' })).toHaveValue(AGENTS.GENERATE.systemInstruction);
+    });
+
+    it('shows the instruction read-only, with the reason, where an edit would not reach the model', () => {
+      render(<SystemDiagram />);
+      fireEvent.click(gear('MATCH_SUGGESTIONS')!);
+      const dialog = screen.getByRole('dialog', { name: `${AGENTS.MATCH_SUGGESTIONS.name} settings` });
+      const node = LETTERLY_FLOW.nodes.find(n => n.id === 'MATCH_SUGGESTIONS')!;
+      expect(within(dialog).queryByRole('button', { name: 'Edit' })).toBeNull();
+      expect(within(dialog).getByRole('textbox', { name: 'System instruction' })).toHaveAttribute('readonly');
+      expect(within(dialog).getByText(node.instructionNote!)).toBeInTheDocument();
+    });
+
+    it('closes with the close button or Escape', () => {
+      render(<SystemDiagram />);
+      fireEvent.click(gear('REFINE')!);
+      fireEvent.click(screen.getByRole('button', { name: 'Close settings' }));
+      expect(screen.queryByRole('dialog')).toBeNull();
+      fireEvent.click(gear('REFINE')!);
+      fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+  });
+
   it('highlights both copies of a field when either is hovered', () => {
     render(<SystemDiagram />);
     fireEvent.mouseEnter(svg().querySelector('[data-node="tone-in"]')!);

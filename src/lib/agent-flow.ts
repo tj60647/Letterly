@@ -69,6 +69,8 @@ export interface FlowNode {
    * the app sends it, and the agent's route uses it. Drawn as a hollow port.
    */
   instructionPort?: boolean;
+  /** For agents without an instruction port: why an edited instruction would not reach the model. */
+  instructionNote?: string;
   /** For agents that run on another agent's model rather than their own. */
   modelFrom?: string;
 }
@@ -148,8 +150,11 @@ interface AgentDiagramFacts {
   background?: boolean;
   triggers: string[];
   instructionPort?: boolean;
+  instructionNote?: string;
   modelFrom?: AgentId;
 }
+
+const EMBEDDING_NOTE = 'An embedding model turns text into numbers and takes no instruction. This text describes what the agent does.';
 
 const AGENT_FACTS: Record<AgentId, AgentDiagramFacts> = {
   GENERATE: {
@@ -174,32 +179,42 @@ const AGENT_FACTS: Record<AgentId, AgentDiagramFacts> = {
     triggers: ['Clicking out of the letter after editing it'],
     instructionPort: true,
   },
-  SCORED: { group: 'embed-agent', background: true, triggers: ['After every new draft'] },
+  SCORED: {
+    group: 'embed-agent',
+    background: true,
+    triggers: ['After every new draft'],
+    instructionNote: EMBEDDING_NOTE,
+  },
   MATCH_SUGGESTIONS_SCORER: {
     group: 'embed-agent',
     background: true,
     triggers: ["Fallback only: when the Suggestion Matcher's response has no match list at all, for example because it failed (an empty list does not trigger it)"],
+    instructionNote: EMBEDDING_NOTE,
   },
   MATCH_SUGGESTIONS: {
     group: 'match-agent',
     background: true,
     triggers: ['Typing a chat message (800 ms after the last keystroke, once there are suggestions)'],
+    instructionNote: 'Its route always sends this default instruction and ignores any edit, so an edit would not reach the model.',
   },
   DETECT_TONE_REQUEST: {
     group: 'detect-agent',
     background: true,
     triggers: ['Sending a chat message (inside the refine route, before the Notes Editor runs)'],
+    instructionNote: "The refine route calls this detector without passing an instruction, so an edit would not reach the model. It is also hidden from the Writers' Room.",
     modelFrom: 'REFINE',
   },
   DETECT_IMAGE_REQUEST: {
     group: 'detect-agent',
     background: true,
     triggers: ['Every draft, for a rough-notes line that asks to add or create an image (inside the generate route)'],
+    instructionNote: "The generate route calls this detector without passing an instruction, so an edit would not reach the model. It is also hidden from the Writers' Room.",
     modelFrom: 'GENERATE',
   },
   IMAGE: {
     group: 'image-agent',
     triggers: ['When the Image Request Detector returns a subject (needs GOOGLE_API_KEY)'],
+    instructionNote: 'The generate route builds the image prompt from this default instruction directly, so an edit would not reach the model.',
   },
 };
 
@@ -218,6 +233,7 @@ const agentNodes: FlowNode[] = (Object.keys(AGENTS) as AgentId[]).map(id => {
     inputs: ports(...Object.keys(agent.inputSchema)),
     outputs: ports(...AGENT_OUTPUTS[id]),
     instructionPort: facts.instructionPort,
+    instructionNote: facts.instructionNote,
     modelFrom: facts.modelFrom,
   };
 });

@@ -18,6 +18,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { AGENTS, MODELS } from '@/lib/agent-constants';
 import { LETTERLY_FLOW, type FlowNode, type Kind, type NodeGroup, type Wire } from '@/lib/agent-flow';
 import { layoutColumns, layoutElk, labelWidth, LABEL_HEIGHT, type FlowLayout } from '@/lib/flow-layout';
+import { AgentSettingsPanel } from './AgentSettingsPanel';
 import styles from './SystemDiagram.module.css';
 
 // ── Colour scheme ─────────────────────────────────────────────────────────────
@@ -59,6 +60,10 @@ function modelText(node: FlowNode, assignments: Record<string, string>): string 
   return MODEL_NAMES[modelId] || modelId;
 }
 
+/** A 24×24 gear icon, drawn at half size on agent nodes. */
+const GEAR_PATH =
+  'M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54A.48.48 0 0 0 13.92 2h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.72 8.47a.48.48 0 0 0 .12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.48.48 0 0 0-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z';
+
 /** Enter and Space act like a click on an SVG element given a button role. */
 const onActivateKey = (activate: () => void) => (e: React.KeyboardEvent) => {
   if (e.key === 'Enter' || e.key === ' ') {
@@ -78,6 +83,7 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
   const [elkError, setElkError] = useState<string | null>(null);
   const [hovered, setHovered] = useState<Focus>(null);
   const [pinned, setPinned] = useState<Focus>(null);
+  const [settingsFor, setSettingsFor] = useState<string | null>(null);
 
   const columnsLayout = useMemo(() => layoutColumns(LETTERLY_FLOW), []);
 
@@ -262,9 +268,26 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
                 <text x={box.x + box.width / 2} y={box.titleY} textAnchor="middle" fill={style.text} fontSize={11.5} fontWeight="600" fontFamily="system-ui, sans-serif">
                   {node.title}
                 </text>
-                <text x={box.x + box.width / 2} y={box.subtitleY} textAnchor="middle" fill={style.text} fontSize={8.5} opacity={0.8} fontFamily={isOutput || node.role === 'input' ? 'system-ui, sans-serif' : 'monospace'}>
-                  {node.subtitle}
-                </text>
+                {node.role === 'agent' && (
+                  <g
+                    data-gear
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Settings for ${node.title}`}
+                    style={{ cursor: 'pointer' }}
+                    onClick={e => {
+                      e.stopPropagation();
+                      setSettingsFor(node.id);
+                    }}
+                    onKeyDown={e => {
+                      e.stopPropagation();
+                      onActivateKey(() => setSettingsFor(node.id))(e);
+                    }}
+                  >
+                    <circle cx={box.x + box.width - 14} cy={box.y + 13} r={9} fill="#ffffff" fillOpacity={0.18} />
+                    <path d={GEAR_PATH} transform={`translate(${box.x + box.width - 20}, ${box.y + 7}) scale(0.5)`} fill={style.text} />
+                  </g>
+                )}
                 {box.faceY !== null && (
                   <text data-face x={box.x + box.width / 2} y={box.faceY} textAnchor="middle" fill={style.text} fontSize={9} opacity={0.9} fontFamily="monospace">
                     {modelText(node, assignments)}
@@ -323,6 +346,7 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
               </span>
               <div className={styles.infoBody}>
                 <span className={styles.infoText}>{node.description}</span>
+                {node.role !== 'agent' && <span className={styles.infoModel}>{node.subtitle}</span>}
                 {node.available && (
                   <span className={styles.infoModel}>{node.available === 'after-draft' ? 'Available after the first draft' : 'Available from the start'}</span>
                 )}
@@ -348,6 +372,10 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
         {!focus && <span className={styles.infoPlaceholder}>Hover a node or wire to preview · click to pin</span>}
         {pinned && !hovered && <span className={styles.infoPinned}>pinned</span>}
       </div>
+
+      {settingsFor && (
+        <AgentSettingsPanel key={settingsFor} agentId={settingsFor} assignments={assignments} onClose={() => setSettingsFor(null)} />
+      )}
 
       {/* ── Legend ──────────────────────────────────────────────────── */}
       <div className={styles.legend}>

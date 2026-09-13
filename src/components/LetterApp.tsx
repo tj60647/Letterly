@@ -17,6 +17,7 @@ import styles from "./LetterApp.module.css";
 // ModelSelector removed in favor of AgentModelSettings
 import { AgentModelSettings } from "./AgentModelSettings";
 import { AGENTS } from "@/lib/agent-constants";
+import { CUSTOM_INSTRUCTIONS_KEY } from "@/lib/custom-instructions";
 import {
     SparklesIcon, CopyIcon, CheckIcon, EraserIcon,
     UserIcon, PenToolIcon, InfoIcon,
@@ -102,7 +103,7 @@ export default function LetterApp() {
 
     // Load custom instructions from localStorage on mount
     React.useEffect(() => {
-        const stored = localStorage.getItem('letterly-custom-instructions');
+        const stored = localStorage.getItem(CUSTOM_INSTRUCTIONS_KEY);
         if (stored) {
             try {
                 setCustomInstructions(JSON.parse(stored));
@@ -114,7 +115,7 @@ export default function LetterApp() {
 
     // Save custom instructions to localStorage whenever they change
     React.useEffect(() => {
-        localStorage.setItem('letterly-custom-instructions', JSON.stringify(customInstructions));
+        localStorage.setItem(CUSTOM_INSTRUCTIONS_KEY, JSON.stringify(customInstructions));
     }, [customInstructions]);
 
     // Output State

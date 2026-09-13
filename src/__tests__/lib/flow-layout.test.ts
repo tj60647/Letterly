@@ -64,6 +64,18 @@ function expectDrawable(getLayout: () => FlowLayout) {
     }
   });
 
+  it('keeps each node to a title row, a model row for agents, and its port rows', () => {
+    for (const box of getLayout().nodes) {
+      const node = LETTERLY_FLOW.nodes.find(n => n.id === box.id)!;
+      const rows = node.inputs.length + node.outputs.length + (node.instructionPort ? 1 : 0);
+      const expected = 26 + (node.role === 'agent' ? 16 : 0) + rows * 16 + 8;
+      expect({ node: box.id, height: box.height }).toEqual({ node: box.id, height: expected });
+      const firstPortY = Math.min(...[...box.inputs, ...box.outputs].map(p => p.y));
+      expect(box.titleY).toBeLessThan(firstPortY);
+      if (box.faceY !== null) expect(box.faceY).toBeLessThan(firstPortY);
+    }
+  });
+
   it('routes every wire from its output port to its input port, labelled with the ports it joins', () => {
     const layout = getLayout();
     const boxes = new Map(layout.nodes.map(n => [n.id, n]));
@@ -88,7 +100,7 @@ function expectDrawable(getLayout: () => FlowLayout) {
   it('places every wire label clear of every node', () => {
     const layout = getLayout();
     for (const route of layout.wires) {
-      const labelBox = { id: route.id, x: route.labelX - labelWidth(route.label) / 2, y: route.labelY - LABEL_HEIGHT / 2, width: labelWidth(route.label), height: LABEL_HEIGHT, inputs: [], outputs: [], instruction: null, titleY: 0, subtitleY: 0, faceY: null };
+      const labelBox = { id: route.id, x: route.labelX - labelWidth(route.label) / 2, y: route.labelY - LABEL_HEIGHT / 2, width: labelWidth(route.label), height: LABEL_HEIGHT, inputs: [], outputs: [], instruction: null, titleY: 0, faceY: null };
       const covered = layout.nodes.filter(n => overlaps(labelBox, n)).map(n => n.id);
       expect({ wire: route.id, covered }).toEqual({ wire: route.id, covered: [] });
     }

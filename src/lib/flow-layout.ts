@@ -35,9 +35,8 @@ export interface NodeBox {
   outputs: PortPoint[];
   /** Where the hollow instruction port sits, for agents that have one. */
   instruction: { x: number; y: number } | null;
-  /** Baselines for the text rows inside the node. */
+  /** Baseline for the node's title. */
   titleY: number;
-  subtitleY: number;
   /** The row that shows the model, for agents. */
   faceY: number | null;
 }
@@ -78,7 +77,7 @@ export interface FlowLayout {
 // ── Node geometry, shared by both layouts ────────────────────────────────────
 
 export const NODE_WIDTH = 210;
-const HEADER = 40;
+const HEADER = 26;
 const FACE_ROW = 16;
 const PORT_ROW = 16;
 const BOTTOM_PAD = 8;
@@ -106,7 +105,7 @@ function shapeOf(node: FlowNode): NodeShape {
     inputs,
     outputs,
     instructionDy,
-    faceDy: node.role === 'agent' ? HEADER + FACE_ROW / 2 + 4 : null,
+    faceDy: node.role === 'agent' ? HEADER + FACE_ROW / 2 + 1 : null,
   };
 }
 
@@ -122,7 +121,6 @@ function placeNode(node: FlowNode, x: number, y: number): NodeBox {
     outputs: s.outputs.map(p => ({ id: p.id, label: p.label ?? p.id, kind: p.kind, x: x + s.width, y: y + p.dy })),
     instruction: s.instructionDy === null ? null : { x, y: y + s.instructionDy },
     titleY: y + 17,
-    subtitleY: y + 31,
     faceY: s.faceDy === null ? null : y + s.faceDy,
   };
 }

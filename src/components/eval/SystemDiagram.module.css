@@ -195,3 +195,176 @@
   font-size: 0.8rem;
   color: var(--text-secondary);
 }
+
+/* ── Agent settings panel ────────────────────────────────────────────────── */
+
+.settingsPanel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 50;
+  width: min(440px, 100vw);
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--bg-primary, #ffffff);
+  border-left: 1px solid var(--border-subtle, #e2e8f0);
+  box-shadow: -8px 0 24px rgba(15, 23, 42, 0.12);
+  padding: 20px 22px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settingsHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settingsTitle {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.settingsId {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.settingsClose {
+  border: none;
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.settingsDescription {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.settingsList {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  gap: 8px 12px;
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.settingsList dt {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.settingsList dd {
+  margin: 0;
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settingsMuted {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.settingsBullets {
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.settingsInstructionHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settingsInstructionHeader h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.settingsBadgeCustom,
+.settingsBadgeDefault {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.settingsBadgeCustom {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.settingsBadgeDefault {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.settingsTextarea {
+  width: 100%;
+  font-family: monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle, #e2e8f0);
+  background: var(--bg-secondary, #f8fafc);
+  color: var(--text-primary);
+  resize: vertical;
+}
+
+.settingsTextarea[readonly] {
+  opacity: 0.85;
+}
+
+.settingsActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.settingsPrimary,
+.settingsSecondary {
+  font-size: 0.82rem;
+  padding: 5px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.settingsPrimary {
+  background: #1d4ed8;
+  border: 1px solid #1e40af;
+  color: #ffffff;
+}
+
+.settingsSecondary {
+  background: var(--bg-secondary, #f8fafc);
+  border: 1px solid var(--border-subtle, #e2e8f0);
+  color: var(--text-primary);
+}
+
+.settingsNote {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  background: var(--bg-secondary, #f8fafc);
+  border: 1px solid var(--border-subtle, #e2e8f0);
+  border-radius: 6px;
+  padding: 8px 10px;
+  line-height: 1.5;
+}
