@@ -73,7 +73,7 @@ IMPORTANT: Do NOT wrap normal text in backticks or code blocks. Only use code fo
     },
     REFINE: {
         id: 'REFINE',
-        name: 'Refinement Editor',
+        name: 'Notes Editor',
         description: 'Updates your rough notes based on your chat feedback. Tells the Draft Generator to make another pass.',
         type: 'chat',
         primary: "openai/gpt-oss-120b",

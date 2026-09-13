@@ -25,7 +25,7 @@ jest.mock('@/lib/models', () => ({
   AGENTS: {
     REFINE: {
       id: 'REFINE',
-      name: 'Refinement Editor',
+      name: 'Notes Editor',
       type: 'chat',
       primary: 'test-model',
       fallbacks: [],

@@ -154,7 +154,7 @@ const AGENT_FACTS: Record<AgentId, AgentDiagramFacts> = {
     group: 'core-agent',
     triggers: [
       'Generate Draft button',
-      'After the Refinement Editor updates the notes',
+      'After the Notes Editor updates the notes',
       'Changing tone, length, language, or a model, once a letter exists',
     ],
     instructionPort: true,
@@ -186,7 +186,7 @@ const AGENT_FACTS: Record<AgentId, AgentDiagramFacts> = {
   DETECT_TONE_REQUEST: {
     group: 'detect-agent',
     background: true,
-    triggers: ['Sending a chat message (inside the refine route, before the Refinement Editor runs)'],
+    triggers: ['Sending a chat message (inside the refine route, before the Notes Editor runs)'],
     modelFrom: 'REFINE',
   },
   DETECT_IMAGE_REQUEST: {
