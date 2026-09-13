@@ -21,6 +21,20 @@ By the end of this tutorial, you will have:
 - a working multi-agent application (Letterly) that emerged from that process
 - tools for inspecting and refining agent behavior after implementation
 
+### What "Agentic System" Means Here
+
+There is more than one working definition of an agentic system. Three are in common use, and each puts the weight somewhere different:
+
+| Definition | A system is agentic when… | Is Letterly agentic in this sense? |
+|---|---|---|
+| **1. Autonomous** | A model directs its own process: it plans, chooses tools, and decides what to do next, with little human intervention at each step. | **No, by design.** The application's code sets the order in which agents run, and the author closes every loop. |
+| **2. Multi-agent collaboration** | Several role-specialised agents each contribute part of the work, coordinating on a shared task. | **Yes.** Letterly's agents collaborate with the author, giving different kinds of feedback (drafting, refining notes, reviewing, recommending length, detecting tone) from a variety of input: notes, chat messages, edits to the letter, even a message still being typed. |
+| **3. Mixed-initiative** | The system takes initiative alongside the person. It notices, proposes, and reshapes the interface, while the person keeps authority over the result. | **Yes.** The interface changes with the state of the system. Agents add new tones to the Tone dropdown, surface suggested review prompts that can be added to the notes with a click, highlight which suggestions a chat message addresses, and mark a recommended length. |
+
+Letterly is agentic in the second and third senses and deliberately not in the first: the author stays in charge of the letter. When you design your own system, decide which of these you are building. The answer changes what each role is allowed to decide on its own.
+
+*Further reading:* Anthropic, "[Building Effective AI Agents](https://www.anthropic.com/engineering/building-effective-agents)" (separates *workflows*, where code sets the path, from *agents*, where the model does). Sapkota, Roumeliotis & Karkee, "[AI Agents vs. Agentic AI: A Conceptual Taxonomy, Applications and Challenges](https://arxiv.org/abs/2505.10468)" (2025). AWS Prescriptive Guidance, "[Multi-agent collaboration](https://docs.aws.amazon.com/prescriptive-guidance/latest/agentic-ai-patterns/multi-agent-collaboration.html)". Eric Horvitz, "Principles of Mixed-Initiative User Interfaces" (CHI 1999).
+
 Technical setup and a glossary are available at the end for readers who want to run the application locally or look up unfamiliar terms.
 
 ---
@@ -85,104 +99,101 @@ Forming a structured foundation for building an agentic application.
 
 ---
 
+### Workshop Materials
+
+The handouts for this chapter and the next are in **[workshop/](workshop/README.md)**, along with facilitator notes on choosing cards, grounding the User in a real memory, and casting roles.
+
+---
+
 ### Phase 1 — Enact the System
 
-You have been given:
+> **"What makes something hard to say?"** *The user knows the goal but not the words.*
+
+**Casting.** Take a headcount for each question and have people line up: "Who has done improv?", "Who likes to write?", "Who has done UX research?" Then assemble teams of 3–4 at a table (no laptops needed). The latest session was planned for about nine teams. Each team has:
+- Someone who likes to write (**Assistant**)
+- Someone who is less excited about writing (**User**)
+- Some **observers**
+
+Each team is given:
 
 - A Goal Card
 - A sheet of Rough User Notes (3–4 incomplete fragments)
 - A single role: "Letter Writing Assistant"
+- Post-it Notes and writing utensils
 
-**Enact the role. See what happens.**
+**Enact the roles you have been given. See what happens.**
 
-**Team Structure (4 people)**
+**Team Structure (3–4 people)**
 
 | Role | Responsibilities |
 |---|---|
-| 1 User | Answer questions honestly. Do not volunteer information. Do not organize thoughts for the assistant. Do not diagnose assistant needs. |
+| 1 User | Behave as a real user would. Answer questions honestly, but don't volunteer information. Don't organize your thoughts for the assistant. Don't diagnose what the assistant needs. |
 | 1 Letter Writing Assistant | Enact the role. |
-| Observer 1 (Interaction Lens) | What had to happen for progress? |
-| Observer 2 (System Lens) | What would this role need to function reliably? |
+| 1–2 Observers | **Observer 1 (Interaction Lens):** What had to happen for progress to occur? **Observer 2 (System Lens):** What would this role need to function reliably? |
 
 **Observer Guidelines**
-- Use Post-its
+- Use Post-its to capture observations
 - Write in fragments
-- Avoid interpretation
-- Avoid advising mid-session
+- Avoid interpretation during enactment
+- Avoid advising mid-session. Don't interact with the User or Assistant, just write down what you see happening.
 
-**Time limit: 10 minutes**
+**Time limit: 10 minutes**, one continuous run:
 
----
+> **At minute 5:** The User suddenly remembers something (and reveals one additional note of their choice).
+>
+> **At minute 8:** The User introduces a new constraint.
 
-### Phase 2 — Enact the System (Stage 2)
-
-Same as Phase 1, plus:
-
-> At minute 5: The User reveals one additional note.
+Handout: [workshop/enact.md](workshop/enact.md)
 
 ---
 
-### Phase 3 — Enact the System (Stage 3)
-
-Same as Phase 2, plus:
-
-> At minute 8: The User introduces a new constraint.
-
----
-
-### Phase 4 — Reflection & Debrief
+### Phase 2 — Reflection & Debrief
 
 **First: Individual teams process (3 min)**
 
-Questions:
+Assistants, Users, Observers: review these questions.
 
 - What did the assistant do?
-- What did it need?
-- What did it assume?
-- What did it produce?
+- What did the assistant need?
+- What did the assistant assume?
+- What did the assistant produce?
 - Where did it struggle?
 - Where did responsibility blur?
 - What felt unstable?
-- What required judgment vs. procedure?
+- What required judgment rather than procedure?
 
 Observers: Select 2–3 key Post-its.
 
-**Then: Whole-group debrief (~17 min)**
+**Then: Volunteer debrief (~3 min per team, as time allows)**
+
+Teams volunteer one at a time until the debrief's time is up; not every team needs to speak. For each team:
 
 - Assistants speak first
 - Users respond
-- Observers share
+- Observers share (read selected Post-its)
 
-**Time limit: 20 minutes**
+*This sequence is deliberately staged to lead with assistant intention, then how it was experienced, then how it was observed.*
 
 ---
 
 ### Extended Debrief Questions
 
-Same as Phase 4, plus:
-
-Additional questions:
+Raised during the debrief:
 
 - How do you know when you are done?
 - How did you manage scope?
-- Did you act like an assistant, or like a chatbot?
-- Who "owned" the assistant?
-
----
-
-### Workshop Activity Photos
-
-*(Photos of teams collaborating, Post-it observations, and role decomposition sketches from the live session.)*
+- Did you act like an assistant, or did you act like what you think a chatbot would do?
+- Who "owned" the assistant, the user or something else?
 
 ---
 
 ### Goal Cards
 
-Each team is assigned a Goal Card before the session begins. The card gives the person playing the User a scenario and a set of rough notes to reveal in stages. The person playing the Assistant does not see the notes in advance.
+Each team is assigned a Goal Card before the session begins. The current cards (A–C) give the person playing the User a scenario and ask them to *think of a time* they needed to write that letter. It doesn't have to be a profound moment. A matching sheet of Rough User Notes holds fragments to reveal in stages ("Use these, or something from your own experience. The point being you don't remember everything at once."). The person playing the Assistant does not see the card or the notes in advance.
 
-Six cards are available, covering different high-stakes letter writing situations: resignation, apology, formal complaint, internal recommendation, public statement, and performance feedback.
+The current printed set covers three common experiences: **resignation**, **apology**, and **formal complaint**. Three earlier cards (internal recommendation, public statement, performance feedback) are kept for groups with that kind of experience. They use the earlier format: no *think of a time* prompt, and their staged notes are printed on the card rather than on a separate sheet.
 
-**[View all Goal Cards →](GOAL_CARDS.md)**
+**[View the Goal Cards and Rough User Notes →](workshop/goal-cards.md)**
 
 ---
 
@@ -198,15 +209,121 @@ The five framework artifacts are:
 |---|---|
 | **Activity Brief** | The activity, its goal, and the constraints that apply |
 | **Stage-Reveal Prompt Set** | The staged information reveals used during bodystorming |
-| **Role Cards** | Each role's name, purpose, behavioral rules, boundaries, knowledge base, inputs, and outputs |
+| **Role Cards** | Each role's name, purpose, engagement context, behavioral rules, interaction loop, boundaries, what it does not do, required inputs, outputs, and knowledge base |
 | **Handoff Map** | Which role hands off to which, and what data passes between them |
 | **Debrief Log** | Observations from the session organized by role decisions, role boundaries, role handoffs, and role knowledge base needs |
 
-A complete document set is the output of this chapter. These documents drive everything in Chapter 5.
+This chapter follows the order the workshop runs in. First describe the single assistant you enacted, test it, and present it. Then, as a follow-up, decompose it into several roles once you have seen where one role strains. The complete document set drives Chapter 5.
 
 ---
 
-### Phase 1 — Role Decomposition
+### Step 1 — Describe the Role
+
+Describe the single **Letter Writing Assistant** you enacted by filling in a Role Card:
+
+| Field | Description |
+|---|---|
+| Role Name | The name or identity of the role being defined. It may also imply a particular perspective, expertise, or persona. |
+| Purpose | Why the role exists and the outcome it is intended to help produce. |
+| Engagement Context | The situation, circumstances, or conditions in which someone approaches or engages this role. |
+| Behavioral Rules | The principles, instructions, defaults, tone, personality, and ways of responding that govern how the role behaves while performing its work. |
+| Interaction Loop | The recurring sequence the role follows to elicit what it needs, perform its work, check its understanding, respond to new information, and move the interaction toward an output. |
+| Boundaries | The limits within which the role operates, including limits of scope, authority, responsibility, or judgment. |
+| Does Not Do | The actions, decisions, responsibilities, or behaviors that are explicitly outside the role. |
+| Required Inputs | The information, materials, constraints, preferences, and decisions the role needs the user to provide in order to do its work. |
+| Outputs | The artifacts, information, recommendations, decisions, actions, or other results the role produces. |
+| Knowledge Base | The standing knowledge the role knows or has access to in order to perform its work: facts, concepts, methods, heuristics, domain patterns, terminology, examples, documents, manuals, policies, procedures, rubrics, and other authoritative reference materials. |
+
+Template: [workshop/role-card-template.md](workshop/role-card-template.md)
+
+> Your cards don't need to be perfect. You will iterate on them as you get feedback on behavior.
+
+#### Sample Role Card
+
+A fully worked card: **Cheerful MDes Thesis Feedback Ghostwriter**, a role that helps a classmate turn a half-formed critique into a feedback letter that is useful, specific, and recognizably theirs. It shows every field filled in, including a seven-step Interaction Loop and a Knowledge Base of studio-critique heuristics.
+
+Worked example: [workshop/role-card-example-ghostwriter.md](workshop/role-card-example-ghostwriter.md)
+
+---
+
+### Step 2 — Test the Role in Agent Design Studio
+
+Use **[Agent Design Studio](https://agentstudio.aroughidea.com/)** to test what you designed before moving into code. It is a sandbox for designing behavior: a reasonably model-agnostic place to adjust the main design surfaces of an agent, without needing a provider account or a developer platform:
+
+- The model powering the behavior
+- The instructions that define its role
+- The temperature that changes how consistent or exploratory it feels
+- The knowledge it can use
+- The user input it must interpret
+- The output it produces
+
+**Set up your letter writing assistant. Evaluate the feedback. Iterate on your design.**
+
+Take the contents of your Role Card and put it into Agent Studio:
+
+| Role Card field | Goes into Agent Studio as |
+|---|---|
+| Role Name | System Instructions |
+| Purpose | System Instructions |
+| Engagement Context | System Instructions |
+| Behavioral Rules | System Instructions |
+| Interaction Loop | System Instructions |
+| Boundaries | System Instructions |
+| Does Not Do | System Instructions |
+| Required Inputs | System Instructions |
+| Outputs | System Instructions |
+| Knowledge Base | Knowledge. Keep this limited to one page for now. |
+
+Then play the User from your Goal Card and see whether the agent behaves the way the card says it should.
+
+In the Agent Studio view, work through its seven steps:
+
+1. Select a model
+2. Edit system instructions
+3. Add/replace knowledge
+4. Set the temperature
+5. Edit default questions
+6. Test through conversation
+7. Download results
+
+> "We are not using Agent Design Studio because it is the final production tool. We are using it because it makes agent behavior visible, testable, and discussable without requiring code."
+
+Handout, including where Agent Design Studio fits among comparable tools: [workshop/agent-design-studio.md](workshop/agent-design-studio.md)
+
+---
+
+### Step 3 — Present Your Agent
+
+> **Design Practice Question:** *How will you present the design of your agent?*
+>
+> **A presentation that captures the design decisions you have made, why you made them, and how you have tested them.**
+
+Build it from three design artifacts that let others discuss and critique your agent:
+
+| # | Artifact | What it contains |
+|---|---|---|
+| 1 | **Design Intent** | System Instructions, Knowledge Base, parameters |
+| 2 | **System Diagram** | The agent, with what goes in and what comes out |
+| 3 | **Design Quals** | Expected responses given a prompt |
+
+These three line up with the three verification steps in Chapter 6: settings, structure, and behavior.
+
+---
+
+### Step 4 — Decompose the Role (Follow-Up Exercise)
+
+Decomposition comes after the single role has been described, tested, and presented. By then, teams have seen for themselves where one role strains.
+
+**Open by asking each team:**
+
+- Did the assistant feel overwhelmed? Or like it was trying to do too many jobs at once? Or like it needed assistants too?
+- How might the assistant describe the ideal assistants?
+- Would the user wish they had more than one perspective on the letter?
+- What different things might they want to compare or think about?
+
+Then begin the decomposition exercise.
+
+#### Phase 1 — Role Decomposition
 
 One person previously acted as the entire assistant.
 
@@ -227,9 +344,7 @@ One person previously acted as the entire assistant.
 
 **Time limit: 20 minutes**
 
----
-
-### Phase 2 — Decomposition as Design Decision
+#### Phase 2 — Decomposition as Design Decision
 
 Decomposition is a design decision, not a correctness problem.
 
@@ -248,9 +363,7 @@ Decomposition is a design decision, not a correctness problem.
 | Gallery walk | Compare approaches. Mark: surprising split / same split / different approach / question | 5 min |
 | Discussion | — | 7 min |
 
----
-
-### Phase 3 — Decomposition Discussion
+#### Phase 3 — Decomposition Discussion
 
 Same as Phase 2, plus:
 
@@ -258,21 +371,9 @@ Same as Phase 2, plus:
 
 > "What different splits did teams make?"
 
----
+#### Define Each Role
 
-### Exercise 1 — Role Definition
-
-For each role define:
-
-| Field | Description |
-|---|---|
-| Role Name | — |
-| Purpose | — |
-| Behavioral rules | — |
-| Role Boundaries / Does not do | — |
-| Role Knowledge Base | — |
-| Required inputs | — |
-| Outputs | — |
+Fill in a Role Card for each new role, using the same template as Step 1.
 
 Also:
 
@@ -281,15 +382,7 @@ Also:
 
 **Time limit: 15 minutes**
 
----
-
-### Sample Role Card
-
-Same fields as Exercise 1, presented as a visual role card template (name, purpose, behavioral rules, role boundaries, role knowledge base, inputs, outputs).
-
----
-
-### Sample Relationship Diagram
+#### Sample Relationship Diagram
 
 ```
 User
@@ -299,9 +392,7 @@ User
                                               (feedback loop)
 ```
 
----
-
-### Submission Example
+#### Submission Example
 
 *(Visual example illustrating a completed system design submission.)*
 
@@ -353,9 +444,11 @@ Run with decomposed roles:
 
 ---
 
-### Exercise 2 — Use AI Studio
+### Exercise 2 — Test the Decomposed Roles, Then Build
 
-Use **AI Studio** (or your assigned coding assistant) to test what you designed.
+Test each new role in Agent Design Studio the same way you tested the single role ([Chapter 4, Step 2](#step-2--test-the-role-in-agent-design-studio)).
+
+When the behavior is right and the system needs to become real, move into code with **AI Studio** or your assigned coding assistant. Letterly began that way, as an AI Studio prototype.
 
 **Test:**
 - System instructions
@@ -400,15 +493,15 @@ User → Coordinator → Composition Roles → Refinement → Governance → Fin
 
 Instead of one single AI doing everything, Letterly uses a **Writers' Room** approach — a team of specialized agents working together, mirroring the decomposed roles you designed in the workshop:
 
-1.  **Draft Generator** — Writes and rewrites the draft letter based on your rough notes and settings.
-2.  **Refinement Editor** — Updates your rough notes based on your feedback so the Draft Generator can improve the letter.
-3.  **Suggestions** — Reviews the draft letter against your rough notes to propose specific improvements.
-4.  **Length Analyst** — Analyzes your rough notes to recommend the optimal length for the draft letter.
-5.  **Line Art Generator** — Draws a custom illustration if your rough notes explicitly request a drawing or image.
-6.  **Notes Sync** — Updates your rough notes to match any manual edits you make to the draft letter.
-7.  **Similarity Scorer** — Calculates how accurately the draft letter matches your rough notes.
+1.  **Letter Generator** — Writes and rewrites the draft letter based on your notes and settings.
+2.  **Notes Editor** — Updates your notes based on your chat feedback so the Letter Generator can improve the letter. It edits the notes, never the letter.
+3.  **Suggestions** — Reviews the draft letter against your notes to propose specific improvements.
+4.  **Length Analyst** — Analyzes your notes to recommend the optimal length for the draft letter.
+5.  **Line Art Generator** — Draws a custom illustration if your notes explicitly request a drawing or image.
+6.  **Notes Sync** — Updates your notes to match any manual edits you make to the draft letter.
+7.  **Similarity Scorer** — Calculates how accurately the draft letter matches your notes.
 8.  **Tone Detector** — Analyzes your chat messages to detect when you're requesting a tone change (e.g., "make it more formal").
-9.  **Image Request Detector** — Identifies requests for illustrations or images in your rough notes.
+9.  **Image Request Detector** — Identifies requests for illustrations or images in your notes.
 10. **Suggestion Matcher** — Intelligently matches your chat input to relevant editor suggestions using AI reasoning or semantic similarity.
 
 ### Customizing Your Agents
@@ -416,14 +509,14 @@ Instead of one single AI doing everything, Letterly uses a **Writers' Room** app
 Each agent comes with default instructions that define how it behaves. You can **customize these instructions** to change how any agent works:
 
 -   **Access the Writers' Room:** Click the gear icon (⚙️) in the top right corner to open the agent settings modal.
--   **Edit Instructions:** Click the gear icon next to any agent to enter edit mode. Modify the system instructions to change the agent's behavior (e.g., add "Always sign off with 'Cheerio!'" to make the Draft Generator include that signature).
+-   **Edit Instructions:** Click the gear icon next to any agent to enter edit mode. Modify the system instructions to change the agent's behavior (e.g., add "Always sign off with 'Cheerio!'" to make the Letter Generator include that signature).
 -   **Save or Reset:** Save your custom instructions, or reset to the default behavior at any time. Custom instructions are stored locally in your browser.
 -   **Visual Indicators:** Agents with custom instructions display a blue "✓ Custom Instructions" badge, while default agents show a gray "Default Instructions" badge.
 
 ### How They Collaborate
 
 Not all agents work the same way:
--   **In Series:** The **Refinement Editor** and **Draft Generator** work as a tag team. When you ask for changes, the Editor updates the plan first, and then the Writer rewrites the letter.
+-   **In Series:** The **Notes Editor** and **Letter Generator** work as a tag team. When you ask for changes, the Notes Editor updates the notes first, and then the Letter Generator rewrites the letter.
 -   **In the Background:** The **Suggestions**, **Length Analyst**, and **Similarity Scorer** agents work independently to analyze your work without interrupting you.
 -   **On Demand:** The **Line Art Generator** only steps in when specifically invited.
 
@@ -729,8 +822,13 @@ See `e2e/README.md` for detailed execution instructions.
 ### Key Terms (Glossary)
 
 - **Agent:** A role in the system given a name, purpose, behavioral rules, and defined inputs and outputs. In implementation, an agent is a call to a language model with a specific system instruction.
-- **Agentic System:** A system composed of multiple agents that collaborate, hand off work, and operate under defined role boundaries.
+- **Agentic System:** A system in which AI agents act with some initiative. There are three common working definitions: autonomous, multi-agent collaboration, and mixed-initiative. See [What "Agentic System" Means Here](#what-agentic-system-means-here) in Chapter 1. Letterly is agentic in the collaborative and mixed-initiative senses.
+- **Agent Design Studio:** A workshop-scale sandbox for prototyping an agent's behavior (model, instructions, temperature, knowledge) before writing code. Open it at [agentstudio.aroughidea.com](https://agentstudio.aroughidea.com/); see [workshop/agent-design-studio.md](workshop/agent-design-studio.md).
 - **Bodystorming:** A design method where participants physically enact a system's roles to discover behavioral assumptions before implementation.
+- **Design Intent:** The first of three design artifacts for presenting an agent: its system instructions, knowledge base, and parameters.
+- **Design Quals:** The third of the three design artifacts: expected responses given a prompt. What you check the running agent against.
+- **Engagement Context:** The situation, circumstances, or conditions in which someone approaches or engages a role.
+- **Interaction Loop:** The recurring sequence a role follows to elicit what it needs, perform its work, check its understanding, respond to new information, and move toward an output.
 - **Role Boundaries:** What a role will and will not do. These become the behavioral rules in a system instruction.
 - **Role Decisions:** The judgments a role must make during its operation.
 - **Role Handoffs:** The points at which one role passes its output to another.
@@ -767,13 +865,13 @@ These files mostly live in `src/app/api/`. They are the "kitchen" where the work
 - **`api/generate/route.ts`**: The main writer. It takes your notes and writes the letter. Supports custom system instructions.
 - **`api/refine/route.ts`**: The editor. It takes your feedback (e.g., "Make it shorter") and updates the notes. Supports custom system instructions.
 - **`api/suggest/route.ts`**: The critic. It looks at your draft and suggests improvements. Supports custom system instructions.
-- **`api/sync-notes/route.ts`**: The synchronizer. Detects changes made directly in the letter editor and syncs them back to your rough notes. Supports custom system instructions.
+- **`api/sync-notes/route.ts`**: The synchronizer. Detects changes made directly in the letter editor and syncs them back to your notes. Supports custom system instructions.
 
 **Helper/Detection Routes:**
 - **`api/detect-tone/route.ts`**: Analyzes chat messages to detect tone change requests (e.g., "make it more formal"). Supports custom system instructions.
-- **`api/detect-image/route.ts`**: Identifies image/illustration requests in your rough notes. Supports custom system instructions.
+- **`api/detect-image/route.ts`**: Identifies image/illustration requests in your notes. Supports custom system instructions.
 - **`api/recommend-length/route.ts`**: Analyzes notes complexity to recommend optimal letter length (Short/Medium/Long). Supports custom system instructions.
-- **`api/score/route.ts`**: Calculates semantic similarity score between rough notes and generated letter using embeddings.
+- **`api/score/route.ts`**: Calculates semantic similarity score between notes and generated letter using embeddings.
 
 **Suggestion Matching Routes:**
 - **`api/match-suggestions/route.ts`**: Uses vector embeddings and cosine similarity to match chat input against editor suggestions.
