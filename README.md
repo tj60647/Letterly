@@ -182,7 +182,7 @@ Raised during the debrief:
 
 - How do you know when you are done?
 - How did you manage scope?
-- Did you act like an assistant, or what you think a chatbot would do?
+- Did you act like an assistant, or did you act like what you think a chatbot would do?
 - Who "owned" the assistant, the user or something else?
 
 ---
