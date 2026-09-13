@@ -48,7 +48,7 @@ describe('SystemDiagram', () => {
 
   it('shows when a wire fires on hover', () => {
     render(<SystemDiagram />);
-    const wire = LETTERLY_FLOW.wires.find(w => w.id === 'SYNC_NOTES.newPoints->left-panel-out.roughNotes')!;
+    const wire = LETTERLY_FLOW.wires.find(w => w.id === 'SYNC_NOTES.newPoints->rough-notes-out.roughNotes')!;
     fireEvent.mouseEnter(svg().querySelector(`[data-wire="${wire.id}"]`)!);
     expect(screen.getByText(wire.when)).toBeInTheDocument();
   });
@@ -64,7 +64,7 @@ describe('SystemDiagram', () => {
 
   it('lets a keyboard user focus a wire, read what it joins, and pin it', () => {
     render(<SystemDiagram />);
-    const wire = LETTERLY_FLOW.wires.find(w => w.id === 'SYNC_NOTES.newPoints->left-panel-out.roughNotes')!;
+    const wire = LETTERLY_FLOW.wires.find(w => w.id === 'SYNC_NOTES.newPoints->rough-notes-out.roughNotes')!;
     const group = svg().querySelector(`[data-wire="${wire.id}"]`)!;
     expect(group).toHaveAttribute('tabindex', '0');
     expect(group).toHaveAttribute('role', 'button');
@@ -88,17 +88,17 @@ describe('SystemDiagram', () => {
     expect(within(svg()).getByText('WHAT YOU GIVE')).toBeInTheDocument();
   });
 
-  it('highlights both copies of a panel when either is hovered', () => {
+  it('highlights both copies of a field when either is hovered', () => {
     render(<SystemDiagram />);
-    fireEvent.mouseEnter(svg().querySelector('[data-node="left-panel-in"]')!);
-    expect(svg().querySelector('[data-node="left-panel-in"]')).toHaveAttribute('data-highlighted', 'true');
-    expect(svg().querySelector('[data-node="left-panel-out"]')).toHaveAttribute('data-highlighted', 'true');
-    expect(svg().querySelector('[data-node="center-panel-out"]')).toHaveAttribute('data-highlighted', 'false');
+    fireEvent.mouseEnter(svg().querySelector('[data-node="tone-in"]')!);
+    expect(svg().querySelector('[data-node="tone-in"]')).toHaveAttribute('data-highlighted', 'true');
+    expect(svg().querySelector('[data-node="tone-out"]')).toHaveAttribute('data-highlighted', 'true');
+    expect(svg().querySelector('[data-node="length-out"]')).toHaveAttribute('data-highlighted', 'false');
   });
 
   it('labels the interface agents change in plain words', () => {
     render(<SystemDiagram />);
-    expect(within(svg().querySelector('[data-node="left-panel-out"]') as HTMLElement).getByText('tone dropdown')).toBeInTheDocument();
+    expect(within(svg().querySelector('[data-node="tone-out"]') as HTMLElement).getByText('options and selection')).toBeInTheDocument();
   });
 
   it('switches to the ELK layout, which has no column headings', async () => {

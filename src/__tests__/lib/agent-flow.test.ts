@@ -65,18 +65,34 @@ describe('LETTERLY_FLOW', () => {
     }
   });
 
-  it('gives every interface node a panel, and titles both copies of a panel alike', () => {
+  it('draws each interface field once per side, and titles both copies of a field alike', () => {
     const interfaceNodes = LETTERLY_FLOW.nodes.filter(n => n.role !== 'agent');
-    for (const node of interfaceNodes) expect({ node: node.id, panel: typeof node.panel }).toEqual({ node: node.id, panel: 'string' });
+    for (const node of interfaceNodes) expect({ node: node.id, field: typeof node.field }).toEqual({ node: node.id, field: 'string' });
+    for (const role of ['input', 'output'] as const) {
+      const fields = interfaceNodes.filter(n => n.role === role).map(n => n.field);
+      expect({ role, unique: new Set(fields).size === fields.length }).toEqual({ role, unique: true });
+    }
     for (const a of interfaceNodes) {
       for (const b of interfaceNodes) {
-        if (a.panel === b.panel) expect(a.title).toBe(b.title);
+        if (a.field === b.field) expect({ field: a.field, title: a.title }).toEqual({ field: a.field, title: b.title });
       }
     }
-    const panelsOnBothSides = new Set(
-      interfaceNodes.filter(n => n.role === 'input').map(n => n.panel).filter(p => interfaceNodes.some(n => n.role === 'output' && n.panel === p))
-    );
-    expect(panelsOnBothSides.size).toBeGreaterThan(0);
+  });
+
+  it('gives each interface field no more than the two values a single control carries', () => {
+    for (const node of LETTERLY_FLOW.nodes.filter(n => n.role !== 'agent')) {
+      const values = node.role === 'input' ? node.outputs.length : node.inputs.length;
+      expect({ node: node.id, oneField: values >= 1 && values <= 2 }).toEqual({ node: node.id, oneField: true });
+    }
+  });
+
+  it('names each labelled field exactly as the app labels it on screen', () => {
+    const letterApp = fs.readFileSync(path.join(process.cwd(), 'src', 'components', 'LetterApp.tsx'), 'utf8');
+    const labelled = LETTERLY_FLOW.nodes.filter(n => n.uiLabel);
+    expect(labelled.length).toBeGreaterThan(0);
+    for (const node of labelled) {
+      expect({ node: node.id, onScreen: letterApp.includes(node.uiLabel!) }).toEqual({ node: node.id, onScreen: true });
+    }
   });
 
   it('names every element of the interface agents change in plain words', () => {

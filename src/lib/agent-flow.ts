@@ -12,9 +12,9 @@
  * - A wire runs from an output **port** on one node to an input port on another: `{ node, port }` to `{ node, port }`.
  * - Every port carries a **kind** of value (text, json, number, image), and is drawn in that kind's colour.
  *
- * The interface appears twice. On the left are the panels as the author gives to them (input nodes);
- * on the right are the same panels as agents change them (output nodes). Both copies of a panel share a
- * `panel` id and a title. Drawing it this way means every wire reads left to right, as one round of work.
+ * The interface appears twice, one node per field (a single on-screen control). On the left is each field as the
+ * author gives to it (input nodes); on the right, each field as agents change it (output nodes). Both copies of a field
+ * share a `field` id and a title. Drawing it this way means every wire reads left to right, as one round of work.
  *
  * An agent's input ports are read from its `inputSchema` in agent-constants.ts, so they are never typed twice.
  * Everything else here describes what the application code does today (LetterApp.tsx and the API routes).
@@ -36,9 +36,9 @@ export interface Port {
 
 /**
  * Where a node sits in the story of the diagram.
- * - `input`: a panel of the interface, as what the author types, chooses, or clicks.
+ * - `input`: one field of the interface, as what the author types, chooses, or clicks.
  * - `agent`: one AI agent from AGENTS.
- * - `output`: a panel of the interface, as what agents change on screen.
+ * - `output`: one field of the interface, as agents change it on screen.
  */
 export type NodeRole = 'input' | 'agent' | 'output';
 
@@ -52,8 +52,10 @@ export interface FlowNode {
   description: string;
   role: NodeRole;
   group: NodeGroup;
-  /** For interface nodes: which panel this is. The panel's two copies share it. */
-  panel?: string;
+  /** For interface nodes: which field this is. The field's two copies share it. */
+  field?: string;
+  /** For interface nodes: the label the app shows for this field, where it has one. Tests check it appears in LetterApp.tsx. */
+  uiLabel?: string;
   /** True for agents that run in the background, without the author asking. Drawn with a dashed border. */
   background?: boolean;
   /** What makes this node act. */
@@ -218,110 +220,50 @@ const agentNodes: FlowNode[] = (Object.keys(AGENTS) as AgentId[]).map(id => {
   };
 });
 
-const interfaceNodes: FlowNode[] = [
-  // ── What the author gives ──
-  {
-    id: 'left-panel-in',
-    title: 'Left panel',
-    subtitle: 'What you give',
-    description: 'Rough Notes, From, To, Tone, Length, Output Language, and Style Match: what the author types and chooses.',
-    role: 'input',
-    group: 'user-input',
-    panel: 'left-panel',
-    triggers: ['Typing in the notes', 'Choosing a setting', 'Generate Draft button'],
-    inputs: [],
-    outputs: ports('roughNotes', 'recipient', 'sender', 'tone', 'length', 'language', 'styleExample', 'toneOptions'),
-  },
-  {
-    id: 'chat-in',
-    title: 'Chat',
-    subtitle: 'What you give',
-    description: 'Messages the author types and sends to change the notes and regenerate the letter.',
-    role: 'input',
-    group: 'user-input',
-    panel: 'chat',
-    triggers: ['Typing a message', 'Sending a message'],
-    inputs: [],
-    outputs: ports('message', 'draft', 'history'),
-  },
-  {
-    id: 'center-panel-in',
-    title: 'Center panel',
-    subtitle: 'What you give',
-    description: 'The letter, which the author can click into and edit directly.',
-    role: 'input',
-    group: 'user-input',
-    panel: 'center-panel',
-    triggers: ['Clicking out of the letter after editing it'],
-    inputs: [],
-    outputs: ports('editedLetter'),
-  },
-  {
-    id: 'right-panel-in',
-    title: 'Right panel',
-    subtitle: 'What you give',
-    description: 'Suggestion chips the author can click to add to the notes.',
-    role: 'input',
-    group: 'user-input',
-    panel: 'right-panel',
-    triggers: ['Clicking a suggestion'],
-    inputs: [],
-    outputs: ports('suggestion'),
-  },
+/** A field of the interface, as the author gives to it: one on-screen control and the values it carries. */
+const given = (id: string, field: string, title: string, subtitle: string, description: string, triggers: string[], outputs: Port[], uiLabel?: string): FlowNode => ({
+  id, field, title, subtitle, description, triggers, outputs, uiLabel, role: 'input', group: 'user-input', inputs: [],
+});
 
-  // ── What agents change ──
-  {
-    id: 'left-panel-out',
-    title: 'Left panel',
-    subtitle: 'What agents change',
-    description: 'Agents rewrite or add to the rough notes, add and select a tone, and mark a recommended length.',
-    role: 'output',
-    group: 'output',
-    panel: 'left-panel',
-    triggers: [],
-    inputs: [
-      element('roughNotes', 'rough notes', 'text'),
-      element('toneDropdown', 'tone dropdown', 'text'),
-      element('lengthButtons', 'length buttons', 'text'),
-    ],
-    outputs: [],
-  },
-  {
-    id: 'center-panel-out',
-    title: 'Center panel',
-    subtitle: 'What agents change',
-    description: 'The draft letter, with any line-art watermark behind it.',
-    role: 'output',
-    group: 'output',
-    panel: 'center-panel',
-    triggers: [],
-    inputs: [element('letter', 'letter', 'text'), element('watermark', 'watermark', 'image')],
-    outputs: [],
-  },
-  {
-    id: 'right-panel-out',
-    title: 'Right panel',
-    subtitle: 'What agents change',
-    description: 'Suggestion chips, shaded when the chat message being typed addresses them.',
-    role: 'output',
-    group: 'output',
-    panel: 'right-panel',
-    triggers: [],
-    inputs: [element('suggestionChips', 'suggestion chips', 'json'), element('chipShading', 'chip shading', 'json')],
-    outputs: [],
-  },
-  {
-    id: 'stats-bar-out',
-    title: 'Stats bar',
-    subtitle: 'What agents change',
-    description: 'The Match % between the notes (with recipient and sender) and the letter.',
-    role: 'output',
-    group: 'output',
-    panel: 'stats-bar',
-    triggers: [],
-    inputs: [element('matchPercent', 'match %', 'number')],
-    outputs: [],
-  },
+/** The same field, as agents change it. */
+const changed = (id: string, field: string, title: string, subtitle: string, description: string, inputs: Port[], uiLabel?: string): FlowNode => ({
+  id, field, title, subtitle, description, inputs, uiLabel, role: 'output', group: 'output', triggers: [], outputs: [],
+});
+
+const interfaceNodes: FlowNode[] = [
+  // ── What the author gives: one node per field ──
+  given('rough-notes-in', 'rough-notes', 'Rough Notes', 'Left panel', 'The bullet-point notes the author types. Agents read them and write back to them.',
+    ['Typing in the notes', 'Generate Draft button'], ports('roughNotes'), 'Rough Notes'),
+  given('from-in', 'from', 'From', 'Left panel', 'Who is writing the letter.', ['Typing a name'], ports('sender'), 'From'),
+  given('to-in', 'to', 'To', 'Left panel', 'Who the letter is for.', ['Typing a name'], ports('recipient'), 'To'),
+  given('tone-in', 'tone', 'Tone', 'Left panel', 'The selected tone, and the list of tones the dropdown offers.',
+    ['Choosing a tone'], ports('tone', 'toneOptions'), 'Tone'),
+  given('length-in', 'length', 'Length', 'Left panel', 'Brief, Standard, or Detailed.', ['Choosing a length'], ports('length'), 'Length'),
+  given('language-in', 'language', 'Output Language', 'Left panel', 'The language the letter is written in.', ['Choosing a language'], ports('language'), 'Output Language'),
+  given('style-in', 'style', 'Style Match', 'Left panel', 'An optional sample of writing whose style the letter should match.',
+    ['Pasting a sample'], ports('styleExample'), 'Style Match'),
+  given('chat-message-in', 'chat-message', 'Chat Message', 'Refine & Iterate panel', 'The message the author is typing, and sends, to change the notes.',
+    ['Typing a message', 'Sending a message'], ports('message', 'draft'), 'Refine & Iterate'),
+  given('chat-history-in', 'chat-history', 'Chat History', 'Refine & Iterate panel', 'The messages the author has already sent in this conversation.',
+    ['Sending a message'], ports('history')),
+  given('letter-in', 'letter', 'Letter', 'Center panel', 'The letter, which the author can click into and edit directly.',
+    ['Clicking out of the letter after editing it'], ports('editedLetter')),
+  given('chips-in', 'chips', 'Editor Review', 'Right panel', 'Suggestion chips the author can click to add to the notes.',
+    ['Clicking a suggestion'], ports('suggestion'), 'Editor Review'),
+
+  // ── What agents change: one node per field ──
+  changed('rough-notes-out', 'rough-notes', 'Rough Notes', 'Left panel', 'Agents rewrite the notes or add to them.',
+    [element('roughNotes', 'notes', 'text')], 'Rough Notes'),
+  changed('tone-out', 'tone', 'Tone', 'Left panel', 'The Tone Request Detector adds a tone to the dropdown if it is new, then selects it.',
+    [element('toneDropdown', 'options and selection', 'text')], 'Tone'),
+  changed('length-out', 'length', 'Length', 'Left panel', 'The Length Analyst marks the recommended length button.',
+    [element('lengthButtons', 'recommended button', 'text')], 'Length'),
+  changed('letter-out', 'letter', 'Letter', 'Center panel', 'The draft letter, with any line-art watermark behind it.',
+    [element('letter', 'draft', 'text'), element('watermark', 'watermark', 'image')]),
+  changed('chips-out', 'chips', 'Editor Review', 'Right panel', 'Suggestion chips, shaded when the chat message being typed addresses them.',
+    [element('suggestionChips', 'suggestions', 'json'), element('chipShading', 'shading', 'json')], 'Editor Review'),
+  changed('match-out', 'match', 'Match %', 'Stats bar', 'The Match % between the notes (with recipient and sender) and the letter.',
+    [element('matchPercent', 'score', 'number')], '% Match'),
 ];
 
 const wire = (from: string, to: string, when: string): Wire => {
@@ -339,63 +281,63 @@ const LETTER_EDITED = 'Clicking out of the letter after editing it';
 
 const wires: Wire[] = [
   // Draft Generator
-  wire('left-panel-in.roughNotes', 'GENERATE.roughNotes', GENERATES),
-  wire('left-panel-in.recipient', 'GENERATE.recipient', GENERATES),
-  wire('left-panel-in.sender', 'GENERATE.sender', GENERATES),
-  wire('left-panel-in.tone', 'GENERATE.tone', GENERATES),
-  wire('left-panel-in.length', 'GENERATE.length', GENERATES),
-  wire('left-panel-in.language', 'GENERATE.language', GENERATES),
-  wire('left-panel-in.styleExample', 'GENERATE.styleExample', GENERATES),
-  wire('GENERATE.letter', 'center-panel-out.letter', GENERATES),
+  wire('rough-notes-in.roughNotes', 'GENERATE.roughNotes', GENERATES),
+  wire('to-in.recipient', 'GENERATE.recipient', GENERATES),
+  wire('from-in.sender', 'GENERATE.sender', GENERATES),
+  wire('tone-in.tone', 'GENERATE.tone', GENERATES),
+  wire('length-in.length', 'GENERATE.length', GENERATES),
+  wire('language-in.language', 'GENERATE.language', GENERATES),
+  wire('style-in.styleExample', 'GENERATE.styleExample', GENERATES),
+  wire('GENERATE.letter', 'letter-out.letter', GENERATES),
 
   // Line art, inside the generate route
-  wire('left-panel-in.roughNotes', 'DETECT_IMAGE_REQUEST.message', 'Every draft, for the first notes line that asks to add or create an image'),
+  wire('rough-notes-in.roughNotes', 'DETECT_IMAGE_REQUEST.message', 'Every draft, for the first notes line that asks to add or create an image'),
   wire('DETECT_IMAGE_REQUEST.subject', 'IMAGE.subject', 'When a subject is found and GOOGLE_API_KEY is set'),
-  wire('IMAGE.image', 'center-panel-out.watermark', 'When an image is generated'),
+  wire('IMAGE.image', 'letter-out.watermark', 'When an image is generated'),
 
   // Chat: tone detection, then refinement
-  wire('chat-in.message', 'DETECT_TONE_REQUEST.message', CHAT_SENT),
-  wire('left-panel-in.toneOptions', 'DETECT_TONE_REQUEST.existingTones', CHAT_SENT),
-  wire('DETECT_TONE_REQUEST.tone', 'left-panel-out.toneDropdown', 'When a tone change is detected: added to the dropdown if new, then selected'),
-  wire('left-panel-in.roughNotes', 'REFINE.roughNotes', CHAT_SENT),
-  wire('chat-in.message', 'REFINE.instructions', CHAT_SENT),
-  wire('chat-in.history', 'REFINE.conversationHistory', CHAT_SENT),
-  wire('left-panel-in.toneOptions', 'REFINE.existingTones', CHAT_SENT),
-  wire('REFINE.roughNotes', 'left-panel-out.roughNotes', 'Replaces the notes, then a new draft is generated'),
+  wire('chat-message-in.message', 'DETECT_TONE_REQUEST.message', CHAT_SENT),
+  wire('tone-in.toneOptions', 'DETECT_TONE_REQUEST.existingTones', CHAT_SENT),
+  wire('DETECT_TONE_REQUEST.tone', 'tone-out.toneDropdown', 'When a tone change is detected: added to the dropdown if new, then selected'),
+  wire('rough-notes-in.roughNotes', 'REFINE.roughNotes', CHAT_SENT),
+  wire('chat-message-in.message', 'REFINE.instructions', CHAT_SENT),
+  wire('chat-history-in.history', 'REFINE.conversationHistory', CHAT_SENT),
+  wire('tone-in.toneOptions', 'REFINE.existingTones', CHAT_SENT),
+  wire('REFINE.roughNotes', 'rough-notes-out.roughNotes', 'Replaces the notes, then a new draft is generated'),
 
   // Review after each draft
-  wire('left-panel-in.roughNotes', 'SUGGEST.roughNotes', AFTER_DRAFT),
+  wire('rough-notes-in.roughNotes', 'SUGGEST.roughNotes', AFTER_DRAFT),
   wire('GENERATE.letter', 'SUGGEST.generatedLetter', AFTER_DRAFT),
-  wire('left-panel-in.recipient', 'SUGGEST.recipient', AFTER_DRAFT),
-  wire('left-panel-in.tone', 'SUGGEST.tone', AFTER_DRAFT),
-  wire('left-panel-in.length', 'SUGGEST.length', AFTER_DRAFT),
-  wire('left-panel-in.styleExample', 'SUGGEST.styleExample', AFTER_DRAFT),
-  wire('SUGGEST.suggestions', 'right-panel-out.suggestionChips', AFTER_DRAFT),
-  wire('right-panel-in.suggestion', 'left-panel-out.roughNotes', 'Clicking a chip appends it to the notes; no agent is involved'),
+  wire('to-in.recipient', 'SUGGEST.recipient', AFTER_DRAFT),
+  wire('tone-in.tone', 'SUGGEST.tone', AFTER_DRAFT),
+  wire('length-in.length', 'SUGGEST.length', AFTER_DRAFT),
+  wire('style-in.styleExample', 'SUGGEST.styleExample', AFTER_DRAFT),
+  wire('SUGGEST.suggestions', 'chips-out.suggestionChips', AFTER_DRAFT),
+  wire('chips-in.suggestion', 'rough-notes-out.roughNotes', 'Clicking a chip appends it to the notes; no agent is involved'),
 
-  wire('left-panel-in.roughNotes', 'SCORED.roughNotes', `${AFTER_DRAFT} (joined with recipient and sender)`),
+  wire('rough-notes-in.roughNotes', 'SCORED.roughNotes', `${AFTER_DRAFT} (joined with recipient and sender)`),
   wire('GENERATE.letter', 'SCORED.letter', AFTER_DRAFT),
-  wire('SCORED.score', 'stats-bar-out.matchPercent', AFTER_DRAFT),
+  wire('SCORED.score', 'match-out.matchPercent', AFTER_DRAFT),
 
   // Matching a chat message to suggestions while typing
-  wire('chat-in.draft', 'MATCH_SUGGESTIONS.chatInput', TYPING),
+  wire('chat-message-in.draft', 'MATCH_SUGGESTIONS.chatInput', TYPING),
   wire('SUGGEST.suggestions', 'MATCH_SUGGESTIONS.suggestions', TYPING),
-  wire('MATCH_SUGGESTIONS.matches', 'right-panel-out.chipShading', 'Shades the chips the message addresses'),
-  wire('chat-in.draft', 'MATCH_SUGGESTIONS_SCORER.chatInput', FALLBACK),
+  wire('MATCH_SUGGESTIONS.matches', 'chips-out.chipShading', 'Shades the chips the message addresses'),
+  wire('chat-message-in.draft', 'MATCH_SUGGESTIONS_SCORER.chatInput', FALLBACK),
   wire('SUGGEST.suggestions', 'MATCH_SUGGESTIONS_SCORER.suggestions', FALLBACK),
-  wire('MATCH_SUGGESTIONS_SCORER.matches', 'right-panel-out.chipShading', 'Fallback: marks matched chips'),
+  wire('MATCH_SUGGESTIONS_SCORER.matches', 'chips-out.chipShading', 'Fallback: marks matched chips'),
 
   // Length recommendation
-  wire('left-panel-in.roughNotes', 'RECOMMEND_LENGTH.roughNotes', 'Editing the notes: 1 second after you stop'),
-  wire('RECOMMEND_LENGTH.recommendation', 'left-panel-out.lengthButtons', 'Marks the recommended length button'),
+  wire('rough-notes-in.roughNotes', 'RECOMMEND_LENGTH.roughNotes', 'Editing the notes: 1 second after you stop'),
+  wire('RECOMMEND_LENGTH.recommendation', 'length-out.lengthButtons', 'Marks the recommended length button'),
 
   // Editing the letter directly
-  wire('left-panel-in.roughNotes', 'SYNC_NOTES.roughNotes', LETTER_EDITED),
-  wire('center-panel-in.editedLetter', 'SYNC_NOTES.editedLetter', LETTER_EDITED),
-  wire('SYNC_NOTES.newPoints', 'left-panel-out.roughNotes', 'Appends new points to the notes; no new draft'),
+  wire('rough-notes-in.roughNotes', 'SYNC_NOTES.roughNotes', LETTER_EDITED),
+  wire('letter-in.editedLetter', 'SYNC_NOTES.editedLetter', LETTER_EDITED),
+  wire('SYNC_NOTES.newPoints', 'rough-notes-out.roughNotes', 'Appends new points to the notes; no new draft'),
 ];
 
-/** Letterly as a flow: the interface as the author gives to it, the agents, and the interface as agents change it. */
+/** Letterly as a flow: each field as the author gives to it, the agents, and each field as agents change it. */
 export const LETTERLY_FLOW: Flow = {
   nodes: [...interfaceNodes.filter(n => n.role === 'input'), ...agentNodes, ...interfaceNodes.filter(n => n.role === 'output')],
   wires,

@@ -69,8 +69,8 @@ const onActivateKey = (activate: () => void) => (e: React.KeyboardEvent) => {
 
 const touches = (wire: Wire, nodeId: string) => wire.from.node === nodeId || wire.to.node === nodeId;
 
-/** True for the node itself, or the other copy of the same interface panel. */
-const isSelfOrTwin = (a: string, b: string) => a === b || (!!NODES.get(a)?.panel && NODES.get(a)?.panel === NODES.get(b)?.panel);
+/** True for the node itself, or the other copy of the same interface field. */
+const isSelfOrTwin = (a: string, b: string) => a === b || (!!NODES.get(a)?.field && NODES.get(a)?.field === NODES.get(b)?.field);
 
 export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
   const [mode, setMode] = useState<LayoutMode>('columns');
@@ -109,7 +109,7 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
       <div className={styles.diagramIntro}>
         <p>
           Letterly&rsquo;s agents collaborate with you through the interface: they read what you type and choose, and they change
-          what you see. So the interface appears twice: on the left, <strong>what you give</strong>; on the right, <strong>what agents change</strong>. This diagram is drawn from the code&rsquo;s own description of that wiring
+          what you see. So each field of the interface appears twice: on the left, <strong>what you give</strong>; on the right, <strong>what agents change</strong>. This diagram is drawn from the code&rsquo;s own description of that wiring
           (<code>src/lib/agent-flow.ts</code>), so it changes when the wiring does.
           {' '}Each <strong>node</strong> has <strong>ports</strong>: inputs on the left, outputs on the right, coloured by the kind of value they carry.
           A <strong>hollow</strong> port is the instruction you can edit in the Writers&rsquo; Room.
@@ -305,7 +305,7 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
           return (
             <>
               <span className={styles.infoBadge} style={{ background: style.fill, color: style.text, border: `1px solid ${style.stroke}` }}>
-                {node.role === 'agent' ? node.subtitle : `${node.title} · ${node.subtitle.toLowerCase()}`}
+                {node.role === 'agent' ? node.subtitle : `${node.title} · ${node.role === 'input' ? 'what you give' : 'what agents change'}`}
               </span>
               <div className={styles.infoBody}>
                 <span className={styles.infoText}>{node.description}</span>
