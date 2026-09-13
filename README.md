@@ -494,7 +494,7 @@ User → Coordinator → Composition Roles → Refinement → Governance → Fin
 Instead of one single AI doing everything, Letterly uses a **Writers' Room** approach — a team of specialized agents working together, mirroring the decomposed roles you designed in the workshop:
 
 1.  **Draft Generator** — Writes and rewrites the draft letter based on your rough notes and settings.
-2.  **Refinement Editor** — Updates your rough notes based on your feedback so the Draft Generator can improve the letter.
+2.  **Notes Editor** — Updates your rough notes based on your chat feedback so the Draft Generator can improve the letter. It edits the notes, never the letter.
 3.  **Suggestions** — Reviews the draft letter against your rough notes to propose specific improvements.
 4.  **Length Analyst** — Analyzes your rough notes to recommend the optimal length for the draft letter.
 5.  **Line Art Generator** — Draws a custom illustration if your rough notes explicitly request a drawing or image.
@@ -516,7 +516,7 @@ Each agent comes with default instructions that define how it behaves. You can *
 ### How They Collaborate
 
 Not all agents work the same way:
--   **In Series:** The **Refinement Editor** and **Draft Generator** work as a tag team. When you ask for changes, the Editor updates the plan first, and then the Writer rewrites the letter.
+-   **In Series:** The **Notes Editor** and **Draft Generator** work as a tag team. When you ask for changes, the Notes Editor updates the notes first, and then the Draft Generator rewrites the letter.
 -   **In the Background:** The **Suggestions**, **Length Analyst**, and **Similarity Scorer** agents work independently to analyze your work without interrupting you.
 -   **On Demand:** The **Line Art Generator** only steps in when specifically invited.
 
