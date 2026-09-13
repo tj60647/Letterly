@@ -28,7 +28,7 @@ There is more than one working definition of an agentic system. Three are in com
 | Definition | A system is agentic when… | Is Letterly agentic in this sense? |
 |---|---|---|
 | **1. Autonomous** | A model directs its own process: it plans, chooses tools, and decides what to do next, with little human intervention at each step. | **No, by design.** The application's code sets the order in which agents run, and the author closes every loop. |
-| **2. Multi-agent collaboration** | Several role-specialised agents each contribute part of the work, coordinating on a shared task. | **Yes.** Letterly's agents collaborate with the author, giving different kinds of feedback (drafting, refining notes, reviewing, recommending length, detecting tone) from a variety of input: rough notes, chat messages, edits to the letter, even a message still being typed. |
+| **2. Multi-agent collaboration** | Several role-specialised agents each contribute part of the work, coordinating on a shared task. | **Yes.** Letterly's agents collaborate with the author, giving different kinds of feedback (drafting, refining notes, reviewing, recommending length, detecting tone) from a variety of input: notes, chat messages, edits to the letter, even a message still being typed. |
 | **3. Mixed-initiative** | The system takes initiative alongside the person. It notices, proposes, and reshapes the interface, while the person keeps authority over the result. | **Yes.** The interface changes with the state of the system. Agents add new tones to the Tone dropdown, surface suggested review prompts that can be added to the notes with a click, highlight which suggestions a chat message addresses, and mark a recommended length. |
 
 Letterly is agentic in the second and third senses and deliberately not in the first: the author stays in charge of the letter. When you design your own system, decide which of these you are building. The answer changes what each role is allowed to decide on its own.
@@ -493,15 +493,15 @@ User → Coordinator → Composition Roles → Refinement → Governance → Fin
 
 Instead of one single AI doing everything, Letterly uses a **Writers' Room** approach — a team of specialized agents working together, mirroring the decomposed roles you designed in the workshop:
 
-1.  **Draft Generator** — Writes and rewrites the draft letter based on your rough notes and settings.
-2.  **Notes Editor** — Updates your rough notes based on your chat feedback so the Draft Generator can improve the letter. It edits the notes, never the letter.
-3.  **Suggestions** — Reviews the draft letter against your rough notes to propose specific improvements.
-4.  **Length Analyst** — Analyzes your rough notes to recommend the optimal length for the draft letter.
-5.  **Line Art Generator** — Draws a custom illustration if your rough notes explicitly request a drawing or image.
-6.  **Notes Sync** — Updates your rough notes to match any manual edits you make to the draft letter.
-7.  **Similarity Scorer** — Calculates how accurately the draft letter matches your rough notes.
+1.  **Letter Generator** — Writes and rewrites the draft letter based on your notes and settings.
+2.  **Notes Editor** — Updates your notes based on your chat feedback so the Letter Generator can improve the letter. It edits the notes, never the letter.
+3.  **Suggestions** — Reviews the draft letter against your notes to propose specific improvements.
+4.  **Length Analyst** — Analyzes your notes to recommend the optimal length for the draft letter.
+5.  **Line Art Generator** — Draws a custom illustration if your notes explicitly request a drawing or image.
+6.  **Notes Sync** — Updates your notes to match any manual edits you make to the draft letter.
+7.  **Similarity Scorer** — Calculates how accurately the draft letter matches your notes.
 8.  **Tone Detector** — Analyzes your chat messages to detect when you're requesting a tone change (e.g., "make it more formal").
-9.  **Image Request Detector** — Identifies requests for illustrations or images in your rough notes.
+9.  **Image Request Detector** — Identifies requests for illustrations or images in your notes.
 10. **Suggestion Matcher** — Intelligently matches your chat input to relevant editor suggestions using AI reasoning or semantic similarity.
 
 ### Customizing Your Agents
@@ -509,14 +509,14 @@ Instead of one single AI doing everything, Letterly uses a **Writers' Room** app
 Each agent comes with default instructions that define how it behaves. You can **customize these instructions** to change how any agent works:
 
 -   **Access the Writers' Room:** Click the gear icon (⚙️) in the top right corner to open the agent settings modal.
--   **Edit Instructions:** Click the gear icon next to any agent to enter edit mode. Modify the system instructions to change the agent's behavior (e.g., add "Always sign off with 'Cheerio!'" to make the Draft Generator include that signature).
+-   **Edit Instructions:** Click the gear icon next to any agent to enter edit mode. Modify the system instructions to change the agent's behavior (e.g., add "Always sign off with 'Cheerio!'" to make the Letter Generator include that signature).
 -   **Save or Reset:** Save your custom instructions, or reset to the default behavior at any time. Custom instructions are stored locally in your browser.
 -   **Visual Indicators:** Agents with custom instructions display a blue "✓ Custom Instructions" badge, while default agents show a gray "Default Instructions" badge.
 
 ### How They Collaborate
 
 Not all agents work the same way:
--   **In Series:** The **Notes Editor** and **Draft Generator** work as a tag team. When you ask for changes, the Notes Editor updates the notes first, and then the Draft Generator rewrites the letter.
+-   **In Series:** The **Notes Editor** and **Letter Generator** work as a tag team. When you ask for changes, the Notes Editor updates the notes first, and then the Letter Generator rewrites the letter.
 -   **In the Background:** The **Suggestions**, **Length Analyst**, and **Similarity Scorer** agents work independently to analyze your work without interrupting you.
 -   **On Demand:** The **Line Art Generator** only steps in when specifically invited.
 
@@ -865,13 +865,13 @@ These files mostly live in `src/app/api/`. They are the "kitchen" where the work
 - **`api/generate/route.ts`**: The main writer. It takes your notes and writes the letter. Supports custom system instructions.
 - **`api/refine/route.ts`**: The editor. It takes your feedback (e.g., "Make it shorter") and updates the notes. Supports custom system instructions.
 - **`api/suggest/route.ts`**: The critic. It looks at your draft and suggests improvements. Supports custom system instructions.
-- **`api/sync-notes/route.ts`**: The synchronizer. Detects changes made directly in the letter editor and syncs them back to your rough notes. Supports custom system instructions.
+- **`api/sync-notes/route.ts`**: The synchronizer. Detects changes made directly in the letter editor and syncs them back to your notes. Supports custom system instructions.
 
 **Helper/Detection Routes:**
 - **`api/detect-tone/route.ts`**: Analyzes chat messages to detect tone change requests (e.g., "make it more formal"). Supports custom system instructions.
-- **`api/detect-image/route.ts`**: Identifies image/illustration requests in your rough notes. Supports custom system instructions.
+- **`api/detect-image/route.ts`**: Identifies image/illustration requests in your notes. Supports custom system instructions.
 - **`api/recommend-length/route.ts`**: Analyzes notes complexity to recommend optimal letter length (Short/Medium/Long). Supports custom system instructions.
-- **`api/score/route.ts`**: Calculates semantic similarity score between rough notes and generated letter using embeddings.
+- **`api/score/route.ts`**: Calculates semantic similarity score between notes and generated letter using embeddings.
 
 **Suggestion Matching Routes:**
 - **`api/match-suggestions/route.ts`**: Uses vector embeddings and cosine similarity to match chat input against editor suggestions.
