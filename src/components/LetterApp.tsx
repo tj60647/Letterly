@@ -544,7 +544,7 @@ export default function LetterApp() {
                 }),
             });
 
-            if (!refineResponse.ok) throw new Error("Failed to refine rough notes");
+            if (!refineResponse.ok) throw new Error("Failed to refine notes");
             const refineData = await refineResponse.json();
             if (refineData.error) throw new Error(refineData.error);
 
@@ -628,7 +628,7 @@ export default function LetterApp() {
             if (err instanceof Error) {
                 setError(err.message);
             } else {
-                setError("Failed to update rough notes");
+                setError("Failed to update notes");
             }
         } finally {
             setIsChatLoading(false);
@@ -730,7 +730,7 @@ export default function LetterApp() {
 
                     <div style={{ marginTop: "1.5rem" }}>
                         <label className={styles.label} style={{ marginBottom: "0.5rem" }}>
-                            Rough Notes <span style={{ color: "var(--status-error)" }}>*</span>
+                            Notes <span style={{ color: "var(--status-error)" }}>*</span>
                         </label>
                         <textarea
                             className={styles.textarea}
@@ -985,7 +985,7 @@ export default function LetterApp() {
                     <div className={styles.chatHeader}>
                         <h3 className={styles.chatTitle}>Refine & Iterate</h3>
                         <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "0.25rem", lineHeight: "1.4" }}>
-                            Chat with the AI to tweak your rough notes and regenerate the letter.
+                            Chat with the AI to tweak your notes and regenerate the letter.
                         </p>
                     </div>
 

@@ -47,7 +47,7 @@ describe('/api/refine', () => {
     jest.clearAllMocks();
   });
 
-  it('should refine rough notes with default instructions', async () => {
+  it('should refine notes with default instructions', async () => {
     const req = createMockRequest({
       roughNotes: '- Meeting needed\n- Timeline unclear',
       instructions: 'Add more detail about the budget',
@@ -81,7 +81,7 @@ describe('/api/refine', () => {
     expect(data.text).toContain('Custom note added');
   });
 
-  it('should return error when rough notes are missing', async () => {
+  it('should return error when notes are missing', async () => {
     const req = createMockRequest({
       instructions: 'Add detail',
     });

@@ -171,7 +171,7 @@ const AGENT_FACTS: Record<AgentId, AgentDiagramFacts> = {
   RECOMMEND_LENGTH: {
     group: 'core-agent',
     background: true,
-    triggers: ['Editing the rough notes (1 second after you stop, once they are longer than 10 characters)'],
+    triggers: ['Editing the notes (1 second after you stop, once they are longer than 10 characters)'],
     instructionPort: true,
   },
   SYNC_NOTES: {
@@ -207,7 +207,7 @@ const AGENT_FACTS: Record<AgentId, AgentDiagramFacts> = {
   DETECT_IMAGE_REQUEST: {
     group: 'detect-agent',
     background: true,
-    triggers: ['Every draft, for a rough-notes line that asks to add or create an image (inside the generate route)'],
+    triggers: ['Every draft, for a notes line that asks to add or create an image (inside the generate route)'],
     instructionNote: "The generate route calls this detector without passing an instruction, so an edit would not reach the model. It is also hidden from the Writers' Room.",
     modelFrom: 'GENERATE',
   },
@@ -257,8 +257,8 @@ const changed = (id: string, field: string, title: string, subtitle: string, des
 
 const interfaceNodes: FlowNode[] = [
   // ── What the author gives: one node per field ──
-  given('rough-notes-in', 'rough-notes', 'Rough Notes', 'Left panel', 'The bullet-point notes the author types. Agents read them and write back to them.',
-    ['Typing in the notes', 'Generate Draft button'], ports('roughNotes'), 'Rough Notes'),
+  given('rough-notes-in', 'rough-notes', 'Notes', 'Left panel', 'The bullet-point notes the author types. Agents read them and write back to them.',
+    ['Typing in the notes', 'Generate Draft button'], ports('roughNotes'), 'Notes <span'),
   given('from-in', 'from', 'From', 'Left panel', 'Who is writing the letter.', ['Typing a name'], ports('sender'), 'From'),
   given('to-in', 'to', 'To', 'Left panel', 'Who the letter is for.', ['Typing a name'], ports('recipient'), 'To'),
   given('tone-in', 'tone', 'Tone', 'Left panel', 'The selected tone, and the list of tones the dropdown offers.',
@@ -277,8 +277,8 @@ const interfaceNodes: FlowNode[] = [
     ['Clicking a suggestion'], ports('suggestion'), 'Editor Review'),
 
   // ── What agents change: one node per field ──
-  changed('rough-notes-out', 'rough-notes', 'Rough Notes', 'Left panel', 'Agents rewrite the notes or add to them.',
-    [element('roughNotes', 'notes', 'text')], 'Rough Notes'),
+  changed('rough-notes-out', 'rough-notes', 'Notes', 'Left panel', 'Agents rewrite the notes or add to them.',
+    [element('roughNotes', 'notes', 'text')], 'Notes <span'),
   changed('tone-out', 'tone', 'Tone', 'Left panel', 'The Tone Request Detector adds a tone to the dropdown if it is new, then selects it.',
     [element('toneDropdown', 'options and selection', 'text')], 'Tone'),
   changed('length-out', 'length', 'Length', 'Left panel', 'The Length Analyst marks the recommended length button.',
@@ -305,7 +305,7 @@ const FALLBACK = "Fallback: only when the Suggestion Matcher's response has no m
 const LETTER_EDITED = 'Clicking out of the letter after editing it';
 
 const wires: Wire[] = [
-  // Draft Generator
+  // Letter Generator
   wire('rough-notes-in.roughNotes', 'GENERATE.roughNotes', GENERATES),
   wire('to-in.recipient', 'GENERATE.recipient', GENERATES),
   wire('from-in.sender', 'GENERATE.sender', GENERATES),

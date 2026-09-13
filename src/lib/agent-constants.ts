@@ -44,8 +44,8 @@ export const MODELS = [
 export const AGENTS = {
     GENERATE: {
         id: 'GENERATE',
-        name: 'Draft Generator',
-        description: 'An expert writer and editor ready to help you with your letter writing. Writes a draft letter from your rough notes, tone, language, and length settings.',
+        name: 'Letter Generator',
+        description: 'An expert writer and editor ready to help you with your letter writing. Writes a draft letter from your notes, tone, language, and length settings.',
         type: 'chat',
         primary: "openai/gpt-oss-120b",
         fallbacks: [
@@ -74,7 +74,7 @@ IMPORTANT: Do NOT wrap normal text in backticks or code blocks. Only use code fo
     REFINE: {
         id: 'REFINE',
         name: 'Notes Editor',
-        description: 'Updates your rough notes based on your chat feedback. Tells the Draft Generator to make another pass.',
+        description: 'Updates your notes based on your chat feedback. Tells the Letter Generator to make another pass.',
         type: 'chat',
         primary: "openai/gpt-oss-120b",
         fallbacks: [
@@ -108,7 +108,7 @@ INSTRUCTIONS:
     SUGGEST: {
         id: 'SUGGEST',
         name: 'Suggestions',
-        description: 'Reviews your draft letter to propose actionable improvements based on the draft letter and your rough notes.',
+        description: 'Reviews your draft letter to propose actionable improvements based on the draft letter and your notes.',
         type: 'chat',
         primary: "openai/gpt-oss-120b",
         fallbacks: ["openai/gpt-oss-120b:free"],
@@ -127,7 +127,7 @@ Return ONLY the suggestions as a plain JSON array of strings. Do not wrap it in 
 Example Output:
 ["Clarify the deadline", "Add the budget figure", "Specify the recipient"]`,
         inputSchema: {
-            roughNotes: 'Required — original rough notes the letter was based on',
+            roughNotes: 'Required — original notes the letter was based on',
             generatedLetter: 'Optional — the current draft letter text',
             recipient: 'Optional — who the letter is addressed to',
             tone: 'Optional — tone of the letter (e.g. "Professional")',
@@ -139,7 +139,7 @@ Example Output:
     RECOMMEND_LENGTH: {
         id: 'RECOMMEND_LENGTH',
         name: 'Length Analyst',
-        description: 'Analyzes your rough notes to recommend the optimal draft letter length.',
+        description: 'Analyzes your notes to recommend the optimal draft letter length.',
         type: 'chat',
         primary: "openai/gpt-oss-20b",
         fallbacks: ["openai/gpt-oss-20b:free"],
@@ -153,14 +153,14 @@ Criteria:
 
 Return ONLY one word: "Short", "Medium", or "Long". Do not use Markdown formatting.`,
         inputSchema: {
-            roughNotes: 'Required — the rough notes to analyze for recommended letter length',
+            roughNotes: 'Required — the notes to analyze for recommended letter length',
         },
         outputDescription: 'Single word: "Short", "Medium", or "Long"',
     },
     SYNC_NOTES: {
         id: 'SYNC_NOTES',
         name: 'Notes Sync',
-        description: 'Updates your rough notes to match changes you make when editing the letter.',
+        description: 'Updates your notes to match changes you make when editing the letter.',
         type: 'chat',
         primary: "openai/gpt-oss-120b",
         fallbacks: ["openai/gpt-oss-120b:free"],
@@ -182,13 +182,13 @@ IMPORTANT: Write all points in present tense, not past tense (e.g., "Express int
     SCORED: {
         id: 'SCORED',
         name: 'Similarity Scorer',
-        description: 'Calculates the match score between your rough notes and the draft letter.',
+        description: 'Calculates the match score between your notes and the draft letter.',
         type: 'embedding',
         primary: "openai/text-embedding-3-large",
         fallbacks: [],
-        systemInstruction: `Uses cosine similarity between embeddings of your rough notes and the final letter to calculate how well the letter captures your original intent. Higher scores indicate better alignment.`,
+        systemInstruction: `Uses cosine similarity between embeddings of your notes and the final letter to calculate how well the letter captures your original intent. Higher scores indicate better alignment.`,
         inputSchema: {
-            roughNotes: 'Required — original rough notes',
+            roughNotes: 'Required — original notes',
             letter: 'Required — generated letter to score against the notes',
         },
         outputDescription: 'Cosine similarity score (0.0–1.0) reflecting how well the letter captures the original notes',
