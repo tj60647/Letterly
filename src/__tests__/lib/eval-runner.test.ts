@@ -42,6 +42,23 @@ describe('runTest', () => {
   });
 });
 
+describe('the instruction a prompt carries', () => {
+  const promptWithInstruction = { ...generateTest, prompt: JSON.stringify({ roughNotes: '- hi', systemInstruction: 'typed into the prompt' }) };
+
+  it('is dropped on Defaults, so the switch cannot be bypassed and the result is truly default', async () => {
+    respond({ text: 'Hello', usedModel: 'm' });
+    const result = await runTest(promptWithInstruction);
+    expect(sentBody()).toEqual({ roughNotes: '- hi' });
+    expect(result.instructionSource).toBe('default');
+  });
+
+  it('is replaced by the saved edit when the switch sends one', async () => {
+    respond({ text: 'Hello', usedModel: 'm' });
+    await runTest(promptWithInstruction, { systemInstruction: 'saved edit' });
+    expect(sentBody()).toEqual({ roughNotes: '- hi', systemInstruction: 'saved edit' });
+  });
+});
+
 describe('the json_array_length check', () => {
   const suggestTest = (min: string, max: string): TestCase => ({
     ...generateTest,

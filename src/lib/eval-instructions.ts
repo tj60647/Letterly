@@ -10,6 +10,7 @@
  * with an instruction port), so a passing test never implies an edit had an effect it could not have.
  */
 
+import { AGENTS } from './agent-constants';
 import { LETTERLY_FLOW } from './agent-flow';
 import { loadCustomInstructions } from './custom-instructions';
 import type { RunOptions } from './eval-types';
@@ -19,7 +20,12 @@ const AGENTS_THAT_USE_EDITS = new Set(LETTERLY_FLOW.nodes.filter(n => n.role ===
 function usableEdits(): Record<string, string> {
   return Object.fromEntries(
     Object.entries(loadCustomInstructions()).filter(
-      ([agentId, text]) => AGENTS_THAT_USE_EDITS.has(agentId) && typeof text === 'string' && text.trim() !== ''
+      ([agentId, text]) =>
+        AGENTS_THAT_USE_EDITS.has(agentId) &&
+        typeof text === 'string' &&
+        text.trim() !== '' &&
+        // The Writers' Room Reset button saves a copy of the default rather than deleting the edit.
+        text !== AGENTS[agentId as keyof typeof AGENTS].systemInstruction
     )
   );
 }

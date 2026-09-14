@@ -9,6 +9,7 @@
  * @license MIT
  */
 
+import { AGENTS } from '@/lib/agent-constants';
 import { saveCustomInstruction } from '@/lib/custom-instructions';
 import { instructionOptions, usableEditCount } from '@/lib/eval-instructions';
 
@@ -34,6 +35,12 @@ describe('saved instruction edits in the Eval Suite', () => {
   it("ignores edits for agents whose route would not use them, as the System Diagram shows", () => {
     saveCustomInstruction('MATCH_SUGGESTIONS', 'ignored by its route');
     expect(instructionOptions('MATCH_SUGGESTIONS', true)).toEqual({});
+  });
+
+  it("treats a saved copy of the default as no edit, as the Writers' Room Reset button leaves one", () => {
+    saveCustomInstruction('GENERATE', AGENTS.GENERATE.systemInstruction);
+    expect(usableEditCount()).toBe(0);
+    expect(instructionOptions('GENERATE', true)).toEqual({});
   });
 
   it('counts only the edits that would reach a model', () => {

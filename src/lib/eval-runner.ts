@@ -82,6 +82,8 @@ async function callAgentApi(agentId: string, prompt: string, options: RunOptions
     console.warn(`[eval-runner] Prompt is not valid JSON for agent "${agentId}"; treating as plain roughNotes. Error: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`);
     body = { roughNotes: prompt };
   }
+  // Only the Defaults | Your edits switch decides the instruction, so one typed into the prompt is dropped.
+  delete body.systemInstruction;
   if (options.systemInstruction) body = { ...body, systemInstruction: options.systemInstruction };
 
   const agentEndpointMap: Record<string, string> = {

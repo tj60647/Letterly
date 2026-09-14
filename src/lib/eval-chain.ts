@@ -10,6 +10,8 @@
  */
 
 const REFERENCE = /\{\{step-(\d+)\}\}/g;
+/** What a reference to a removed step becomes, so it fails clearly instead of reading whichever step took its number. */
+const REMOVED = '{{removed-step}}';
 
 /** The step numbers a prompt refers to, in order, without repeats. */
 export function stepReferences(prompt: string): number[] {
@@ -21,9 +23,23 @@ export function stepReferences(prompt: string): number[] {
  * Throws when a referenced step has no output, for example because it failed or has not run.
  */
 export function fillStepReferences(prompt: string, outputs: (string | undefined)[]): string {
+  if (prompt.includes(REMOVED)) throw new Error('This step refers to a step that was removed');
   return prompt.replace(REFERENCE, (_, n: string) => {
     const output = outputs[Number(n) - 1];
     if (output === undefined) throw new Error(`Step ${n} has no output to use`);
     return JSON.stringify(output).slice(1, -1);
+  });
+}
+
+/**
+ * Rewrites a prompt's references after step `removed` is deleted and the steps after it move up one place.
+ * A reference to a later step is renumbered to follow it; a reference to the removed step is marked, so running fails
+ * with a clear error.
+ */
+export function renumberAfterRemoval(prompt: string, removed: number): string {
+  return prompt.replace(REFERENCE, (match, n: string) => {
+    const step = Number(n);
+    if (step === removed) return REMOVED;
+    return step > removed ? `{{step-${step - 1}}}` : match;
   });
 }

@@ -6,7 +6,7 @@
  * @license MIT
  */
 
-import { fillStepReferences, stepReferences } from '@/lib/eval-chain';
+import { fillStepReferences, stepReferences, renumberAfterRemoval } from '@/lib/eval-chain';
 import { SCENARIOS } from '@/lib/eval-scenarios';
 
 describe('fillStepReferences', () => {
@@ -28,6 +28,18 @@ describe('fillStepReferences', () => {
 
   it('lists the steps a prompt refers to', () => {
     expect(stepReferences('{"a":"{{step-1}}","b":"{{step-2}} and {{step-1}}"}')).toEqual([1, 2]);
+  });
+});
+
+describe('renumberAfterRemoval', () => {
+  it('shifts references to later steps down by one, so they still name the same step', () => {
+    expect(renumberAfterRemoval('{"a":"{{step-1}}","b":"{{step-3}}"}', 2)).toBe('{"a":"{{step-1}}","b":"{{step-2}}"}');
+  });
+
+  it('marks a reference to the removed step, which then stops with a clear error instead of reading another step', () => {
+    const prompt = renumberAfterRemoval('{"a":"{{step-2}}"}', 2);
+    expect(stepReferences(prompt)).toEqual([]);
+    expect(() => fillStepReferences(prompt, ['a', 'b'])).toThrow('refers to a step that was removed');
   });
 });
 

@@ -11,7 +11,7 @@ import React, { useState, useRef } from 'react';
 import { AGENTS } from '@/lib/agent-constants';
 import { runTest } from '@/lib/eval-runner';
 import { instructionOptions } from '@/lib/eval-instructions';
-import { fillStepReferences } from '@/lib/eval-chain';
+import { fillStepReferences, renumberAfterRemoval } from '@/lib/eval-chain';
 import { SCENARIOS } from '@/lib/eval-scenarios';
 import { PlayIcon, StopIcon, RefreshIcon, InfoIcon } from '@/components/ui/icons';
 import styles from './EvalSuite.module.css';
@@ -76,8 +76,12 @@ export function PlaygroundMode({ useEdits = false }: { useEdits?: boolean }) {
     setCustomPrompt('');
   };
 
+  // Steps are numbered by position, so removing one renumbers the steps after it; their references move with them.
   const removeStep = (id: string) => {
-    setSteps(prev => prev.filter(s => s.id !== id));
+    setSteps(prev => {
+      const removed = prev.findIndex(s => s.id === id) + 1;
+      return prev.filter(s => s.id !== id).map(s => ({ ...s, prompt: renumberAfterRemoval(s.prompt, removed) }));
+    });
   };
 
   const runAll = async () => {
