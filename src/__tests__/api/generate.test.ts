@@ -14,7 +14,7 @@ jest.mock('@/lib/models', () => ({
   createOpenAIClient: jest.fn(() => ({})),
   callWithFallback: jest.fn(async (client, messages) => {
     // Extract system instruction from messages
-    const systemMessage = messages.find((m: any) => m.role === 'system');
+    const systemMessage = messages.find((m: { role: string; content?: string }) => m.role === 'system');
     const hasCustomInstruction = systemMessage?.content?.includes('Cheerio');
     
     return {
