@@ -1,5 +1,9 @@
 # Letterly: Prototyping Agentic Systems
 
+[![live site heartbeat](https://github.com/tj60647/Letterly/actions/workflows/heartbeat.yml/badge.svg)](https://github.com/tj60647/Letterly/actions/workflows/heartbeat.yml) [![CI](https://github.com/tj60647/Letterly/actions/workflows/ci.yml/badge.svg)](https://github.com/tj60647/Letterly/actions/workflows/ci.yml)
+
+*Heartbeat red means [letterly.aroughidea.com](https://letterly.aroughidea.com/) can't use its OpenRouter key (missing, rejected, or out of credit): the pages still load, but no letter can be written.*
+
 This README is organized as a tutorial. Start at the top and work your way through.
 
 ---
@@ -834,6 +838,12 @@ npm run test:e2e
 
 See `e2e/README.md` for detailed execution instructions.
 
+#### Checks That Run on GitHub
+
+- **CI** (`.github/workflows/ci.yml`): type check, lint, tests, and build on every pull request. The `main` branch only accepts changes through a pull request that passes it.
+- **Heartbeat** (`.github/workflows/heartbeat.yml`): every 15 minutes, asks the live site's `/api/health`, which answers `200 {"ok":true}` only when the deployment's OpenRouter key is valid and has credit. A failed run emails the repository owner. GitHub can delay scheduled runs, and it disables them after 60 days without repository activity.
+- **Model catalogue** (`.github/workflows/model-catalogue.yml`): every Monday, and whenever the model list changes, checks that every listed model still exists on OpenRouter. OpenRouter retires models without notice.
+
 ---
 
 ## Chapter 8 — Glossary and Project Navigation
@@ -898,6 +908,11 @@ These files mostly live in `src/app/api/`. They are the "kitchen" where the work
 **Suggestion Matching Routes:**
 - **`api/match-suggestions/route.ts`**: Uses vector embeddings and cosine similarity to match chat input against editor suggestions.
 - **`api/match-suggestions-agent/route.ts`**: Alternative approach using AI reasoning to intelligently match suggestions. Reads a custom instruction but currently sends the default.
+
+**Health Route:**
+- **`api/health/route.ts`**: Answers `200 {"ok":true}` when the deployment's OpenRouter key is valid and has credit, and `503 {"ok":false}` otherwise. Used by the heartbeat; it never calls a model.
+
+**Request Checks:** `middleware.ts` refuses requests from other websites, oversized bodies, and floods from one address. Each route also refuses models not listed in `src/lib/agent-constants.ts` and over-long instructions (`src/lib/request-guards.ts`).
 
 **Note:** All routes that use LLM agents accept an optional `systemInstruction` parameter. Not every one uses it, as noted above; the System Diagram's hollow ports show exactly where an edit reaches the model. Embedding-based routes (`score`, `match-suggestions`) use model selection instead.
 
