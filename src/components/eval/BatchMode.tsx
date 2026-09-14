@@ -10,6 +10,7 @@ import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { TestResult, BatchRunResult } from '@/lib/eval-types';
 import { PREDEFINED_TESTS, TEST_SUITES } from '@/lib/eval-tests';
 import { runTest } from '@/lib/eval-runner';
+import { instructionOptions } from '@/lib/eval-instructions';
 import { PlayIcon, StopIcon, DownloadIcon, RefreshIcon, InfoIcon } from '@/components/ui/icons';
 import styles from './EvalSuite.module.css';
 
@@ -42,6 +43,7 @@ function TestResultRow({ testId, result, running }: TestResultRowProps) {
             <>
               <span className={styles.metaChip}>{result.latencyMs}ms</span>
               <span className={styles.metaChip}>{result.model}</span>
+              {result.instructionSource === 'edited' && <span className={styles.editedChip}>Edited instruction</span>}
               <span className={result.passed ? styles.passBadge : styles.failBadge}>
                 {result.passed ? '✓ PASS' : '✗ FAIL'}
               </span>
@@ -78,7 +80,7 @@ function TestResultRow({ testId, result, running }: TestResultRowProps) {
   );
 }
 
-export function BatchMode() {
+export function BatchMode({ useEdits = false }: { useEdits?: boolean }) {
   const [selectedSuite, setSelectedSuite] = useState<string>('all');
   const [results, setResults] = useState<Record<string, TestResult>>({});
   const [running, setRunning] = useState(false);
@@ -129,7 +131,7 @@ export function BatchMode() {
     for (const test of suiteTests) {
       if (abortRef.current) break;
       setCurrentTestId(test.id);
-      const result = await runTest(test);
+      const result = await runTest(test, instructionOptions(test.agentId, useEdits));
       runResults[test.id] = result;
       setResults(prev => ({ ...prev, [test.id]: result }));
     }
@@ -144,7 +146,7 @@ export function BatchMode() {
     setBatchHistory(prev => [batchResult, ...prev].slice(0, 5));
     setCurrentTestId(null);
     setRunning(false);
-  }, [suiteTests]);
+  }, [suiteTests, useEdits]);
 
   const stopRun = () => { abortRef.current = true; };
 

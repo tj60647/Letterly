@@ -681,12 +681,12 @@ How to do it:
 
 In Letterly:
 - Both evaluation types are available in the **Agent Eval Suite** at `/eval`.
-- Use the **Comparison tab** for epistemic evaluation: run a single test against one agent, add assertions (contains, excludes, length, regex, JSON), and get immediate pass/fail feedback for targeted prompt tuning.
-- Use the **Playground tab** for mechanistic evaluation: chain multiple agent steps, run them in sequence, and inspect each step's status, latency, and output in a visual timeline to diagnose handoff failures.
+- Use the **Comparison tab** for epistemic evaluation: run a single test against one agent, add assertions (contains, excludes, length, regex, JSON, list length), and get immediate pass/fail feedback for targeted prompt tuning.
+- Use the **Playground tab** for mechanistic evaluation: chain multiple agent steps, run them in sequence, and inspect each step's status, latency, and output in a visual timeline to diagnose handoff failures. A step uses an earlier step's output when its input says `{{step-N}}`: in the built-in Full Letter Flow, the letter step 2 writes is the letter step 3 critiques.
 - Use the **Batch tab** to run full regression suites across all agents, monitor pass rates, and export results before shipping prompt or model changes.
 - The Eval Suite is also accessible from the "Agent Testing" link in the Writers' Room modal header.
 
-**Current limits:** the Comparison, Playground, and Batch tabs send each agent's *default* instruction, not the edits saved in the Writers' Room. Each Playground step also uses its own fixed input rather than the previous step's output. Until those are fixed, use them to test the defaults, and test an edited instruction in the main app.
+**Defaults or your edits:** a switch above the Comparison, Playground, and Batch tabs chooses which instructions the tests send. **Your edits** sends the instructions you saved in the Writers' Room or the System Diagram, and starts selected whenever you have any; **Defaults** sends the instructions the app ships with. Each result says when it used an edited instruction. Edits are sent only to the five agents whose routes pass them to the model (the agents the System Diagram draws with an instruction port). The tests still use each agent's default model.
 
 Output: revised system instructions and updated design documents where behavior does not match design.
 
@@ -934,9 +934,10 @@ These files mostly live in `src/app/api/`. They are the "kitchen" where the work
 Letterly includes a built-in **Agent Eval Suite** for testing and debugging your AI agents. Access it at [http://localhost:3000/eval](http://localhost:3000/eval) (or press `Ctrl+Shift+E` / `Cmd+Shift+E` from the main app).
 
 **Tabs available:**
-- **Comparison** — Run a single test, define assertions (contains, excludes, length, regex, valid JSON), and get immediate pass/fail feedback. Great for prompt tuning.
-- **Playground** — Build multi-step agent chains, inspect each step's output, and log observations. Ideal for testing agent handoffs.
+- **Comparison** — Run a single test, define assertions (contains, excludes, length, regex, valid JSON, list length), and get immediate pass/fail feedback. Great for prompt tuning.
+- **Playground** — Build multi-step agent chains, inspect each step's output, and log observations. Write `{{step-N}}` in a step's input to use step N's output. Ideal for testing agent handoffs.
 - **Batch** — Run a full suite of predefined regression tests against any agent. Track pass rates over time.
+- **Defaults | Your edits** — Above those three tabs: test the default instructions, or the ones you saved.
 - **System Diagram** — Every agent and interface field as nodes with ports and labelled wires, drawn from `src/lib/agent-flow.ts`. Hover to see when things fire; use an agent's gear to view or edit its settings.
 
 ---

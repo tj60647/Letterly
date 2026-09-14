@@ -3,13 +3,13 @@
  * @description TypeScript types for the Agent Eval Suite.
  */
 
-export type AssertionType = 'contains' | 'excludes' | 'length_between' | 'regex_match' | 'json_valid';
+export type AssertionType = 'contains' | 'excludes' | 'length_between' | 'regex_match' | 'json_valid' | 'json_array_length';
 
 export interface Assertion {
   id: string;
   type: AssertionType;
   value: string;
-  /** For length_between: the upper bound (value holds the lower bound). */
+  /** For length_between and json_array_length: the upper bound (value holds the lower bound). */
   extraValue?: string;
   label: string;
 }
@@ -41,6 +41,14 @@ export interface TestResult {
   tokenCount?: number;
   timestamp: string;
   error?: string;
+  /** Whether the agent ran with its default instruction or the author's saved edit. */
+  instructionSource?: 'default' | 'edited';
+}
+
+/** Extra request fields a test run sends alongside the test's own input. */
+export interface RunOptions {
+  /** The author's saved instruction; when absent the route uses the agent's default. */
+  systemInstruction?: string;
 }
 
 export interface BatchRunResult {

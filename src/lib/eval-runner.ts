@@ -3,7 +3,7 @@
  * @description Utility that runs a test case against the actual API and evaluates assertions.
  */
 
-import { TestCase, TestResult, Assertion, AssertionResultItem } from './eval-types';
+import { TestCase, TestResult, Assertion, AssertionResultItem, RunOptions } from './eval-types';
 
 function evaluateAssertion(assertion: Assertion, output: string): AssertionResultItem {
   const { type, value, extraValue } = assertion;
@@ -38,6 +38,22 @@ function evaluateAssertion(assertion: Assertion, output: string): AssertionResul
           message = 'Output is not valid JSON';
         }
         break;
+      case 'json_array_length': {
+        // A list of non-blank items whose count falls in range. Unlike json_valid, this fails when an agent returns nothing.
+        const min = parseInt(value, 10);
+        const max = parseInt(extraValue || '9999', 10);
+        let items: unknown;
+        try { items = JSON.parse(output); } catch { items = undefined; }
+        if (!Array.isArray(items)) {
+          message = 'Output is not a JSON list';
+        } else if (items.some(item => typeof item !== 'string' || !item.trim())) {
+          message = 'The list contains a blank or non-text item';
+        } else {
+          passed = items.length >= min && items.length <= max;
+          message = passed ? `${items.length} items, within [${min}, ${max}]` : `${items.length} items, outside [${min}, ${max}]`;
+        }
+        break;
+      }
       case 'regex_match': {
         const regex = new RegExp(value);
         passed = regex.test(output);
@@ -56,7 +72,7 @@ function evaluateAssertion(assertion: Assertion, output: string): AssertionResul
   return { assertion, passed, message };
 }
 
-async function callAgentApi(agentId: string, prompt: string): Promise<{ output: string; model: string; latencyMs: number }> {
+async function callAgentApi(agentId: string, prompt: string, options: RunOptions): Promise<{ output: string; model: string; latencyMs: number }> {
   const start = Date.now();
   let body: Record<string, unknown>;
 
@@ -66,6 +82,9 @@ async function callAgentApi(agentId: string, prompt: string): Promise<{ output: 
     console.warn(`[eval-runner] Prompt is not valid JSON for agent "${agentId}"; treating as plain roughNotes. Error: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`);
     body = { roughNotes: prompt };
   }
+  // Only the Defaults | Your edits switch decides the instruction, so one typed into the prompt is dropped.
+  delete body.systemInstruction;
+  if (options.systemInstruction) body = { ...body, systemInstruction: options.systemInstruction };
 
   const agentEndpointMap: Record<string, string> = {
     GENERATE: '/api/generate',
@@ -111,11 +130,12 @@ async function callAgentApi(agentId: string, prompt: string): Promise<{ output: 
   return { output, model: usedModel, latencyMs };
 }
 
-export async function runTest(testCase: TestCase): Promise<TestResult> {
+export async function runTest(testCase: TestCase, options: RunOptions = {}): Promise<TestResult> {
   const timestamp = new Date().toISOString();
+  const instructionSource = options.systemInstruction ? 'edited' : 'default';
 
   try {
-    const { output, model, latencyMs } = await callAgentApi(testCase.agentId, testCase.prompt);
+    const { output, model, latencyMs } = await callAgentApi(testCase.agentId, testCase.prompt, options);
 
     const assertionResults: AssertionResultItem[] = testCase.assertions.map(a => evaluateAssertion(a, output));
     const passed = assertionResults.every(r => r.passed);
@@ -128,6 +148,7 @@ export async function runTest(testCase: TestCase): Promise<TestResult> {
       latencyMs,
       model,
       timestamp,
+      instructionSource,
     };
   } catch (error) {
     return {
@@ -143,6 +164,7 @@ export async function runTest(testCase: TestCase): Promise<TestResult> {
       model: 'error',
       timestamp,
       error: error instanceof Error ? error.message : String(error),
+      instructionSource,
     };
   }
 }

@@ -11,6 +11,7 @@ import { AGENTS } from '@/lib/agent-constants';
 import { TestCase, TestResult, Assertion, AssertionType } from '@/lib/eval-types';
 import { PREDEFINED_TESTS, TEST_SUITES } from '@/lib/eval-tests';
 import { runTest } from '@/lib/eval-runner';
+import { instructionOptions } from '@/lib/eval-instructions';
 import { PlayIcon, PlusIcon, RefreshIcon, InfoIcon } from '@/components/ui/icons';
 import styles from './EvalSuite.module.css';
 
@@ -59,11 +60,12 @@ const ASSERTION_TYPE_LABELS: Record<AssertionType, string> = {
   length_between: 'Length Between',
   regex_match: 'Regex Match',
   json_valid: 'JSON Valid',
+  json_array_length: 'List Length',
 };
 
 const visibleAgents = Object.values(AGENTS).filter(a => !('hidden' in a) || !a.hidden);
 
-export function ComparisonMode() {
+export function ComparisonMode({ useEdits = false }: { useEdits?: boolean }) {
   const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
   const [selectedAgentId, setSelectedAgentId] = useState<string>('GENERATE');
   const [promptValue, setPromptValue] = useState<string>('');
@@ -142,7 +144,7 @@ export function ComparisonMode() {
       assertions,
       tags: [],
     };
-    const res = await runTest(testCase);
+    const res = await runTest(testCase, instructionOptions(selectedAgentId, useEdits));
     setResult(res);
     setRunning(false);
   };
@@ -297,12 +299,12 @@ export function ComparisonMode() {
               {newAssertionType !== 'json_valid' && (
                 <input
                   className={styles.inputSm}
-                  placeholder={newAssertionType === 'length_between' ? 'Min' : 'Value'}
+                  placeholder={newAssertionType === 'length_between' || newAssertionType === 'json_array_length' ? 'Min' : 'Value'}
                   value={newAssertionValue}
                   onChange={e => setNewAssertionValue(e.target.value)}
                 />
               )}
-              {newAssertionType === 'length_between' && (
+              {(newAssertionType === 'length_between' || newAssertionType === 'json_array_length') && (
                 <input
                   className={styles.inputSm}
                   placeholder="Max"
@@ -346,6 +348,9 @@ export function ComparisonMode() {
             <div className={styles.metaBar}>
               <span className={styles.metaItem}><strong>Model:</strong> {result.model}</span>
               <span className={styles.metaItem}><strong>Latency:</strong> {result.latencyMs}ms</span>
+              {result.instructionSource === 'edited'
+                ? <span className={styles.editedChip}>Edited instruction</span>
+                : <span className={styles.metaItem}><strong>Instruction:</strong> default</span>}
               <span className={styles.metaItem}><strong>Timestamp:</strong> {new Date(result.timestamp).toLocaleTimeString()}</span>
             </div>
 
