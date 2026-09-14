@@ -53,7 +53,11 @@ describe('rejectDisallowed', () => {
 
 describe('every API route', () => {
   const apiDir = path.join(process.cwd(), 'src', 'app', 'api');
-  const routes = fs.readdirSync(apiDir).filter(d => fs.existsSync(path.join(apiDir, d, 'route.ts')));
+  // Routes that accept a request body (a POST handler). /api/health only answers GET and takes no input.
+  const routes = fs.readdirSync(apiDir).filter(d => {
+    const file = path.join(apiDir, d, 'route.ts');
+    return fs.existsSync(file) && /export async function POST\(/.test(fs.readFileSync(file, 'utf8'));
+  });
 
   it('checks the request with rejectDisallowed before using it', () => {
     expect(routes.length).toBeGreaterThan(0);
