@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createOpenAIClient, AGENTS } from '@/lib/models';
+import { rejectDisallowed } from '@/lib/request-guards';
 
 function cosineSimilarity(vecA: number[], vecB: number[]) {
     let dotProduct = 0;
@@ -34,6 +35,8 @@ function cosineSimilarity(vecA: number[], vecB: number[]) {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
+        const rejected = rejectDisallowed(body, 'embedding');
+        if (rejected) return rejected;
         const { roughNotes, letter, model } = body;
 
         if (!roughNotes || !letter) {

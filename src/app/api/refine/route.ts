@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
+import { rejectDisallowed } from '@/lib/request-guards';
 
 /**
  * Iteratively refines the rough notes based on user chat instructions.
@@ -22,6 +23,8 @@ export async function POST(req: NextRequest) {
     console.log("POST /api/refine called");
     try {
         const body = await req.json();
+        const rejected = rejectDisallowed(body, 'chat');
+        if (rejected) return rejected;
         const { roughNotes, instructions, conversationHistory, model, currentTone, existingTones, systemInstruction } = body;
 
         if (!roughNotes || typeof roughNotes !== 'string' || roughNotes.trim().length === 0) {

@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
+import { rejectDisallowed } from '@/lib/request-guards';
 
 /**
  * Recommends an optimal letter length (Short, Medium, Long) based on the quantity and depth of rough notes.
@@ -20,6 +21,8 @@ import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
+        const rejected = rejectDisallowed(body, 'chat');
+        if (rejected) return rejected;
         const { roughNotes, model, systemInstruction } = body;
 
         if (!roughNotes || roughNotes.trim().length < 10) {
