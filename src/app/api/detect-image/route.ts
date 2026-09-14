@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
+import { rejectDisallowed } from '@/lib/request-guards';
 
 /**
  * Detects if the user's message contains a request for an image or illustration.
@@ -19,7 +20,10 @@ import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
  */
 export async function POST(req: NextRequest) {
     try {
-        const { message, model, systemInstruction } = await req.json();
+        const body = await req.json();
+        const rejected = rejectDisallowed(body, 'chat');
+        if (rejected) return rejected;
+        const { message, model, systemInstruction } = body;
 
         if (!message || typeof message !== "string") {
             return NextResponse.json(

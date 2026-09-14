@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
 import { GoogleGenAI } from "@google/genai";
+import { rejectDisallowed } from '@/lib/request-guards';
 
 /**
  * Generates the final letter based on user inputs.
@@ -23,6 +24,8 @@ export async function POST(req: NextRequest) {
     console.log("POST /api/generate called");
     try {
         const body = await req.json();
+        const rejected = rejectDisallowed(body, 'chat');
+        if (rejected) return rejected;
         const { recipient, sender, tone, length, language, roughNotes, styleExample, model, systemInstruction } = body;
 
         if (!roughNotes || typeof roughNotes !== 'string') {

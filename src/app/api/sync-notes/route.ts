@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
+import { rejectDisallowed } from '@/lib/request-guards';
 
 /**
  * Identifies new information added directly to the letter editor and syncs it back to the rough notes.
@@ -20,6 +21,8 @@ import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
+        const rejected = rejectDisallowed(body, 'chat');
+        if (rejected) return rejected;
         const { editedLetter, roughNotes, model, systemInstruction } = body;
 
         if (!editedLetter || !roughNotes) {

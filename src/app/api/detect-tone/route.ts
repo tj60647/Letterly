@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
+import { rejectDisallowed } from '@/lib/request-guards';
 
 /**
  * Analyzes the user's message to determine if they are requesting a specific tone change.
@@ -21,6 +22,8 @@ import { createOpenAIClient, callWithFallback, AGENTS } from '@/lib/models';
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
+        const rejected = rejectDisallowed(body, 'chat');
+        if (rejected) return rejected;
         const { message, existingTones, model, systemInstruction } = body;
 
         if (!message) {

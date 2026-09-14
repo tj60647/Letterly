@@ -79,16 +79,32 @@ describe('/api/generate', () => {
     expect(data.error).toBe('Rough notes are required');
   });
 
-  it('should accept model override', async () => {
+  it('should accept a listed model override', async () => {
+    const { callWithFallback } = jest.requireMock('@/lib/models');
     const req = createMockRequest({
       ...mockLetterData,
-      model: 'custom-model',
+      model: 'openai/gpt-oss-20b',
     });
-    
+
+    const response = await POST(req);
+
+    expect(response.status).toBe(200);
+    const agentArg = callWithFallback.mock.calls[0][2];
+    expect(agentArg.primary).toBe('openai/gpt-oss-20b');
+  });
+
+  it('should refuse a model that is not listed, without calling any model', async () => {
+    const { callWithFallback } = jest.requireMock('@/lib/models');
+    const req = createMockRequest({
+      ...mockLetterData,
+      model: 'anthropic/claude-opus-5',
+    });
+
     const response = await POST(req);
     const data = await response.json();
 
-    expect(response.status).toBe(200);
-    expect(data.usedModel).toBe('test-model');
+    expect(response.status).toBe(400);
+    expect(data.error).toBe('Model not allowed');
+    expect(callWithFallback).not.toHaveBeenCalled();
   });
 });
