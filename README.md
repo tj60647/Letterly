@@ -499,18 +499,22 @@ Instead of one single AI doing everything, Letterly uses a **Writers' Room** app
 4.  **Length Analyst** — Analyzes your notes to recommend the optimal length for the draft letter.
 5.  **Line Art Generator** — Draws a custom illustration if your notes explicitly request a drawing or image.
 6.  **Notes Sync** — Updates your notes to match any manual edits you make to the draft letter.
-7.  **Similarity Scorer** — Calculates how accurately the draft letter matches your notes.
-8.  **Tone Detector** — Analyzes your chat messages to detect when you're requesting a tone change (e.g., "make it more formal").
-9.  **Image Request Detector** — Identifies requests for illustrations or images in your notes.
-10. **Suggestion Matcher** — Intelligently matches your chat input to relevant editor suggestions using AI reasoning or semantic similarity.
+7.  **Suggestion Matcher** — While you type a chat message, uses AI reasoning to work out which editor suggestions the message addresses.
+8.  **Similarity Scorer** — Calculates how closely the draft letter matches your notes.
+9.  **Tone Request Detector** — Checks each chat message for a tone change request (e.g., "make it more formal").
+10. **Image Request Detector** — Checks lines in your notes that ask to add or create an image.
+11. **Suggestion Matcher Scorer** — A backup for the Suggestion Matcher that compares meanings with embeddings, used only when the matcher fails.
+
+The first seven appear in the Writers' Room. The last four run behind the scenes; you can see all eleven, and how they connect, in the System Diagram.
 
 ### Customizing Your Agents
 
 Each agent comes with default instructions that define how it behaves. You can **customize these instructions** to change how any agent works:
 
--   **Access the Writers' Room:** Click the gear icon (⚙️) in the top right corner to open the agent settings modal.
+-   **Access the Writers' Room:** Click the **Writers' Room** button in the left panel to open the agent settings modal. You can also click the gear on any agent in the System Diagram (`/eval`, System Diagram tab).
 -   **Edit Instructions:** Click the gear icon next to any agent to enter edit mode. Modify the system instructions to change the agent's behavior (e.g., add "Always sign off with 'Cheerio!'" to make the Letter Generator include that signature).
--   **Save or Reset:** Save your custom instructions, or reset to the default behavior at any time. Custom instructions are stored locally in your browser.
+-   **Save or Reset:** Save your custom instructions, or reset to the default behavior at any time. Custom instructions are stored locally in your browser, and the Writers' Room and the System Diagram share them.
+-   **Which edits take effect:** An edited instruction reaches the model for the **Letter Generator**, **Notes Editor**, **Suggestions**, **Length Analyst**, and **Notes Sync**. The Suggestion Matcher and Line Art Generator can currently be edited in the Writers' Room, but their routes still use the default instruction. The System Diagram's settings panel shows those read-only and explains why.
 -   **Visual Indicators:** Agents with custom instructions display a blue "✓ Custom Instructions" badge, while default agents show a gray "Default Instructions" badge.
 
 ### How They Collaborate
@@ -519,6 +523,7 @@ Not all agents work the same way:
 -   **In Series:** The **Notes Editor** and **Letter Generator** work as a tag team. When you ask for changes, the Notes Editor updates the notes first, and then the Letter Generator rewrites the letter.
 -   **In the Background:** The **Suggestions**, **Length Analyst**, and **Similarity Scorer** agents work independently to analyze your work without interrupting you.
 -   **On Demand:** The **Line Art Generator** only steps in when specifically invited.
+-   **While You Type:** The **Suggestion Matcher** shades the suggestion chips your chat message addresses, before you send it.
 
 ---
 
@@ -617,6 +622,8 @@ A visual diagram helps communicate how agents relate to one another and to the u
 ##### Agentic System Diagram
 > Please provide a tab in the agents modal that shows a node-and-edge system diagram for the agentic system. The diagram should include the user and show how the user interacts with the agents.
 
+> **A lesson from Letterly:** a diagram generated once, with its nodes and edges saved as fixed lists, stays the same when the code changes. Letterly's first diagram drifted until several of its claims no longer matched the app. The current diagram is drawn from a description of the wiring (`src/lib/agent-flow.ts`), and tests check that description against the code. When you ask your coding assistant for a diagram, ask it to draw from data the code uses too, and to test that data.
+
 ---
 
 ### Iteration
@@ -643,6 +650,7 @@ In Letterly:
 - Triggered by the "Writers' Room" button in the main app sidebar.
 - Shows each agent's name, model dropdown, and system instructions side by side.
 - A gear icon opens an inline editor for each agent's instructions; a reset button restores defaults.
+- The same instructions can be read and edited from the gear on each agent in the System Diagram, which also shows where an edit would not reach the model.
 
 ---
 
@@ -654,7 +662,10 @@ How to do it:
 
 In Letterly:
 - Accessible via the "System Diagram" link in the Writers' Room modal header, or by navigating to `/eval` and selecting the "System Diagram" tab.
-- Shows every agent in the Writers' Room, when each one fires, what data it receives, and where its output appears in the UI.
+- Each field of the interface appears twice: on the left, **what you give** (grouped into fields available from the start and those that need a first draft); on the right, **what agents change**. All eleven agents sit between them.
+- Every node has **ports**, and every **wire** is labelled with the value it carries. Hover or focus a wire to see when it fires; hover a node to see what it does.
+- A **hollow port** marks an instruction you can edit that actually reaches the model. The **gear** on an agent opens its settings.
+- Switch between **Columns** and **ELK** layouts.
 
 ---
 
@@ -670,6 +681,8 @@ In Letterly:
 - Use the **Playground tab** for mechanistic evaluation: chain multiple agent steps, run them in sequence, and inspect each step's status, latency, and output in a visual timeline to diagnose handoff failures.
 - Use the **Batch tab** to run full regression suites across all agents, monitor pass rates, and export results before shipping prompt or model changes.
 - The Eval Suite is also accessible from the "Agent Testing" link in the Writers' Room modal header.
+
+**Current limits:** the Comparison, Playground, and Batch tabs send each agent's *default* instruction, not the edits saved in the Writers' Room. Each Playground step also uses its own fixed input rather than the previous step's output. Until those are fixed, use them to test the defaults, and test an edited instruction in the main app.
 
 Output: revised system instructions and updated design documents where behavior does not match design.
 
@@ -792,11 +805,17 @@ npm run test:coverage
 - Custom system instruction overrides
 - Error handling for invalid inputs
 - Model selection and fallback behavior
+- That the System Diagram's description of the wiring still matches the code: agent inputs, routes, instruction reachability, UI labels, and which fields need a first draft
+- That both diagram layouts produce drawable geometry, and that the diagram and its agent settings panel behave as described
 
 **Test files:**
 - `src/__tests__/api/generate.test.ts` - Tests letter generation
 - `src/__tests__/api/refine.test.ts` - Tests note refinement
 - `src/__tests__/api/suggest.test.ts` - Tests suggestion generation
+- `src/__tests__/lib/agent-flow.test.ts` - Checks the System Diagram's flow description against the code
+- `src/__tests__/lib/flow-layout.test.ts` - Checks the Columns and ELK layouts
+- `src/__tests__/lib/custom-instructions.test.ts` - Checks the browser storage for custom instructions
+- `src/__tests__/components/SystemDiagram.test.tsx` - Checks the diagram and its agent settings panel
 
 #### End-to-End Tests (Browser Automation)
 
@@ -827,6 +846,7 @@ See `e2e/README.md` for detailed execution instructions.
 - **Bodystorming:** A design method where participants physically enact a system's roles to discover behavioral assumptions before implementation.
 - **Design Intent:** The first of three design artifacts for presenting an agent: its system instructions, knowledge base, and parameters.
 - **Design Quals:** The third of the three design artifacts: expected responses given a prompt. What you check the running agent against.
+- **Flow, Node, Port, Wire:** The System Diagram's vocabulary, shared with Agent Design Studio's Agentic Studio. A **flow** is made of **nodes** (agents and interface fields). Each node has **ports** where values come in and go out, and a **wire** joins an output port on one node to an input port on another.
 - **Engagement Context:** The situation, circumstances, or conditions in which someone approaches or engages a role.
 - **Interaction Loop:** The recurring sequence a role follows to elicit what it needs, perform its work, check its understanding, respond to new information, and move toward an output.
 - **Role Boundaries:** What a role will and will not do. These become the behavioral rules in a system instruction.
@@ -856,6 +876,8 @@ Think of this project like a house — different folders are like different room
 #### The Visuals (Frontend)
 - **`src/components/LetterApp.tsx`**: The heart of the app. This single file contains almost all the logic for the user interface. It handles what happens when you click "Generate" and manages custom agent instructions.
 - **`src/components/AgentModelSettings.tsx`**: A modal interface that lets you choose which AI "brain" controls which part of the app, and customize system instructions for each agent.
+- **`src/components/eval/SystemDiagram.tsx`**: Draws the System Diagram from the flow description. It decides only how things look.
+- **`src/components/eval/AgentSettingsPanel.tsx`**: The side panel opened from an agent's gear in the System Diagram.
 - **`src/app/page.tsx`**: The entry point. When you visit the website, this file tells the browser to load `LetterApp`.
 
 #### The Intelligence (Backend/API)
@@ -868,23 +890,27 @@ These files mostly live in `src/app/api/`. They are the "kitchen" where the work
 - **`api/sync-notes/route.ts`**: The synchronizer. Detects changes made directly in the letter editor and syncs them back to your notes. Supports custom system instructions.
 
 **Helper/Detection Routes:**
-- **`api/detect-tone/route.ts`**: Analyzes chat messages to detect tone change requests (e.g., "make it more formal"). Supports custom system instructions.
-- **`api/detect-image/route.ts`**: Identifies image/illustration requests in your notes. Supports custom system instructions.
+- **`api/detect-tone/route.ts`**: Analyzes chat messages to detect tone change requests (e.g., "make it more formal"). Accepts a custom instruction, but the refine route that calls it never passes one.
+- **`api/detect-image/route.ts`**: Identifies image/illustration requests in your notes. Accepts a custom instruction, but the generate route that calls it never passes one.
 - **`api/recommend-length/route.ts`**: Analyzes notes complexity to recommend optimal letter length (Short/Medium/Long). Supports custom system instructions.
 - **`api/score/route.ts`**: Calculates semantic similarity score between notes and generated letter using embeddings.
 
 **Suggestion Matching Routes:**
 - **`api/match-suggestions/route.ts`**: Uses vector embeddings and cosine similarity to match chat input against editor suggestions.
-- **`api/match-suggestions-agent/route.ts`**: Alternative approach using AI reasoning to intelligently match suggestions. Supports custom system instructions.
+- **`api/match-suggestions-agent/route.ts`**: Alternative approach using AI reasoning to intelligently match suggestions. Reads a custom instruction but currently sends the default.
 
-**Note:** All routes that use LLM agents accept an optional `systemInstruction` parameter to override the default agent behavior. Embedding-based routes (`score`, `match-suggestions`) use model selection instead.
+**Note:** All routes that use LLM agents accept an optional `systemInstruction` parameter. Not every one uses it, as noted above; the System Diagram's hollow ports show exactly where an edit reaches the model. Embedding-based routes (`score`, `match-suggestions`) use model selection instead.
 
 #### The Configuration (The Brains)
 - **`src/lib/agent-constants.ts`**: This is the "character sheet" for our AI agents. It defines who they are (e.g., "You are an expert editor") and what they should do. **This is the most important file for prompt engineering.**
 - **`src/lib/models.ts`**: Handles AI model communication, including fallback logic, OpenRouter integration, and the shared client creation.
+- **`src/lib/agent-flow.ts`**: Describes how the agents and the interface are wired together, as a flow. The System Diagram is drawn from it, and tests check it against the code. **Update it whenever you change how agents are called.**
+- **`src/lib/flow-layout.ts`**: Works out where the System Diagram's nodes, ports, and wires go, in either the Columns or ELK layout.
+- **`src/lib/custom-instructions.ts`**: Reads and writes the custom instructions saved in your browser, for both the Writers' Room and the System Diagram.
 
 #### The Tests
 - **`src/__tests__/api/`**: Unit tests for API routes using Jest to test agent behavior with default and custom instructions.
+- **`src/__tests__/lib/`** and **`src/__tests__/components/`**: Tests for the System Diagram's flow description, layouts, browser storage, and component.
 - **`src/__tests__/utils/test-helpers.ts`**: Shared test utilities (mock request builder, sample data). Not a test suite itself.
 - **`e2e/`**: End-to-end test stubs for browser-based workflow testing. These are currently manual-execution outlines — see `e2e/README.md` for details.
 - **`jest.config.ts`** and **`jest.setup.ts`**: Testing configuration files.
@@ -896,7 +922,7 @@ Letterly includes a built-in **Agent Eval Suite** for testing and debugging your
 - **Comparison** — Run a single test, define assertions (contains, excludes, length, regex, valid JSON), and get immediate pass/fail feedback. Great for prompt tuning.
 - **Playground** — Build multi-step agent chains, inspect each step's output, and log observations. Ideal for testing agent handoffs.
 - **Batch** — Run a full suite of predefined regression tests against any agent. Track pass rates over time.
-- **System Diagram** — Interactive diagram of all agents, their models, types, and relationships.
+- **System Diagram** — Every agent and interface field as nodes with ports and labelled wires, drawn from `src/lib/agent-flow.ts`. Hover to see when things fire; use an agent's gear to view or edit its settings.
 
 ---
 
