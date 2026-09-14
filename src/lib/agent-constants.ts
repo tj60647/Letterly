@@ -14,18 +14,12 @@
  */
 export const MODELS = [
     // Chat Models
+    // No free-tier (":free") models: OpenRouter retires them without notice. scripts/check-model-catalogue.mts checks
+    // every model here against OpenRouter's live catalogue each week.
     { id: 'openai/gpt-oss-120b', name: 'GPT-OSS 120B', type: 'chat' },
     { id: 'openai/gpt-oss-20b', name: 'GPT-OSS 20B', type: 'chat' },
-    { id: 'openai/gpt-oss-120b:free', name: 'GPT-OSS 120B (Free)', type: 'chat' },
-    { id: 'openai/gpt-oss-20b:free', name: 'GPT-OSS 20B (Free)', type: 'chat' },
-    { id: 'google/gemini-2.0-flash-exp:free', name: 'Google Gemini 2.0 Flash (Free)', type: 'chat' },
-    { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B (Free)', type: 'chat' },
-    { id: 'nousresearch/hermes-3-llama-3.1-405b:free', name: 'Hermes 3 405B (Free)', type: 'chat' },
-    { id: 'qwen/qwen-2.5-vl-7b-instruct:free', name: 'Qwen 2.5 VL 7B (Free)', type: 'chat' },
-    { id: 'meta-llama/llama-3.2-11b-vision-instruct:free', name: 'Llama 3.2 11B (Free)', type: 'chat' },
-    { id: 'meta-llama/llama-3-8b-instruct:free', name: 'Llama 3 8B (Free)', type: 'chat' },
-    { id: 'microsoft/phi-3-medium-128k-instruct:free', name: 'Phi-3 Medium (Free)', type: 'chat' },
-    { id: 'mistralai/mistral-7b-instruct:free', name: 'Mistral 7B (Free)', type: 'chat' },
+    { id: 'meta-llama/llama-3.3-70b-instruct', name: 'Llama 3.3 70B', type: 'chat' },
+    { id: 'mistralai/mistral-small-3.2-24b-instruct', name: 'Mistral Small 3.2 24B', type: 'chat' },
 
     // Embedding Models
     { id: 'openai/text-embedding-3-large', name: 'OpenAI Embedding 3 Large', type: 'embedding' },
@@ -48,9 +42,7 @@ export const AGENTS = {
         description: 'An expert writer and editor ready to help you with your letter writing. Writes a draft letter from your notes, tone, language, and length settings.',
         type: 'chat',
         primary: "openai/gpt-oss-120b",
-        fallbacks: [
-            "openai/gpt-oss-120b:free",
-        ],
+        fallbacks: ["meta-llama/llama-3.3-70b-instruct"],
         systemInstruction: `Act as an expert writer and editor. 
 Produce ONLY the content of the letter. Do not include introductory text like "Here is your letter:".
 Do not add additional content or make up details beyond what is provided in the key points.
@@ -77,9 +69,7 @@ IMPORTANT: Do NOT wrap normal text in backticks or code blocks. Only use code fo
         description: 'Updates your notes based on your chat feedback. Tells the Letter Generator to make another pass.',
         type: 'chat',
         primary: "openai/gpt-oss-120b",
-        fallbacks: [
-            "openai/gpt-oss-120b:free",
-        ],
+        fallbacks: ["meta-llama/llama-3.3-70b-instruct"],
         systemInstruction: `You are a writing assistant helping a user refine their rough notes for a letter.
 
 INSTRUCTIONS:
@@ -111,7 +101,7 @@ INSTRUCTIONS:
         description: 'Reviews your draft letter to propose actionable improvements based on the draft letter and your notes.',
         type: 'chat',
         primary: "openai/gpt-oss-120b",
-        fallbacks: ["openai/gpt-oss-120b:free"],
+        fallbacks: ["meta-llama/llama-3.3-70b-instruct"],
         systemInstruction: `Act as an expert editor reviewing a draft letter against the user's original rough notes.
 Your goal is to identify specific improvements to make the letter more precise, effective, or aligned with the user's intent.
 Focus on:
@@ -142,7 +132,7 @@ Example Output:
         description: 'Analyzes your notes to recommend the optimal draft letter length.',
         type: 'chat',
         primary: "openai/gpt-oss-20b",
-        fallbacks: ["openai/gpt-oss-20b:free"],
+        fallbacks: ["mistralai/mistral-small-3.2-24b-instruct"],
         systemInstruction: `Analyze the following rough notes for a letter.
 Based on the complexity, number of topics, and implied depth of the content, recommend the most appropriate length for the final letter.
 
@@ -163,7 +153,7 @@ Return ONLY one word: "Short", "Medium", or "Long". Do not use Markdown formatti
         description: 'Updates your notes to match changes you make when editing the letter.',
         type: 'chat',
         primary: "openai/gpt-oss-120b",
-        fallbacks: ["openai/gpt-oss-120b:free"],
+        fallbacks: ["meta-llama/llama-3.3-70b-instruct"],
         systemInstruction: `You are a helpful assistant that keeps rough notes in sync with a finished letter.
 Compare the "Edited Letter" to the "Current Rough Notes".
 Identify any NEW information, specific details, or key points that appear in the letter but are missing from the notes.
@@ -200,7 +190,7 @@ IMPORTANT: Write all points in present tense, not past tense (e.g., "Express int
         description: 'Matches chat messages to editor review suggestions using semantic similarity.',
         type: 'embedding',
         primary: "google/gemini-embedding-001",
-        fallbacks: ["openai/text-embedding-3-small", "mistralai/mistral-embed"],
+        fallbacks: ["openai/text-embedding-3-small", "mistralai/mistral-embed-2312"],
         systemInstruction: `Compares the semantic similarity between a chat message and editor review suggestions to identify which suggestions the user is addressing.`,
         inputSchema: {
             chatInput: 'Required — user chat message to match against suggestions',
@@ -215,7 +205,7 @@ IMPORTANT: Write all points in present tense, not past tense (e.g., "Express int
         description: 'Uses AI reasoning to match chat messages to editor review suggestions.',
         type: 'chat',
         primary: "openai/gpt-oss-20b",
-        fallbacks: ["openai/gpt-oss-20b:free"],
+        fallbacks: ["mistralai/mistral-small-3.2-24b-instruct"],
         systemInstruction: `You are analyzing whether a user's chat message addresses any of the given editor review suggestions.
 
 Compare the chat message to each suggestion and determine which suggestions (if any) the user is trying to address.
@@ -240,7 +230,7 @@ Only include suggestions that have some relevance (score < 0.70). If no suggesti
         description: 'Analyzes chat messages to detect tone change requests and maps them to existing or new tones.',
         type: 'chat',
         primary: "openai/gpt-oss-20b",
-        fallbacks: ["openai/gpt-oss-20b:free"],
+        fallbacks: ["mistralai/mistral-small-3.2-24b-instruct"],
         systemInstruction: `You analyze user messages to detect tone change requests for letters.
 
 You will receive:
@@ -272,7 +262,7 @@ Examples:
         description: 'Checks rough-notes lines that ask to add or create an image, and extracts the subject for the Line Art Generator.',
         type: 'chat',
         primary: "openai/gpt-oss-20b",
-        fallbacks: ["openai/gpt-oss-20b:free"],
+        fallbacks: ["mistralai/mistral-small-3.2-24b-instruct"],
         systemInstruction: `You analyze user messages to detect requests for background images or illustrations.
 
 Your task:
