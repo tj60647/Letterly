@@ -1,0 +1,30 @@
+# Checks every OpenRouter model Letterly lists still exists in OpenRouter's catalogue.
+# OpenRouter retires models without notice; a failed run emails the repository owner.
+name: Model catalogue
+
+on:
+  schedule:
+    - cron: "0 13 * * 1" # Mondays, 13:00 UTC
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - src/lib/agent-constants.ts
+      - scripts/check-model-catalogue.mts
+
+permissions:
+  contents: read
+
+jobs:
+  catalogue:
+    name: Model catalogue
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Check listed models against OpenRouter
+        run: node --experimental-strip-types scripts/check-model-catalogue.mts
