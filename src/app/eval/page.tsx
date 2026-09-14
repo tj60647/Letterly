@@ -5,8 +5,13 @@
  * @description Next.js App Router page for the Agent Eval Suite.
  */
 
+import { Suspense } from 'react';
 import { EvalSuite } from '@/components/eval/EvalSuite';
 
 export default function EvalPage() {
-  return <EvalSuite />;
+  return (
+    <Suspense>
+      <EvalSuite />
+    </Suspense>
+  );
 }

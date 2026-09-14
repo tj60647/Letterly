@@ -8,6 +8,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { BeakerIcon, ArrowLeftIcon, DownloadIcon, InfoIcon, TeamIcon, DiagramIcon } from '@/components/ui/icons';
 import { ComparisonMode } from './ComparisonMode';
 import { PlaygroundMode } from './PlaygroundMode';
@@ -68,17 +69,12 @@ const TABS: { id: Tab; label: string; headline: string; summary: string; helpTit
 ];
 
 export function EvalSuite() {
-  const [activeTab, setActiveTab] = useState<Tab>('comparison');
+  // Open the tab named in ?tab= (for example /eval?tab=diagram), so other pages can link straight to it.
+  const requestedTab = useSearchParams().get('tab');
+  const [activeTab, setActiveTab] = useState<Tab>(() =>
+    TABS.some(t => t.id === requestedTab) ? (requestedTab as Tab) : 'comparison'
+  );
   const [showTabHelp, setShowTabHelp] = useState(false);
-
-  // Read ?tab= from the URL on mount to support deep-linking
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tab = params.get('tab') as Tab | null;
-    if (tab && TABS.some(t => t.id === tab)) {
-      setActiveTab(tab);
-    }
-  }, []);
 
   const activeTabConfig = TABS.find(tab => tab.id === activeTab) || TABS[0];
   const isDiagramTab = activeTab === 'diagram';
