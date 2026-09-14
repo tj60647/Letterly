@@ -84,7 +84,7 @@ export const PREDEFINED_TESTS: TestCase[] = [
   {
     id: 'suggest-improvements',
     name: 'Suggest improvements',
-    description: 'Tests that suggestions are actionable and JSON-formatted',
+    description: 'Tests that the agent returns a short list of suggestions, and fails if it returns none',
     agentId: 'SUGGEST',
     prompt: JSON.stringify({
       roughNotes: '- Ask for raise\n- Been here 2 years',
@@ -93,8 +93,7 @@ export const PREDEFINED_TESTS: TestCase[] = [
       tone: 'Professional',
     }),
     assertions: [
-      { id: 'a1', type: 'json_valid', value: '', label: 'Returns valid JSON' },
-      { id: 'a2', type: 'contains', value: '[', label: 'Returns JSON array' },
+      { id: 'a1', type: 'json_array_length', value: '1', extraValue: '5', label: 'Returns 1 to 5 non-blank suggestions' },
     ],
     tags: ['suggest', 'json'],
   },

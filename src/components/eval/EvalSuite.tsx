@@ -6,7 +6,7 @@
  * tabbed interface for Comparison, Playground, Batch, and System Diagram.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { BeakerIcon, ArrowLeftIcon, DownloadIcon, InfoIcon, TeamIcon, DiagramIcon } from '@/components/ui/icons';
@@ -14,6 +14,7 @@ import { ComparisonMode } from './ComparisonMode';
 import { PlaygroundMode } from './PlaygroundMode';
 import { BatchMode } from './BatchMode';
 import { SystemDiagram } from './SystemDiagram';
+import { usableEditCount } from '@/lib/eval-instructions';
 import styles from './EvalSuite.module.css';
 
 type Tab = 'comparison' | 'playground' | 'batch' | 'diagram';
@@ -28,7 +29,7 @@ const TABS: { id: Tab; label: string; headline: string; summary: string; helpTit
     helpBody: [
       'Use this tab when you want to quickly validate one behavior in isolation, such as tone adherence, required details, or output format.',
       'Start by selecting a predefined test or choosing an agent manually. Then provide either plain-text prompt input or structured JSON in Advanced JSON Mode.',
-      'Add assertions that define what success means. Assertions can check that text contains or excludes required language, that length falls in a range, that output matches a regex pattern, or that the output is valid JSON.',
+      'Add assertions that define what success means. Assertions can check that text contains or excludes required language, that length falls in a range, that output matches a regex pattern, that the output is valid JSON, or that it is a JSON list with a count in range.',
       'Run the test and review both the output and assertion results. Use this mode as your fastest loop for prompt tuning and targeted debugging.'
     ],
   },
@@ -40,7 +41,7 @@ const TABS: { id: Tab; label: string; headline: string; summary: string; helpTit
     helpTitle: 'How To Use Playground Mode',
     helpBody: [
       'Use this tab when you want to evaluate handoffs between agents instead of isolated calls. It is ideal for full workflow checks and exploratory testing.',
-      'Load a scenario to start quickly, or add custom steps by choosing an agent and supplying prompt input for that step. Steps run in sequence and render as a visual timeline.',
+      'Load a scenario to start quickly, or add custom steps by choosing an agent and supplying prompt input for that step. Steps run in sequence and render as a visual timeline. Write {{step-N}} inside a quoted value to pass step N’s output to a later step.',
       'Watch each step for status, latency, output, and errors. If one step fails, your timeline still captures where and why, making chain-level diagnosis straightforward.',
       'Use the observations panel to capture findings while testing. This creates a lightweight research log you can revisit while refining prompts and test definitions.'
     ],
@@ -68,6 +69,12 @@ const TABS: { id: Tab; label: string; headline: string; summary: string; helpTit
   },
 ];
 
+/** Re-reads saved edits when another browser tab changes them. */
+function subscribeToStorage(onChange: () => void) {
+  window.addEventListener('storage', onChange);
+  return () => window.removeEventListener('storage', onChange);
+}
+
 export function EvalSuite() {
   // Open the tab named in ?tab= (for example /eval?tab=diagram), so other pages can link straight to it.
   const requestedTab = useSearchParams().get('tab');
@@ -75,9 +82,14 @@ export function EvalSuite() {
     TABS.some(t => t.id === requestedTab) ? (requestedTab as Tab) : 'comparison'
   );
   const [showTabHelp, setShowTabHelp] = useState(false);
+  // Test the author's saved instruction edits, or the defaults. The count is read from browser storage on every render
+  // (the System Diagram tab can change it) and is 0 on the server. Until the author chooses, edits are tested if any exist.
+  const editCount = useSyncExternalStore(subscribeToStorage, usableEditCount, () => 0);
+  const [useEdits, setUseEdits] = useState<boolean | null>(null);
 
   const activeTabConfig = TABS.find(tab => tab.id === activeTab) || TABS[0];
   const isDiagramTab = activeTab === 'diagram';
+  const testingEdits = editCount > 0 && useEdits !== false;
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -153,23 +165,41 @@ export function EvalSuite() {
           <p className={styles.tabOverviewSummary}>{activeTabConfig.summary}</p>
         </div>
         {!isDiagramTab && (
-          <button
-            className={styles.infoButton}
-            onClick={() => setShowTabHelp(true)}
-            aria-label={`Open ${activeTabConfig.label} instructions`}
-            title={`Open ${activeTabConfig.label} instructions`}
-          >
-            <InfoIcon />
-            How It Works
-          </button>
+          <div className={styles.tabOverviewActions}>
+            <fieldset className={styles.instructionSwitch}>
+              <legend className={styles.instructionSwitchLegend}>Instructions</legend>
+              <label className={`${styles.toggleChip} ${!testingEdits ? styles.toggleChipActive : ''}`}>
+                <input type="radio" name="instruction-source" className={styles.visuallyHidden}
+                  checked={!testingEdits} onChange={() => setUseEdits(false)} />
+                Defaults
+              </label>
+              <label
+                className={`${styles.toggleChip} ${testingEdits ? styles.toggleChipActive : ''}`}
+                title={editCount === 0 ? "No saved edits. Edit an instruction in the Writers' Room or the System Diagram." : undefined}
+              >
+                <input type="radio" name="instruction-source" className={styles.visuallyHidden}
+                  checked={testingEdits} disabled={editCount === 0} onChange={() => setUseEdits(true)} />
+                Your edits ({editCount})
+              </label>
+            </fieldset>
+            <button
+              className={styles.infoButton}
+              onClick={() => setShowTabHelp(true)}
+              aria-label={`Open ${activeTabConfig.label} instructions`}
+              title={`Open ${activeTabConfig.label} instructions`}
+            >
+              <InfoIcon />
+              How It Works
+            </button>
+          </div>
         )}
       </section>
 
       {/* Tab Content */}
       <div className={styles.tabContent}>
-        {activeTab === 'comparison' && <ComparisonMode />}
-        {activeTab === 'playground' && <PlaygroundMode />}
-        {activeTab === 'batch' && <BatchMode />}
+        {activeTab === 'comparison' && <ComparisonMode useEdits={testingEdits} />}
+        {activeTab === 'playground' && <PlaygroundMode useEdits={testingEdits} />}
+        {activeTab === 'batch' && <BatchMode useEdits={testingEdits} />}
         {activeTab === 'diagram' && <SystemDiagram />}
       </div>
 

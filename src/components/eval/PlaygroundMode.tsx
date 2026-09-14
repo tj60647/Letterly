@@ -3,12 +3,16 @@
 /**
  * @file src/components/eval/PlaygroundMode.tsx
  * @description Playground Mode for the Agent Eval Suite. Allows testing agent chains
- * with a visual timeline of execution steps and an observations panel.
+ * with a visual timeline of execution steps and an observations panel. A step can use an earlier step's output by
+ * writing {{step-N}} in its JSON input (see eval-chain.ts).
  */
 
 import React, { useState, useRef } from 'react';
 import { AGENTS } from '@/lib/agent-constants';
 import { runTest } from '@/lib/eval-runner';
+import { instructionOptions } from '@/lib/eval-instructions';
+import { fillStepReferences } from '@/lib/eval-chain';
+import { SCENARIOS } from '@/lib/eval-scenarios';
 import { PlayIcon, StopIcon, RefreshIcon, InfoIcon } from '@/components/ui/icons';
 import styles from './EvalSuite.module.css';
 
@@ -23,82 +27,12 @@ interface Step {
   model?: string;
   latencyMs?: number;
   error?: string;
+  edited?: boolean;
 }
-
-const SCENARIOS: Record<string, { name: string; description: string; steps: Omit<Step, 'status' | 'output' | 'model' | 'latencyMs' | 'error'>[] }> = {
-  letter_flow: {
-    name: 'Full Letter Flow',
-    description: 'Recommend length → Generate letter → Suggest improvements',
-    steps: [
-      {
-        id: 'step-1',
-        agentId: 'RECOMMEND_LENGTH',
-        prompt: JSON.stringify({ roughNotes: '- Request project status update\n- Ask about budget\n- Mention upcoming deadline' }),
-      },
-      {
-        id: 'step-2',
-        agentId: 'GENERATE',
-        prompt: JSON.stringify({
-          recipient: 'Project Manager',
-          sender: 'Stakeholder',
-          tone: 'Professional',
-          length: 'Medium',
-          language: 'English',
-          roughNotes: '- Request project status update\n- Ask about budget\n- Mention upcoming deadline',
-        }),
-      },
-      {
-        id: 'step-3',
-        agentId: 'SUGGEST',
-        prompt: JSON.stringify({
-          roughNotes: '- Request project status update\n- Ask about budget',
-          generatedLetter: 'Dear Project Manager,\n\nI am writing to request an update on the current project status.\n\nBest regards,\nStakeholder',
-          recipient: 'Project Manager',
-          tone: 'Professional',
-        }),
-      },
-    ],
-  },
-  refine_loop: {
-    name: 'Refine & Sync Loop',
-    description: 'Refine notes → Generate → Sync notes back',
-    steps: [
-      {
-        id: 'step-1',
-        agentId: 'REFINE',
-        prompt: JSON.stringify({
-          roughNotes: '- Complaint about late delivery',
-          instructions: 'Add: order number #45678, expected date was last Friday',
-          conversationHistory: [],
-        }),
-      },
-      {
-        id: 'step-2',
-        agentId: 'GENERATE',
-        prompt: JSON.stringify({
-          recipient: 'Customer Service',
-          sender: 'Customer',
-          tone: 'Assertive',
-          length: 'Short',
-          language: 'English',
-          roughNotes: '- Complaint about late delivery\n- Order #45678\n- Expected last Friday',
-        }),
-      },
-      {
-        id: 'step-3',
-        agentId: 'SYNC_NOTES',
-        prompt: JSON.stringify({
-          roughNotes: '- Complaint about late delivery',
-          editedLetter: 'Dear Customer Service,\n\nI am writing about order #45678 which was expected last Friday.\n\nRegards,\nCustomer',
-        }),
-      },
-    ],
-  },
-};
 
 const visibleAgents = Object.values(AGENTS).filter(a => !('hidden' in a) || !a.hidden);
 
-export function PlaygroundMode() {
+export function PlaygroundMode({ useEdits = false }: { useEdits?: boolean }) {
   const [selectedScenario, setSelectedScenario] = useState<string>('letter_flow');
   const [steps, setSteps] = useState<Step[]>(() =>
     SCENARIOS['letter_flow'].steps.map(s => ({ ...s, status: 'pending' as StepStatus }))
@@ -123,6 +57,7 @@ export function PlaygroundMode() {
     model: undefined,
     latencyMs: undefined,
     error: undefined,
+    edited: undefined,
   });
 
   const resetSteps = () => {
@@ -154,6 +89,9 @@ export function PlaygroundMode() {
     setRunning(true);
     const log = (msg: string) => setObservations(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
 
+    // Each step's output, by position, so a later step's {{step-N}} can use it. A failed step leaves undefined.
+    const outputs: (string | undefined)[] = currentSteps.map(() => undefined);
+
     for (let i = 0; i < currentSteps.length; i++) {
       if (abortRef.current) {
         log('Run aborted by user.');
@@ -164,24 +102,36 @@ export function PlaygroundMode() {
       setSteps(prev => prev.map(s => s.id === step.id ? { ...s, status: 'running' } : s));
       log(`Starting ${step.agentId}…`);
 
+      let prompt: string;
+      try {
+        prompt = fillStepReferences(step.prompt, outputs);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        setSteps(prev => prev.map(s => s.id === step.id ? { ...s, status: 'error', error: message } : s));
+        log(`Skipped ${step.agentId}: ${message}`);
+        continue;
+      }
+
       const result = await runTest({
         id: step.id,
         name: step.agentId,
         description: '',
         agentId: step.agentId,
-        prompt: step.prompt,
+        prompt,
         assertions: [],
         tags: [],
-      });
+      }, instructionOptions(step.agentId, useEdits));
+      const edited = result.instructionSource === 'edited';
 
       if (result.error) {
-        setSteps(prev => prev.map(s => s.id === step.id ? { ...s, status: 'error', error: result.error, latencyMs: result.latencyMs } : s));
+        setSteps(prev => prev.map(s => s.id === step.id ? { ...s, status: 'error', error: result.error, latencyMs: result.latencyMs, edited } : s));
         log(`Error in ${step.agentId}: ${result.error}`);
       } else {
         setSteps(prev => prev.map(s => s.id === step.id ? {
-          ...s, status: 'complete', output: result.actualOutput, model: result.model, latencyMs: result.latencyMs,
+          ...s, status: 'complete', output: result.actualOutput, model: result.model, latencyMs: result.latencyMs, edited,
         } : s));
-        log(`${step.agentId} completed in ${result.latencyMs}ms (${result.model})`);
+        outputs[i] = result.actualOutput;
+        log(`${step.agentId} completed in ${result.latencyMs}ms (${result.model}${edited ? ', edited instruction' : ''})`);
       }
     }
 
@@ -259,6 +209,7 @@ export function PlaygroundMode() {
               <div className={styles.timelineMeta}>
                 {step.latencyMs !== undefined && <span className={styles.metaChip}>{step.latencyMs}ms</span>}
                 {step.model && <span className={styles.metaChip}>{step.model}</span>}
+                {step.edited && <span className={styles.editedChip}>Edited instruction</span>}
                 {!running && (
                   <button className={styles.removeStepBtn} onClick={() => removeStep(step.id)} title="Remove step">×</button>
                 )}
@@ -296,7 +247,7 @@ export function PlaygroundMode() {
           <input
             className={styles.inputSm}
             style={{ flex: 1 }}
-            placeholder='JSON prompt e.g. {"roughNotes": "..."}'
+            placeholder='JSON prompt e.g. {"roughNotes": "{{step-1}}"} uses step 1’s output'
             value={customPrompt}
             onChange={e => setCustomPrompt(e.target.value)}
           />
@@ -333,6 +284,9 @@ export function PlaygroundMode() {
               </p>
               <p>
                 Add custom steps when you need to test alternate paths, edge cases, or interventions. Each step should include enough context for the target agent to perform reliably.
+              </p>
+              <p>
+                To pass one step&apos;s output to a later step, write <code>{'{{step-N}}'}</code> inside a quoted value, where N is the step number shown in the chain. For example, <code>{'"generatedLetter": "{{step-2}}"'}</code> sends the letter step 2 wrote. If step N failed, the later step is skipped with an error.
               </p>
               <p>
                 Use the timeline to diagnose where quality degrades. Latency spikes, malformed output, or brittle transitions often identify prompt boundaries that need tightening.
