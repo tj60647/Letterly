@@ -16,7 +16,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { AGENTS, MODELS } from '@/lib/agent-constants';
-import { LETTERLY_FLOW, type FlowNode, type Kind, type NodeGroup, type Wire } from '@/lib/agent-flow';
+import { LETTERLY_FLOW, STORIES, type FlowNode, type Kind, type NodeGroup, type StoryId, type Wire } from '@/lib/agent-flow';
 import { layoutColumns, layoutElk, labelWidth, LABEL_HEIGHT, type FlowLayout } from '@/lib/flow-layout';
 import { AgentSettingsPanel } from './AgentSettingsPanel';
 import styles from './SystemDiagram.module.css';
@@ -27,7 +27,7 @@ const NODE_STYLE: Record<NodeGroup, { fill: string; stroke: string; text: string
   'user-input':   { fill: '#1d4ed8', stroke: '#1e40af', text: '#ffffff', legendLabel: 'Interface: what you give' },
   'core-agent':   { fill: '#7c3aed', stroke: '#6d28d9', text: '#ffffff', legendLabel: 'Core Writing Agent' },
   'detect-agent': { fill: '#b45309', stroke: '#92400e', text: '#ffffff', legendLabel: 'Detection Agent' },
-  'embed-agent':  { fill: '#0f766e', stroke: '#115e59', text: '#ffffff', legendLabel: 'Embedding Agent' },
+  'embed-measure': { fill: '#0f766e', stroke: '#115e59', text: '#ffffff', legendLabel: 'Similarity measure: compares embeddings, takes no instruction' },
   'image-agent':  { fill: '#be185d', stroke: '#9d174d', text: '#ffffff', legendLabel: 'Image Agent' },
   'match-agent':  { fill: '#0369a1', stroke: '#075985', text: '#ffffff', legendLabel: 'Matching Agent' },
   'output':       { fill: '#eff6ff', stroke: '#1d4ed8', text: '#1e3a8a', legendLabel: 'Interface: what agents change' },
@@ -44,6 +44,11 @@ const KIND_COLOURS: Record<Kind, string> = {
 const MODEL_NAMES = Object.fromEntries(MODELS.map(m => [m.id, m.name]));
 const NODES = new Map(LETTERLY_FLOW.nodes.map(n => [n.id, n]));
 const WIRES = new Map(LETTERLY_FLOW.wires.map(w => [w.id, w]));
+
+/** Cut corners mark a similarity measure: it compares embeddings and takes no instruction. */
+const CHAMFER = 10;
+const chamferedPath = (x: number, y: number, w: number, h: number, c: number) =>
+  `M ${x + c},${y} H ${x + w - c} L ${x + w},${y + c} V ${y + h - c} L ${x + w - c},${y + h} H ${x + c} L ${x},${y + h - c} V ${y + c} Z`;
 
 type LayoutMode = 'columns' | 'elk';
 type Focus = { type: 'node' | 'wire'; id: string } | null;
@@ -84,8 +89,14 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
   const [hovered, setHovered] = useState<Focus>(null);
   const [pinned, setPinned] = useState<Focus>(null);
   const [settingsFor, setSettingsFor] = useState<string | null>(null);
+  const [story, setStory] = useState<StoryId | null>(null);
 
   const columnsLayout = useMemo(() => layoutColumns(LETTERLY_FLOW), []);
+
+  // A story lights only the wires that fire for one thing the author does, and the nodes those wires touch.
+  const storyWires = useMemo(() => (story ? LETTERLY_FLOW.wires.filter(w => w.stories.includes(story)) : LETTERLY_FLOW.wires), [story]);
+  const storyNodeIds = useMemo(() => new Set(storyWires.flatMap(w => [w.from.node, w.to.node])), [storyWires]);
+  const chosenStory = STORIES.find(s => s.id === story);
 
   // ELK is loaded and run only the first time someone asks for it.
   useEffect(() => {
@@ -103,9 +114,10 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
   const togglePin = (next: Focus) =>
     setPinned(prev => (prev && next && prev.type === next.type && prev.id === next.id ? null : next));
 
+  // Hovering or pinning asks about one thing, so it overrides the story; the story only filters the resting view.
   const wireIsLit = (wire: Wire) => {
-    if (!focus) return true;
-    return focus.type === 'wire' ? focus.id === wire.id : touches(wire, focus.id);
+    if (focus) return focus.type === 'wire' ? focus.id === wire.id : touches(wire, focus.id);
+    return !story || wire.stories.includes(story);
   };
 
   const dividers = layout.headings.slice(1).map((h, i) => (h.x + layout.headings[i].x) / 2);
@@ -115,10 +127,13 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
       <div className={styles.diagramIntro}>
         <p>
           Letterly&rsquo;s agents collaborate with you through the interface: they read what you type and choose, and they change
-          what you see. So each field of the interface appears twice: on the left, <strong>what you give</strong>; on the right, <strong>what agents change</strong>. This diagram is drawn from the code&rsquo;s own description of that wiring
+          what you see. So each field of the interface appears twice: on the left, <strong>what you give</strong>; on the right, <strong>what agents change</strong>.
+          {' '}An agent further right reads another agent&rsquo;s output; the columns are not an order in time. To follow one thing you do, pick a <strong>story</strong> below.
+          {' '}This diagram is drawn from the code&rsquo;s own description of that wiring
           (<code>src/lib/agent-flow.ts</code>), so it changes when the wiring does.
           {' '}Each <strong>node</strong> has <strong>ports</strong>: inputs on the left, outputs on the right, coloured by the kind of value they carry.
           A <strong>hollow</strong> port is the instruction you can edit in the Writers&rsquo; Room.
+          {' '}<strong>Cut corners</strong> mark a similarity measure: it compares embeddings and takes no instruction.
           {' '}Each <strong>wire</strong> is labelled with the ports it joins. <strong>Dashed borders</strong> are agents that run in the background.
           {' '}<strong>Hover</strong> a node or wire to see what it does and when it fires, or <strong>click</strong> to pin it.
         </p>
@@ -138,6 +153,29 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
           {mode === 'elk' && !elkLayout && !elkError && <span className={styles.layoutNote}>Laying out with ELK…</span>}
           {mode === 'elk' && elkError && <span className={styles.layoutNote}>ELK layout failed: {elkError}</span>}
         </div>
+        <div className={styles.layoutToggle} role="group" aria-label="Story">
+          <span className={styles.layoutToggleLabel}>Story</span>
+          <button
+            type="button"
+            className={`${styles.toggleButton} ${story === null ? styles.toggleButtonActive : ''}`}
+            aria-pressed={story === null}
+            onClick={() => setStory(null)}
+          >
+            All
+          </button>
+          {STORIES.map(s => (
+            <button
+              key={s.id}
+              type="button"
+              className={`${styles.toggleButton} ${story === s.id ? styles.toggleButtonActive : ''}`}
+              aria-pressed={story === s.id}
+              onClick={() => setStory(s.id)}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+        {chosenStory && <p className={styles.storyNote}>{chosenStory.description}</p>}
       </div>
 
       <div className={styles.diagramScroll}>
@@ -164,7 +202,7 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
 
           {/* ── Column headings and dividers ─────────────────────────── */}
           {layout.headings.map(h => (
-            <text key={h.label} x={h.x} y={22} textAnchor="middle" fill="#94a3b8" fontSize={10} fontWeight="600" fontFamily="system-ui, sans-serif" letterSpacing="0.08em">
+            <text key={h.x} x={h.x} y={22} textAnchor="middle" fill="#94a3b8" fontSize={10} fontWeight="600" fontFamily="system-ui, sans-serif" letterSpacing="0.08em">
               {h.label}
             </text>
           ))}
@@ -191,6 +229,7 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
               <g
                 key={route.id}
                 data-wire={route.id}
+                data-lit={lit ? 'true' : 'false'}
                 style={{ cursor: 'pointer', opacity: lit ? 1 : 0.15 }}
                 onMouseEnter={() => setHovered(focusMe)}
                 onMouseLeave={() => setHovered(null)}
@@ -222,7 +261,11 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
             const style = NODE_STYLE[node.group];
             const isOutput = node.role === 'output';
             const focused = focus?.type === 'node' && isSelfOrTwin(focus.id, node.id);
-            const lit = !focus || (focus.type === 'node' ? focused || LETTERLY_FLOW.wires.some(w => touches(w, focus.id) && touches(w, node.id)) : touches(WIRES.get(focus.id)!, node.id));
+            const lit = focus
+              ? focus.type === 'node'
+                ? focused || LETTERLY_FLOW.wires.some(w => touches(w, focus.id) && touches(w, node.id))
+                : touches(WIRES.get(focus.id)!, node.id)
+              : storyNodeIds.has(node.id);
             const focusMe: Focus = { type: 'node', id: node.id };
             const labelFill = style.text;
             return (
@@ -230,6 +273,7 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
                 key={box.id}
                 data-node={box.id}
                 data-highlighted={focused ? 'true' : 'false'}
+                data-lit={lit ? 'true' : 'false'}
                 data-available={node.available}
                 style={{ cursor: 'pointer', opacity: lit ? (node.background ? 0.9 : 1) : 0.35 }}
                 onMouseEnter={() => setHovered(focusMe)}
@@ -246,17 +290,36 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
                 {focused && (
                   <rect x={box.x - 3} y={box.y - 3} width={box.width + 6} height={box.height + 6} rx={9} fill="none" stroke={style.stroke} strokeWidth={2} opacity={0.5} />
                 )}
-                <rect
-                  x={box.x}
-                  y={box.y}
-                  width={box.width}
-                  height={box.height}
-                  rx={isOutput ? 14 : 6}
-                  fill={style.fill}
-                  stroke={style.stroke}
-                  strokeWidth={1.5}
-                  strokeDasharray={node.background ? '5 3' : undefined}
-                />
+                {node.group === 'embed-measure' ? (
+                  <path
+                    data-shape="measure"
+                    d={chamferedPath(box.x, box.y, box.width, box.height, CHAMFER)}
+                    fill={style.fill}
+                    stroke={style.stroke}
+                    strokeWidth={1.5}
+                    strokeDasharray={node.background ? '5 3' : undefined}
+                  />
+                ) : (
+                  <rect
+                    x={box.x}
+                    y={box.y}
+                    width={box.width}
+                    height={box.height}
+                    rx={isOutput ? 14 : 6}
+                    fill={style.fill}
+                    stroke={style.stroke}
+                    strokeWidth={1.5}
+                    strokeDasharray={node.background ? '5 3' : undefined}
+                  />
+                )}
+                {node.fallbackFor && (
+                  <g data-fallback>
+                    <rect x={box.x + 6} y={box.y - 7} width={52} height={14} rx={7} fill="#ffffff" stroke={style.stroke} strokeWidth={1} />
+                    <text x={box.x + 32} y={box.y + 3} textAnchor="middle" fill={style.stroke} fontSize={8.5} fontWeight="600" fontFamily="system-ui, sans-serif">
+                      fallback
+                    </text>
+                  </g>
+                )}
                 {node.available === 'after-draft' && (
                   <g>
                     <rect x={box.x + box.width - 92} y={box.y - 7} width={86} height={14} rx={7} fill="#ffffff" stroke={style.stroke} strokeWidth={1} />
@@ -352,6 +415,7 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
                 )}
                 {node.triggers.length > 0 && <span className={styles.infoModel}>Fires on: {node.triggers.join(' · ')}</span>}
                 {node.role === 'agent' && <span className={styles.infoModel}>Model: {modelText(node, assignments)}</span>}
+                {node.fallbackFor && <span className={styles.infoModel}>Stands in for: {AGENTS[node.fallbackFor as keyof typeof AGENTS].name}</span>}
               </div>
             </>
           );
@@ -381,13 +445,17 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
       <div className={styles.legend}>
         {(Object.entries(NODE_STYLE) as [NodeGroup, typeof NODE_STYLE[NodeGroup]][]).map(([group, style]) => (
           <div key={group} className={styles.legendItem}>
-            <span className={styles.legendSwatch} style={{ background: style.fill, borderColor: style.stroke }} />
+            <span className={group === 'embed-measure' ? styles.legendSwatchMeasure : styles.legendSwatch} style={{ background: style.fill, borderColor: style.stroke }} />
             <span className={styles.legendLabel}>{style.legendLabel}</span>
           </div>
         ))}
         <div className={styles.legendItem}>
           <span className={styles.legendSwatchDashed} />
           <span className={styles.legendLabel}>Background agent</span>
+        </div>
+        <div className={styles.legendItem}>
+          <span className={styles.legendPill}>fallback</span>
+          <span className={styles.legendLabel}>Runs only when the agent it stands in for fails</span>
         </div>
         {(Object.entries(KIND_COLOURS) as [Kind, string][]).map(([kind, colour]) => (
           <div key={kind} className={styles.legendItem}>

@@ -32,6 +32,15 @@ export const MODELS = [
 ];
 
 /**
+ * Cosine similarity at or above which the Suggestion Matcher Scorer counts a suggestion as addressed.
+ * The match-suggestions route decides with it, and the System Diagram states it, so the two cannot drift apart.
+ */
+export const SUGGESTION_MATCH_THRESHOLD = 0.65;
+
+/** Match % (as a fraction) at or above which the stats bar shows the Similarity Scorer's score in green. */
+export const GOOD_MATCH_SCORE = 0.8;
+
+/**
  * Defines the configuration for each "Agent" in the system.
  * An Agent is a specialized role (e.g., Writer, Editor, Critic) with a specific goal and consistent system instructions.
  */
@@ -176,9 +185,10 @@ IMPORTANT: Write all points in present tense, not past tense (e.g., "Express int
         type: 'embedding',
         primary: "openai/text-embedding-3-large",
         fallbacks: [],
-        systemInstruction: `Uses cosine similarity between embeddings of your notes and the final letter to calculate how well the letter captures your original intent. Higher scores indicate better alignment.`,
+        // A similarity measure, not a prompted agent: there is no instruction to send, so it says what it computes instead.
+        computes: `Turns the notes (with recipient and sender joined on) and the letter into two embeddings, then takes the cosine similarity between them: 1.0 means the same meaning, 0.0 none. The stats bar shows it as Match %, in green from ${GOOD_MATCH_SCORE * 100}%. No instruction is sent: an embedding model only turns text into numbers.`,
         inputSchema: {
-            roughNotes: 'Required — original notes',
+            roughNotes: 'Required — the notes, with recipient and sender joined on by the app',
             letter: 'Required — generated letter to score against the notes',
         },
         outputDescription: 'Cosine similarity score (0.0–1.0) reflecting how well the letter captures the original notes',
@@ -191,7 +201,8 @@ IMPORTANT: Write all points in present tense, not past tense (e.g., "Express int
         type: 'embedding',
         primary: "google/gemini-embedding-001",
         fallbacks: ["openai/text-embedding-3-small", "mistralai/mistral-embed-2312"],
-        systemInstruction: `Compares the semantic similarity between a chat message and editor review suggestions to identify which suggestions the user is addressing.`,
+        // A similarity measure, not a prompted agent: there is no instruction to send, so it says what it computes instead.
+        computes: `Turns the chat message and every suggestion into embeddings, then takes the cosine similarity between the message and each suggestion. A suggestion counts as addressed at ${SUGGESTION_MATCH_THRESHOLD} or above. No instruction is sent: an embedding model only turns text into numbers.`,
         inputSchema: {
             chatInput: 'Required — user chat message to match against suggestions',
             suggestions: 'Required — array of suggestion strings to compare against',
@@ -278,7 +289,7 @@ Examples:
 - "make it more formal" → return "" (empty, not an image request)
 - "add more details about the timeline" → return "" (empty, not an image request)`,
         inputSchema: {
-            message: 'Required — user chat message to analyze for an image request',
+            message: 'Required — the notes line that asks for an image (the generate route picks the first line matching a fixed pattern)',
         },
         outputDescription: 'Image subject description string if an image was requested, or empty string if not',
         hidden: true
@@ -305,3 +316,12 @@ Requirements:
         hidden: false
     }
 } as const;
+
+/** The id of one entry in AGENTS. */
+export type AgentId = keyof typeof AGENTS;
+
+/** One entry of AGENTS: a prompted agent with a system instruction, or a similarity measure, which has none. */
+export type Agent = (typeof AGENTS)[AgentId];
+
+/** The instruction an entry ships with, or an empty string for a similarity measure, which sends none. */
+export const defaultInstruction = (agent: Agent): string => ('systemInstruction' in agent ? agent.systemInstruction : '');

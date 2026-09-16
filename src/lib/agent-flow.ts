@@ -16,6 +16,10 @@
  * author gives to it (input nodes); on the right, each field as agents change it (output nodes). Both copies of a field
  * share a `field` id and a title. Drawing it this way means every wire reads left to right, as one round of work.
  *
+ * Every wire also lists the **stories** it belongs to: the things an author does (Generate Draft, send a chat message,
+ * and so on), so the diagram can light one story at a time. Two entries in AGENTS are similarity measures rather than
+ * prompted agents: they compare embeddings, take no instruction, and say what they compute instead.
+ *
  * An agent's input ports are read from its `inputSchema` in agent-constants.ts, so they are never typed twice.
  * Everything else here describes what the application code does today (LetterApp.tsx and the API routes).
  * If you change how agents are called, change the wires here too; the tests in
@@ -37,13 +41,13 @@ export interface Port {
 /**
  * Where a node sits in the story of the diagram.
  * - `input`: one field of the interface, as what the author types, chooses, or clicks.
- * - `agent`: one AI agent from AGENTS.
+ * - `agent`: one entry of AGENTS: an AI agent, or a similarity measure.
  * - `output`: one field of the interface, as agents change it on screen.
  */
 export type NodeRole = 'input' | 'agent' | 'output';
 
-/** Visual family, used for the node's colour. Matches the legend of the System Diagram. */
-export type NodeGroup = 'user-input' | 'core-agent' | 'detect-agent' | 'embed-agent' | 'image-agent' | 'match-agent' | 'output';
+/** Visual family, used for the node's colour, and its shape for a similarity measure. Matches the legend of the System Diagram. */
+export type NodeGroup = 'user-input' | 'core-agent' | 'detect-agent' | 'embed-measure' | 'image-agent' | 'match-agent' | 'output';
 
 export interface FlowNode {
   id: string;
@@ -73,7 +77,63 @@ export interface FlowNode {
   instructionNote?: string;
   /** For agents that run on another agent's model rather than their own. */
   modelFrom?: string;
+  /** For similarity measures: what they compute, in place of an instruction. Copied from AGENTS. */
+  computes?: string;
+  /** For an agent that runs only when another one fails: the id of the agent it stands in for. */
+  fallbackFor?: string;
 }
+
+/**
+ * One thing the author does, and everything that fires because of it. Each wire lists the stories it belongs to, so the
+ * diagram can light one story at a time instead of every wire at once.
+ */
+export type StoryId = 'generate' | 'setting' | 'chat-send' | 'chat-typing' | 'notes-edit' | 'letter-edit' | 'chip-click';
+
+export interface Story {
+  id: StoryId;
+  /** The button label. */
+  label: string;
+  /** What happens, in a sentence or two. */
+  description: string;
+}
+
+export const STORIES: Story[] = [
+  {
+    id: 'generate',
+    label: 'Generate Draft',
+    description: 'The Letter Generator writes a draft from the notes and settings, with line art if a notes line asks for it. The Suggestions and the Similarity Scorer then review the draft.',
+  },
+  {
+    id: 'setting',
+    label: 'Change a setting',
+    description: 'Choosing another tone, length, language, or model once a letter exists writes a new draft, exactly as Generate Draft does.',
+  },
+  {
+    id: 'chat-send',
+    label: 'Send a chat message',
+    description: 'The Tone Request Detector and the Notes Editor read the message. The notes are replaced, which also makes the Length Analyst re-read them, and then a new draft is written, exactly as Generate Draft does.',
+  },
+  {
+    id: 'chat-typing',
+    label: 'Type a chat message',
+    description: '800 ms after the last keystroke, the Suggestion Matcher shades the chips the message addresses. Its Scorer steps in only if the Matcher fails.',
+  },
+  {
+    id: 'notes-edit',
+    label: 'Edit the notes',
+    description: 'One second after the notes stop changing, the Length Analyst marks a recommended length. Nothing else fires until Generate Draft.',
+  },
+  {
+    id: 'letter-edit',
+    label: 'Edit the letter',
+    description: 'Clicking out of an edited letter: Notes Sync appends what is new in the letter to the notes, which the Length Analyst then re-reads. No new draft.',
+  },
+  {
+    id: 'chip-click',
+    label: 'Click a suggestion',
+    description: 'The suggestion is appended to the notes; no agent is involved, though the Length Analyst then re-reads the notes.',
+  },
+];
 
 export interface WireEnd {
   node: string;
@@ -86,6 +146,8 @@ export interface Wire {
   to: WireEnd;
   /** When a value travels along this wire. */
   when: string;
+  /** The stories in which it does. */
+  stories: StoryId[];
 }
 
 export interface Flow {
@@ -152,9 +214,8 @@ interface AgentDiagramFacts {
   instructionPort?: boolean;
   instructionNote?: string;
   modelFrom?: AgentId;
+  fallbackFor?: AgentId;
 }
-
-const EMBEDDING_NOTE = 'An embedding model turns text into numbers and takes no instruction. This text describes what the agent does.';
 
 const AGENT_FACTS: Record<AgentId, AgentDiagramFacts> = {
   GENERATE: {
@@ -171,7 +232,7 @@ const AGENT_FACTS: Record<AgentId, AgentDiagramFacts> = {
   RECOMMEND_LENGTH: {
     group: 'core-agent',
     background: true,
-    triggers: ['Editing the notes (1 second after you stop, once they are longer than 10 characters)'],
+    triggers: ['Whenever the notes change (1 second after the last change, once they are longer than 10 characters): typed, appended by a chip, or rewritten by an agent'],
     instructionPort: true,
   },
   SYNC_NOTES: {
@@ -180,16 +241,15 @@ const AGENT_FACTS: Record<AgentId, AgentDiagramFacts> = {
     instructionPort: true,
   },
   SCORED: {
-    group: 'embed-agent',
+    group: 'embed-measure',
     background: true,
     triggers: ['After every new draft'],
-    instructionNote: EMBEDDING_NOTE,
   },
   MATCH_SUGGESTIONS_SCORER: {
-    group: 'embed-agent',
+    group: 'embed-measure',
     background: true,
     triggers: ["Fallback only: when the Suggestion Matcher's response has no match list at all, for example because it failed (an empty list does not trigger it)"],
-    instructionNote: EMBEDDING_NOTE,
+    fallbackFor: 'MATCH_SUGGESTIONS',
   },
   MATCH_SUGGESTIONS: {
     group: 'match-agent',
@@ -207,7 +267,7 @@ const AGENT_FACTS: Record<AgentId, AgentDiagramFacts> = {
   DETECT_IMAGE_REQUEST: {
     group: 'detect-agent',
     background: true,
-    triggers: ['Every draft, for a notes line that asks to add or create an image (inside the generate route)'],
+    triggers: ['Every draft, for the first notes line that matches a fixed pattern such as "add … image" (inside the generate route); that line is removed from the notes the Letter Generator reads'],
     instructionNote: "The generate route calls this detector without passing an instruction, so an edit would not reach the model. It is also hidden from the Writers' Room.",
     modelFrom: 'GENERATE',
   },
@@ -235,6 +295,8 @@ const agentNodes: FlowNode[] = (Object.keys(AGENTS) as AgentId[]).map(id => {
     instructionPort: facts.instructionPort,
     instructionNote: facts.instructionNote,
     modelFrom: facts.modelFrom,
+    computes: 'computes' in agent ? agent.computes : undefined,
+    fallbackFor: facts.fallbackFor,
   };
 });
 
@@ -291,10 +353,10 @@ const interfaceNodes: FlowNode[] = [
     [element('matchPercent', 'score', 'number')], '% Match'),
 ];
 
-const wire = (from: string, to: string, when: string): Wire => {
+const wire = (from: string, to: string, when: string, stories: StoryId[]): Wire => {
   const [fromNode, fromPort] = from.split('.');
   const [toNode, toPort] = to.split('.');
-  return { id: `${from}->${to}`, from: { node: fromNode, port: fromPort }, to: { node: toNode, port: toPort }, when };
+  return { id: `${from}->${to}`, from: { node: fromNode, port: fromPort }, to: { node: toNode, port: toPort }, when, stories };
 };
 
 const GENERATES = 'Every draft: Generate Draft, after a chat message, or when a setting changes';
@@ -303,63 +365,77 @@ const CHAT_SENT = 'Sending a chat message';
 const TYPING = 'Typing: 800 ms after the last keystroke';
 const FALLBACK = "Fallback: only when the Suggestion Matcher's response has no match list at all (an empty list does not trigger it)";
 const LETTER_EDITED = 'Clicking out of the letter after editing it';
+const JOINED = `${AFTER_DRAFT}: joined onto the notes before they are embedded`;
+
+// The stories each wire belongs to. A draft is written on Generate Draft, on a setting change, and after a chat message.
+const DRAFT: StoryId[] = ['generate', 'setting', 'chat-send'];
+const CHAT: StoryId[] = ['chat-send'];
+const TYPING_STORY: StoryId[] = ['chat-typing'];
+const LETTER_EDIT: StoryId[] = ['letter-edit'];
+const CHIP: StoryId[] = ['chip-click'];
+// The Length Analyst re-reads the notes whenever they change, whoever changed them: the author, the Notes Editor, Notes Sync, or a chip.
+const NOTES_CHANGE: StoryId[] = ['notes-edit', 'chat-send', 'letter-edit', 'chip-click'];
 
 const wires: Wire[] = [
   // Letter Generator
-  wire('rough-notes-in.roughNotes', 'GENERATE.roughNotes', GENERATES),
-  wire('to-in.recipient', 'GENERATE.recipient', GENERATES),
-  wire('from-in.sender', 'GENERATE.sender', GENERATES),
-  wire('tone-in.tone', 'GENERATE.tone', GENERATES),
-  wire('length-in.length', 'GENERATE.length', GENERATES),
-  wire('language-in.language', 'GENERATE.language', GENERATES),
-  wire('style-in.styleExample', 'GENERATE.styleExample', GENERATES),
-  wire('GENERATE.letter', 'letter-out.letter', GENERATES),
+  wire('rough-notes-in.roughNotes', 'GENERATE.roughNotes', `${GENERATES}. Any line that asks for an image is removed first`, DRAFT),
+  wire('to-in.recipient', 'GENERATE.recipient', GENERATES, DRAFT),
+  wire('from-in.sender', 'GENERATE.sender', GENERATES, DRAFT),
+  wire('tone-in.tone', 'GENERATE.tone', GENERATES, DRAFT),
+  wire('length-in.length', 'GENERATE.length', GENERATES, DRAFT),
+  wire('language-in.language', 'GENERATE.language', GENERATES, DRAFT),
+  wire('style-in.styleExample', 'GENERATE.styleExample', GENERATES, DRAFT),
+  wire('GENERATE.letter', 'letter-out.letter', GENERATES, DRAFT),
 
   // Line art, inside the generate route
-  wire('rough-notes-in.roughNotes', 'DETECT_IMAGE_REQUEST.message', 'Every draft, for the first notes line that asks to add or create an image'),
-  wire('DETECT_IMAGE_REQUEST.subject', 'IMAGE.subject', 'When a subject is found and GOOGLE_API_KEY is set'),
-  wire('IMAGE.image', 'letter-out.watermark', 'When an image is generated'),
+  wire('rough-notes-in.roughNotes', 'DETECT_IMAGE_REQUEST.message',
+    'Every draft, for the first notes line that matches a fixed pattern (a verb such as add or create, and a word such as image or drawing); the model never sees the other lines', DRAFT),
+  wire('DETECT_IMAGE_REQUEST.subject', 'IMAGE.subject', 'When a subject is found and GOOGLE_API_KEY is set', DRAFT),
+  wire('IMAGE.image', 'letter-out.watermark', 'When an image is generated', DRAFT),
 
   // Chat: tone detection, then refinement
-  wire('chat-message-in.message', 'DETECT_TONE_REQUEST.message', CHAT_SENT),
-  wire('tone-in.toneOptions', 'DETECT_TONE_REQUEST.existingTones', CHAT_SENT),
-  wire('DETECT_TONE_REQUEST.tone', 'tone-out.toneDropdown', 'When a tone change is detected: added to the dropdown if new, then selected'),
-  wire('rough-notes-in.roughNotes', 'REFINE.roughNotes', CHAT_SENT),
-  wire('chat-message-in.message', 'REFINE.instructions', CHAT_SENT),
-  wire('chat-history-in.history', 'REFINE.conversationHistory', CHAT_SENT),
-  wire('tone-in.toneOptions', 'REFINE.existingTones', CHAT_SENT),
-  wire('REFINE.roughNotes', 'rough-notes-out.roughNotes', 'Replaces the notes, then a new draft is generated'),
+  wire('chat-message-in.message', 'DETECT_TONE_REQUEST.message', CHAT_SENT, CHAT),
+  wire('tone-in.toneOptions', 'DETECT_TONE_REQUEST.existingTones', CHAT_SENT, CHAT),
+  wire('DETECT_TONE_REQUEST.tone', 'tone-out.toneDropdown', 'When a tone change is detected: added to the dropdown if new, then selected', CHAT),
+  wire('rough-notes-in.roughNotes', 'REFINE.roughNotes', CHAT_SENT, CHAT),
+  wire('chat-message-in.message', 'REFINE.instructions', CHAT_SENT, CHAT),
+  wire('chat-history-in.history', 'REFINE.conversationHistory', CHAT_SENT, CHAT),
+  wire('tone-in.toneOptions', 'REFINE.existingTones', CHAT_SENT, CHAT),
+  wire('REFINE.roughNotes', 'rough-notes-out.roughNotes', 'Replaces the notes, then a new draft is generated', CHAT),
 
   // Review after each draft
-  wire('rough-notes-in.roughNotes', 'SUGGEST.roughNotes', AFTER_DRAFT),
-  wire('GENERATE.letter', 'SUGGEST.generatedLetter', AFTER_DRAFT),
-  wire('to-in.recipient', 'SUGGEST.recipient', AFTER_DRAFT),
-  wire('tone-in.tone', 'SUGGEST.tone', AFTER_DRAFT),
-  wire('length-in.length', 'SUGGEST.length', AFTER_DRAFT),
-  wire('style-in.styleExample', 'SUGGEST.styleExample', AFTER_DRAFT),
-  wire('SUGGEST.suggestions', 'chips-out.suggestionChips', AFTER_DRAFT),
-  wire('chips-in.suggestion', 'rough-notes-out.roughNotes', 'Clicking a chip appends it to the notes; no agent is involved'),
+  wire('rough-notes-in.roughNotes', 'SUGGEST.roughNotes', AFTER_DRAFT, DRAFT),
+  wire('GENERATE.letter', 'SUGGEST.generatedLetter', AFTER_DRAFT, DRAFT),
+  wire('to-in.recipient', 'SUGGEST.recipient', AFTER_DRAFT, DRAFT),
+  wire('tone-in.tone', 'SUGGEST.tone', AFTER_DRAFT, DRAFT),
+  wire('length-in.length', 'SUGGEST.length', AFTER_DRAFT, DRAFT),
+  wire('style-in.styleExample', 'SUGGEST.styleExample', AFTER_DRAFT, DRAFT),
+  wire('SUGGEST.suggestions', 'chips-out.suggestionChips', AFTER_DRAFT, DRAFT),
+  wire('chips-in.suggestion', 'rough-notes-out.roughNotes', 'Clicking a chip appends it to the notes; no agent is involved', CHIP),
 
-  wire('rough-notes-in.roughNotes', 'SCORED.roughNotes', `${AFTER_DRAFT} (joined with recipient and sender)`),
-  wire('GENERATE.letter', 'SCORED.letter', AFTER_DRAFT),
-  wire('SCORED.score', 'match-out.matchPercent', AFTER_DRAFT),
+  // Scoring the draft: the app joins recipient and sender onto the notes before sending them
+  wire('rough-notes-in.roughNotes', 'SCORED.roughNotes', `${AFTER_DRAFT}, with recipient and sender joined on`, DRAFT),
+  wire('to-in.recipient', 'SCORED.roughNotes', JOINED, DRAFT),
+  wire('from-in.sender', 'SCORED.roughNotes', JOINED, DRAFT),
+  wire('GENERATE.letter', 'SCORED.letter', AFTER_DRAFT, DRAFT),
+  wire('SCORED.score', 'match-out.matchPercent', AFTER_DRAFT, DRAFT),
 
   // Matching a chat message to suggestions while typing
-  wire('chat-message-in.draft', 'MATCH_SUGGESTIONS.chatInput', TYPING),
-  wire('SUGGEST.suggestions', 'MATCH_SUGGESTIONS.suggestions', TYPING),
-  wire('MATCH_SUGGESTIONS.matches', 'chips-out.chipShading', 'Shades the chips the message addresses'),
-  wire('chat-message-in.draft', 'MATCH_SUGGESTIONS_SCORER.chatInput', FALLBACK),
-  wire('SUGGEST.suggestions', 'MATCH_SUGGESTIONS_SCORER.suggestions', FALLBACK),
-  wire('MATCH_SUGGESTIONS_SCORER.matches', 'chips-out.chipShading', 'Fallback: marks matched chips'),
+  wire('chat-message-in.draft', 'MATCH_SUGGESTIONS.chatInput', TYPING, TYPING_STORY),
+  wire('SUGGEST.suggestions', 'MATCH_SUGGESTIONS.suggestions', TYPING, TYPING_STORY),
+  wire('MATCH_SUGGESTIONS.matches', 'chips-out.chipShading', 'Shades the chips the message addresses', TYPING_STORY),
+  wire('chat-message-in.draft', 'MATCH_SUGGESTIONS_SCORER.chatInput', FALLBACK, TYPING_STORY),
+  wire('SUGGEST.suggestions', 'MATCH_SUGGESTIONS_SCORER.suggestions', FALLBACK, TYPING_STORY),
+  wire('MATCH_SUGGESTIONS_SCORER.matches', 'chips-out.chipShading', 'Fallback: marks matched chips', TYPING_STORY),
 
   // Length recommendation
-  wire('rough-notes-in.roughNotes', 'RECOMMEND_LENGTH.roughNotes', 'Editing the notes: 1 second after you stop'),
-  wire('RECOMMEND_LENGTH.recommendation', 'length-out.lengthButtons', 'Marks the recommended length button'),
+  wire('rough-notes-in.roughNotes', 'RECOMMEND_LENGTH.roughNotes', 'Whenever the notes change, 1 second after the last change: typed, appended by a chip, or rewritten by an agent', NOTES_CHANGE),
+  wire('RECOMMEND_LENGTH.recommendation', 'length-out.lengthButtons', 'Marks the recommended length button', NOTES_CHANGE),
 
   // Editing the letter directly
-  wire('rough-notes-in.roughNotes', 'SYNC_NOTES.roughNotes', LETTER_EDITED),
-  wire('letter-in.editedLetter', 'SYNC_NOTES.editedLetter', LETTER_EDITED),
-  wire('SYNC_NOTES.newPoints', 'rough-notes-out.roughNotes', 'Appends new points to the notes; no new draft'),
+  wire('rough-notes-in.roughNotes', 'SYNC_NOTES.roughNotes', LETTER_EDITED, LETTER_EDIT),
+  wire('letter-in.editedLetter', 'SYNC_NOTES.editedLetter', LETTER_EDITED, LETTER_EDIT),
+  wire('SYNC_NOTES.newPoints', 'rough-notes-out.roughNotes', 'Appends new points to the notes; no new draft', LETTER_EDIT),
 ];
 
 /** Letterly as a flow: each field as the author gives to it, the agents, and each field as agents change it. */

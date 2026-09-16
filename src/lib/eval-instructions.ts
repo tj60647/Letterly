@@ -10,7 +10,7 @@
  * with an instruction port), so a passing test never implies an edit had an effect it could not have.
  */
 
-import { AGENTS } from './agent-constants';
+import { AGENTS, defaultInstruction } from './agent-constants';
 import { LETTERLY_FLOW } from './agent-flow';
 import { loadCustomInstructions } from './custom-instructions';
 import type { RunOptions } from './eval-types';
@@ -25,7 +25,7 @@ function usableEdits(): Record<string, string> {
         typeof text === 'string' &&
         text.trim() !== '' &&
         // The Writers' Room Reset button saves a copy of the default rather than deleting the edit.
-        text !== AGENTS[agentId as keyof typeof AGENTS].systemInstruction
+        text !== defaultInstruction(AGENTS[agentId as keyof typeof AGENTS])
     )
   );
 }

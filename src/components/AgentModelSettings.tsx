@@ -10,7 +10,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { AGENTS, MODELS } from '@/lib/agent-constants';
+import { AGENTS, MODELS, defaultInstruction } from '@/lib/agent-constants';
 import { SettingsIcon, BeakerIcon, DiagramIcon } from './ui/icons';
 import styles from './AgentModelSettings.module.css';
 
@@ -53,7 +53,7 @@ export function AgentModelSettings({
 
     const handleEditClick = (agentId: string) => {
         const agent = AGENTS[agentId as keyof typeof AGENTS];
-        const currentInstruction = customInstructions[agentId] || agent.systemInstruction;
+        const currentInstruction = customInstructions[agentId] || defaultInstruction(agent);
         setEditedInstruction(currentInstruction);
         setEditingAgent(agentId);
     };
@@ -71,14 +71,14 @@ export function AgentModelSettings({
 
     const handleReset = (agentId: string) => {
         const agent = AGENTS[agentId as keyof typeof AGENTS];
-        onInstructionChange(agentId, agent.systemInstruction);
+        onInstructionChange(agentId, defaultInstruction(agent));
         setEditingAgent(null);
         setEditedInstruction('');
     };
 
     const isModified = (agentId: string) => {
         return customInstructions[agentId] !== undefined &&
-               customInstructions[agentId] !== AGENTS[agentId as keyof typeof AGENTS].systemInstruction;
+               customInstructions[agentId] !== defaultInstruction(AGENTS[agentId as keyof typeof AGENTS]);
     };
 
     return (
@@ -108,7 +108,7 @@ export function AgentModelSettings({
                             const compatibleModels = MODELS.filter(m => m.type === agent.type);
                             const isEditing = editingAgent === agent.id;
                             const modified = isModified(agent.id);
-                            const displayInstruction = customInstructions[agent.id] || agent.systemInstruction;
+                            const displayInstruction = customInstructions[agent.id] || defaultInstruction(agent);
 
                             return (
                                 <div key={agent.id} className={`${styles.row} ${modified ? styles.modified : ''}`}>

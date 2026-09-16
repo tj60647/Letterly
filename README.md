@@ -471,9 +471,9 @@ When the behavior is right and the system needs to become real, move into code w
 
 ---
 
-### System Diagram Example
+### A Sample Decomposition (Not Letterly's)
 
-An example multi-agent letter writing system with the following roles:
+One possible multi-agent letter writing system, shown as an example of the deliverable. It is not how Letterly is built: Letterly's own roles follow in the next section, and its live System Diagram is in the app at `/eval`. The example has the following roles:
 
 | Role | Function |
 |---|---|
@@ -504,12 +504,12 @@ Instead of one single AI doing everything, Letterly uses a **Writers' Room** app
 5.  **Line Art Generator** — Draws a custom illustration if your notes explicitly request a drawing or image.
 6.  **Notes Sync** — Updates your notes to match any manual edits you make to the draft letter.
 7.  **Suggestion Matcher** — While you type a chat message, uses AI reasoning to work out which editor suggestions the message addresses.
-8.  **Similarity Scorer** — Calculates how closely the draft letter matches your notes.
+8.  **Similarity Scorer** — Calculates how closely the draft letter matches your notes. A similarity measure rather than an agent: it compares embeddings and takes no instruction.
 9.  **Tone Request Detector** — Checks each chat message for a tone change request (e.g., "make it more formal").
 10. **Image Request Detector** — Checks lines in your notes that ask to add or create an image.
-11. **Suggestion Matcher Scorer** — A backup for the Suggestion Matcher that compares meanings with embeddings, used only when the matcher fails.
+11. **Suggestion Matcher Scorer** — A fallback for the Suggestion Matcher, used only when the matcher fails. Also a similarity measure: it compares embeddings and takes no instruction.
 
-The first seven appear in the Writers' Room. The last four run behind the scenes; you can see all eleven, and how they connect, in the System Diagram.
+The first seven appear in the Writers' Room. The last four run behind the scenes; you can see all eleven, and how they connect, in the System Diagram, which draws the two similarity measures with cut corners.
 
 ### Customizing Your Agents
 
@@ -666,9 +666,12 @@ How to do it:
 
 In Letterly:
 - Accessible via the "System Diagram" link in the Writers' Room modal header, or by navigating to `/eval` and selecting the "System Diagram" tab.
-- Each field of the interface appears twice: on the left, **what you give** (grouped into fields available from the start and those that need a first draft); on the right, **what agents change**. All eleven agents sit between them.
+- Each field of the interface appears twice: on the left, **what you give** (grouped into fields available from the start and those that need a first draft); on the right, **what agents change**. All eleven units sit between them: nine agents and two similarity measures, drawn with cut corners.
+- The agent columns are headed by what they read, not by a step number: an agent further right reads another agent's output. The columns are not an order in time.
+- Pick a **story** (Generate Draft, Send a chat message, Type a chat message, and so on) to light only the wires that fire for that one action. With no story chosen, every wire is lit at once: the whole system, but not any one use of it.
 - Every node has **ports**, and every **wire** is labelled with the value it carries. Hover or focus a wire to see when it fires; hover a node to see what it does.
-- A **hollow port** marks an instruction you can edit that actually reaches the model. The **gear** on an agent opens its settings.
+- A **hollow port** marks an instruction you can edit that actually reaches the model. The **gear** on an agent opens its settings; for a similarity measure, the settings show what it computes, threshold included, in place of an instruction.
+- A **fallback** tag marks the Suggestion Matcher Scorer, which runs only when the Suggestion Matcher fails.
 - Switch between **Columns** and **ELK** layouts.
 
 ---
@@ -850,12 +853,13 @@ See `e2e/README.md` for detailed execution instructions.
 
 ### Key Terms (Glossary)
 
-- **Agent:** A role in the system given a name, purpose, behavioral rules, and defined inputs and outputs. In implementation, an agent is a call to a language model with a specific system instruction.
+- **Agent:** A role in the system given a name, purpose, behavioral rules, and defined inputs and outputs. In implementation, an agent is a call to a language model with a specific system instruction. Two of Letterly's eleven units, the Similarity Scorer and the Suggestion Matcher Scorer, are not agents in this sense: they are similarity measures (see below).
 - **Agentic System:** A system in which AI agents act with some initiative. There are three common working definitions: autonomous, multi-agent collaboration, and mixed-initiative. See [What "Agentic System" Means Here](#what-agentic-system-means-here) in Chapter 1. Letterly is agentic in the collaborative and mixed-initiative senses.
 - **Agent Design Studio:** A workshop-scale sandbox for prototyping an agent's behavior (model, instructions, temperature, knowledge) before writing code. Open it at [agentstudio.aroughidea.com](https://agentstudio.aroughidea.com/); see [workshop/agent-design-studio.md](workshop/agent-design-studio.md).
 - **Bodystorming:** A design method where participants physically enact a system's roles to discover behavioral assumptions before implementation.
 - **Design Intent:** The first of three design artifacts for presenting an agent: its system instructions, knowledge base, and parameters.
 - **Design Quals:** The third of the three design artifacts: expected responses given a prompt. What you check the running agent against.
+- **Embedding, Similarity Measure:** An embedding is the list of numbers a model produces for a piece of text, such that texts with similar meanings get similar numbers. A similarity measure compares two embeddings (Letterly uses cosine similarity) and returns a score; code, not a model, then applies a threshold. No instruction is involved, which is why the System Diagram draws Letterly's two measures with cut corners and shows what they compute in place of an instruction.
 - **Flow, Node, Port, Wire:** The System Diagram's vocabulary, shared with Agent Design Studio's Agentic Studio. A **flow** is made of **nodes** (agents and interface fields). Each node has **ports** where values come in and go out, and a **wire** joins an output port on one node to an input port on another.
 - **Engagement Context:** The situation, circumstances, or conditions in which someone approaches or engages a role.
 - **Interaction Loop:** The recurring sequence a role follows to elicit what it needs, perform its work, check its understanding, respond to new information, and move toward an output.
@@ -919,7 +923,7 @@ These files mostly live in `src/app/api/`. They are the "kitchen" where the work
 #### The Configuration (The Brains)
 - **`src/lib/agent-constants.ts`**: This is the "character sheet" for our AI agents. It defines who they are (e.g., "You are an expert editor") and what they should do. **This is the most important file for prompt engineering.**
 - **`src/lib/models.ts`**: Handles AI model communication, including fallback logic, OpenRouter integration, and the shared client creation.
-- **`src/lib/agent-flow.ts`**: Describes how the agents and the interface are wired together, as a flow. The System Diagram is drawn from it, and tests check it against the code. **Update it whenever you change how agents are called.**
+- **`src/lib/agent-flow.ts`**: Describes how the agents and the interface are wired together, as a flow, and which story (Generate Draft, Send a chat message, and so on) each wire belongs to. The System Diagram is drawn from it, and tests check it against the code. **Update it whenever you change how agents are called.**
 - **`src/lib/flow-layout.ts`**: Works out where the System Diagram's nodes, ports, and wires go, in either the Columns or ELK layout.
 - **`src/lib/custom-instructions.ts`**: Reads and writes the custom instructions saved in your browser, for both the Writers' Room and the System Diagram.
 
