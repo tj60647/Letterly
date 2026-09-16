@@ -137,6 +137,13 @@ describe('layoutColumns', () => {
     expect(layout.headings[layout.headings.length - 1].label).toBe('WHAT AGENTS CHANGE');
   });
 
+  it('heads the agent columns by what they read, because the columns are not an order in time', () => {
+    expect(layout.headings[1].label).toBe('AGENTS · READ WHAT YOU GIVE');
+    expect(layout.headings.length).toBeGreaterThan(3);
+    for (const h of layout.headings.slice(2, -1)) expect(h.label).toBe('AGENTS · READ ANOTHER AGENT');
+    expect(layout.headings.filter(h => /STEP/.test(h.label))).toEqual([]);
+  });
+
   it('stacks inputs available from the start above those that need a first draft, each under its sub-heading', () => {
     const inputs = LETTERLY_FLOW.nodes.filter(n => n.role === 'input');
     const start = inputs.filter(n => n.available === 'start').map(n => box(n.id));
@@ -166,9 +173,9 @@ describe('layoutColumns with wires that run backwards', () => {
   const flow = {
     nodes: [node('in', 'input', ['a', 'b', 'c', 'd', 'e'], ['x']), node('agent', 'agent', ['x'], ['y']), node('out', 'output', ['y'], [])],
     wires: [
-      { id: 'in.x->agent.x', from: { node: 'in', port: 'x' }, to: { node: 'agent', port: 'x' }, when: 'w' },
-      { id: 'agent.y->out.y', from: { node: 'agent', port: 'y' }, to: { node: 'out', port: 'y' }, when: 'w' },
-      ...['a', 'b', 'c', 'd', 'e'].map(p => ({ id: `agent.y->in.${p}`, from: { node: 'agent', port: 'y' }, to: { node: 'in', port: p }, when: 'w' })),
+      { id: 'in.x->agent.x', from: { node: 'in', port: 'x' }, to: { node: 'agent', port: 'x' }, when: 'w', stories: [] },
+      { id: 'agent.y->out.y', from: { node: 'agent', port: 'y' }, to: { node: 'out', port: 'y' }, when: 'w', stories: [] },
+      ...['a', 'b', 'c', 'd', 'e'].map(p => ({ id: `agent.y->in.${p}`, from: { node: 'agent', port: 'y' }, to: { node: 'in', port: p }, when: 'w', stories: [] })),
     ],
   };
 

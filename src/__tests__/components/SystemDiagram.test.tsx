@@ -12,7 +12,7 @@
 import React from 'react';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { SystemDiagram } from '@/components/eval/SystemDiagram';
-import { LETTERLY_FLOW } from '@/lib/agent-flow';
+import { LETTERLY_FLOW, STORIES } from '@/lib/agent-flow';
 import { AGENTS, MODELS } from '@/lib/agent-constants';
 
 const svg = () => screen.getByRole('img', { name: /letterly agent system diagram/i });
@@ -200,5 +200,99 @@ describe('SystemDiagram', () => {
     await screen.findByTestId('layout-elk', undefined, { timeout: 10000 });
     expect(within(svg()).queryByText('WHAT YOU GIVE')).toBeNull();
     expect(svg().querySelectorAll('[data-node]')).toHaveLength(LETTERLY_FLOW.nodes.length);
+  });
+});
+
+describe('SystemDiagram stories, measures, and fallbacks', () => {
+  const lit = (selector: string) => svg().querySelector(selector)?.getAttribute('data-lit');
+  const gear = (id: string) => svg().querySelector(`[data-node="${id}"] [data-gear]`) as HTMLElement;
+
+  it('offers a story for each thing the author does, and lights only what fires for the chosen one', () => {
+    render(<SystemDiagram />);
+    const group = screen.getByRole('group', { name: 'Story' });
+    expect(within(group).getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
+    for (const story of STORIES) expect(within(group).getByRole('button', { name: story.label })).toBeInTheDocument();
+
+    const typing = STORIES.find(s => s.id === 'chat-typing')!;
+    fireEvent.click(within(group).getByRole('button', { name: typing.label }));
+    expect(screen.getByText(typing.description)).toBeInTheDocument();
+    expect(lit('[data-wire="chat-message-in.draft->MATCH_SUGGESTIONS.chatInput"]')).toBe('true');
+    expect(lit('[data-wire="GENERATE.letter->letter-out.letter"]')).toBe('false');
+    expect(lit('[data-node="MATCH_SUGGESTIONS"]')).toBe('true');
+    expect(lit('[data-node="GENERATE"]')).toBe('false');
+
+    fireEvent.click(within(group).getByRole('button', { name: 'All' }));
+    expect(lit('[data-wire="GENERATE.letter->letter-out.letter"]')).toBe('true');
+    expect(lit('[data-node="GENERATE"]')).toBe('true');
+  });
+
+  it('still answers a hover on a node outside the chosen story, then returns to the story', () => {
+    render(<SystemDiagram />);
+    const group = screen.getByRole('group', { name: 'Story' });
+    fireEvent.click(within(group).getByRole('button', { name: STORIES.find(s => s.id === 'chat-typing')!.label }));
+    expect(lit('[data-node="SCORED"]')).toBe('false');
+
+    fireEvent.mouseEnter(svg().querySelector('[data-node="SCORED"]')!);
+    expect(lit('[data-node="SCORED"]')).toBe('true');
+    expect(lit('[data-wire="GENERATE.letter->SCORED.letter"]')).toBe('true');
+    expect(lit('[data-wire="chat-message-in.draft->MATCH_SUGGESTIONS.chatInput"]')).toBe('false');
+
+    fireEvent.mouseLeave(svg().querySelector('[data-node="SCORED"]')!);
+    expect(lit('[data-node="SCORED"]')).toBe('false');
+    expect(lit('[data-wire="chat-message-in.draft->MATCH_SUGGESTIONS.chatInput"]')).toBe('true');
+  });
+
+  it('draws a similarity measure with cut corners, and an agent as a box', () => {
+    render(<SystemDiagram />);
+    expect(svg().querySelector('[data-node="SCORED"] [data-shape="measure"]')).not.toBeNull();
+    expect(svg().querySelector('[data-node="MATCH_SUGGESTIONS_SCORER"] [data-shape="measure"]')).not.toBeNull();
+    expect(svg().querySelector('[data-node="GENERATE"] [data-shape="measure"]')).toBeNull();
+  });
+
+  it('marks a fallback on its node and says what it stands in for', () => {
+    render(<SystemDiagram />);
+    const node = svg().querySelector('[data-node="MATCH_SUGGESTIONS_SCORER"]') as HTMLElement;
+    expect(within(node).getByText('fallback')).toBeInTheDocument();
+    expect(within(svg().querySelector('[data-node="MATCH_SUGGESTIONS"]') as HTMLElement).queryByText('fallback')).toBeNull();
+    fireEvent.mouseEnter(node);
+    expect(screen.getByText(`Stands in for: ${AGENTS.MATCH_SUGGESTIONS.name}`)).toBeInTheDocument();
+  });
+
+  it('heads the agent columns by what they read, not by a step number', () => {
+    render(<SystemDiagram />);
+    expect(within(svg()).getByText('AGENTS · READ WHAT YOU GIVE')).toBeInTheDocument();
+    expect(within(svg()).getAllByText('AGENTS · READ ANOTHER AGENT').length).toBeGreaterThan(0);
+    expect(within(svg()).queryByText(/STEP/)).toBeNull();
+  });
+
+  it('calls similarity measures what they are in the legend', () => {
+    render(<SystemDiagram />);
+    expect(screen.getAllByText(/similarity measure/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText('Embedding Agent')).toBeNull();
+    // Measures run in the background too, so the dashed-border legend cannot call them agents.
+    expect(screen.queryByText('Background agent')).toBeNull();
+    expect(screen.getByText('Background: runs without being asked')).toBeInTheDocument();
+    // The Scorer runs when the Matcher answers without a match list, not on every failure.
+    expect(screen.getByText('Runs only when the agent it stands in for answers without a result')).toBeInTheDocument();
+  });
+
+  it('shows what a similarity measure computes, with no instruction box and no Default badge', () => {
+    render(<SystemDiagram />);
+    fireEvent.click(gear('SCORED'));
+    const dialog = screen.getByRole('dialog', { name: `${AGENTS.SCORED.name} settings` });
+    const node = LETTERLY_FLOW.nodes.find(n => n.id === 'SCORED')!;
+    expect(within(dialog).getByText('What it computes')).toBeInTheDocument();
+    expect(within(dialog).getByText(node.computes!)).toBeInTheDocument();
+    expect(within(dialog).queryByRole('textbox', { name: 'System instruction' })).toBeNull();
+    expect(within(dialog).queryByText('Default')).toBeNull();
+    expect(within(dialog).queryByText(/system instruction/i)).toBeNull();
+  });
+
+  it('says in its settings what a fallback stands in for', () => {
+    render(<SystemDiagram />);
+    fireEvent.click(gear('MATCH_SUGGESTIONS_SCORER'));
+    const dialog = screen.getByRole('dialog', { name: `${AGENTS.MATCH_SUGGESTIONS_SCORER.name} settings` });
+    const term = within(dialog).getByText('Stands in for');
+    expect(term.nextElementSibling?.textContent).toContain(AGENTS.MATCH_SUGGESTIONS.name);
   });
 });

@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createOpenAIClient, AGENTS } from '@/lib/models';
+import { SUGGESTION_MATCH_THRESHOLD } from '@/lib/agent-constants';
 import { rejectDisallowed } from '@/lib/request-guards';
 
 function cosineSimilarity(vecA: number[], vecB: number[]) {
@@ -63,7 +64,8 @@ export async function POST(req: NextRequest) {
 
         // Calculate similarity between chat input and each suggestion
         const matchedIndices: number[] = [];
-        const SIMILARITY_THRESHOLD = 0.65;
+        // Shared with the System Diagram, which states this threshold.
+        const SIMILARITY_THRESHOLD = SUGGESTION_MATCH_THRESHOLD;
 
         console.log("--- Match Suggestions Scores ---");
         console.log("Chat Input:", chatInput);

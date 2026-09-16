@@ -47,7 +47,10 @@ describe('rejectDisallowed', () => {
 
   it('keeps every default agent instruction under the limit', async () => {
     const { AGENTS } = await import('@/lib/agent-constants');
-    for (const agent of Object.values(AGENTS)) expect(agent.systemInstruction.length).toBeLessThanOrEqual(MAX_INSTRUCTION_CHARS);
+    for (const agent of Object.values(AGENTS)) {
+      // Similarity measures send no instruction, so they have none to keep under the limit.
+      if ('systemInstruction' in agent) expect(agent.systemInstruction.length).toBeLessThanOrEqual(MAX_INSTRUCTION_CHARS);
+    }
   });
 });
 

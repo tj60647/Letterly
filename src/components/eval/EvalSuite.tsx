@@ -63,7 +63,7 @@ const TABS: { id: Tab; label: string; headline: string; summary: string; helpTit
     id: 'diagram',
     label: 'System Diagram',
     headline: 'Agent Architecture Overview',
-    summary: 'See every AI agent in the Writers\u2019 Room, when each one fires, what data it receives, and where its output appears in the UI.',
+    summary: 'See every agent and similarity measure, when each one fires, what data it receives, and where its output appears in the interface.',
     helpTitle: '',
     helpBody: [],
   },

@@ -322,7 +322,8 @@ export function layoutColumns(flow: Flow): FlowLayout {
   const height = nodesBottom + 20 + LANE_GAP * lane + MARGIN;
   const headings: Heading[] = columns.map((_, c) => ({
     x: sidePad + c * (NODE_WIDTH + COLUMN_GAP) + NODE_WIDTH / 2,
-    label: c === 0 ? 'WHAT YOU GIVE' : c === columnCount - 1 ? 'WHAT AGENTS CHANGE' : lastAgentColumn === 1 ? 'AGENTS' : `AGENTS · STEP ${c}`,
+    // An agent's column is how far it sits from the author's input, not when it runs: headings say what each column reads.
+    label: c === 0 ? 'WHAT YOU GIVE' : c === columnCount - 1 ? 'WHAT AGENTS CHANGE' : c === 1 ? 'AGENTS · READ WHAT YOU GIVE' : 'AGENTS · READ ANOTHER AGENT',
   }));
 
   return { width, height, nodes: boxes, wires: routes, headings, subheadings };

@@ -16,7 +16,7 @@ import ReactMarkdown from 'react-markdown';
 import styles from "./LetterApp.module.css";
 // ModelSelector removed in favor of AgentModelSettings
 import { AgentModelSettings } from "./AgentModelSettings";
-import { AGENTS } from "@/lib/agent-constants";
+import { AGENTS, GOOD_MATCH_SCORE } from "@/lib/agent-constants";
 import { CUSTOM_INSTRUCTIONS_KEY } from "@/lib/custom-instructions";
 import {
     SparklesIcon, CopyIcon, CheckIcon, EraserIcon,
@@ -825,7 +825,7 @@ export default function LetterApp() {
                         {completenessScore !== null && (
                             <>
                                 <span>•</span>
-                                <span title="Completeness Score (Cosine Similarity)" style={{ color: completenessScore > 0.8 ? 'var(--status-success)' : 'var(--text-secondary)' }}>
+                                <span title="Completeness Score (Cosine Similarity)" style={{ color: completenessScore >= GOOD_MATCH_SCORE ? 'var(--status-success)' : 'var(--text-secondary)' }}>
                                     {Math.round(completenessScore * 100)}% Match
                                 </span>
                             </>

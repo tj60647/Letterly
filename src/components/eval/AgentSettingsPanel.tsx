@@ -11,10 +11,11 @@
  *
  * The instruction is saved to the same browser storage the Writers' Room uses (src/lib/custom-instructions.ts).
  * It can be edited only where an edit actually reaches the model; otherwise the panel shows it read-only and says why.
+ * A similarity measure has no instruction at all, so the panel shows what it computes instead.
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { AGENTS, MODELS } from '@/lib/agent-constants';
+import { AGENTS, MODELS, defaultInstruction } from '@/lib/agent-constants';
 import { LETTERLY_FLOW } from '@/lib/agent-flow';
 import { loadCustomInstructions, saveCustomInstruction } from '@/lib/custom-instructions';
 import styles from './SystemDiagram.module.css';
@@ -42,21 +43,21 @@ export function AgentSettingsPanel({ agentId, assignments, onClose }: AgentSetti
     closeRef.current?.focus();
   }, []);
 
-  const defaultInstruction = agent.systemInstruction;
-  const isCustom = custom !== undefined && custom !== defaultInstruction;
-  const shown = editing ? draft : custom ?? defaultInstruction;
+  const shipped = defaultInstruction(agent);
+  const isCustom = custom !== undefined && custom !== shipped;
+  const shown = editing ? draft : custom ?? shipped;
 
   const model = node.modelFrom
     ? `model of ${AGENTS[node.modelFrom as AgentId].name}`
     : MODEL_NAMES[assignments[agentId] || agent.primary] || assignments[agentId] || agent.primary;
 
   const startEditing = () => {
-    setDraft(custom ?? defaultInstruction);
+    setDraft(custom ?? shipped);
     setEditing(true);
   };
 
   const save = () => {
-    const next = draft === defaultInstruction ? null : draft;
+    const next = draft === shipped ? null : draft;
     saveCustomInstruction(agentId, next);
     setCustom(next ?? undefined);
     setEditing(false);
@@ -97,6 +98,12 @@ export function AgentSettingsPanel({ agentId, assignments, onClose }: AgentSetti
             <span className={styles.settingsMuted}>Default. Model choices made in the Writers&rsquo; Room aren&rsquo;t saved across pages yet.</span>
           )}
         </dd>
+        {node.fallbackFor && (
+          <>
+            <dt>Stands in for</dt>
+            <dd>{AGENTS[node.fallbackFor as AgentId].name}, when its response has no match list</dd>
+          </>
+        )}
         <dt>Fires on</dt>
         <dd>
           <ul className={styles.settingsBullets}>
@@ -115,35 +122,46 @@ export function AgentSettingsPanel({ agentId, assignments, onClose }: AgentSetti
         <dd>{agent.outputDescription}</dd>
       </dl>
 
-      <div className={styles.settingsInstructionHeader}>
-        <h4>System instruction</h4>
-        <span className={isCustom ? styles.settingsBadgeCustom : styles.settingsBadgeDefault}>{isCustom ? 'Custom' : 'Default'}</span>
-      </div>
-      <textarea
-        className={styles.settingsTextarea}
-        aria-label="System instruction"
-        value={shown}
-        readOnly={!editing}
-        onChange={e => setDraft(e.target.value)}
-        rows={12}
-      />
-
-      {node.instructionPort ? (
-        <div className={styles.settingsActions}>
-          {editing ? (
-            <>
-              <button type="button" className={styles.settingsPrimary} onClick={save}>Save</button>
-              <button type="button" className={styles.settingsSecondary} onClick={() => setEditing(false)}>Cancel</button>
-            </>
-          ) : (
-            <button type="button" className={styles.settingsPrimary} onClick={startEditing}>Edit</button>
-          )}
-          {isCustom && (
-            <button type="button" className={styles.settingsSecondary} onClick={reset}>Reset to default</button>
-          )}
-        </div>
+      {node.computes ? (
+        <>
+          <div className={styles.settingsInstructionHeader}>
+            <h4>What it computes</h4>
+          </div>
+          <p className={styles.settingsComputes}>{node.computes}</p>
+        </>
       ) : (
-        <p className={styles.settingsNote}>{node.instructionNote}</p>
+        <>
+          <div className={styles.settingsInstructionHeader}>
+            <h4>System instruction</h4>
+            <span className={isCustom ? styles.settingsBadgeCustom : styles.settingsBadgeDefault}>{isCustom ? 'Custom' : 'Default'}</span>
+          </div>
+          <textarea
+            className={styles.settingsTextarea}
+            aria-label="System instruction"
+            value={shown}
+            readOnly={!editing}
+            onChange={e => setDraft(e.target.value)}
+            rows={12}
+          />
+
+          {node.instructionPort ? (
+            <div className={styles.settingsActions}>
+              {editing ? (
+                <>
+                  <button type="button" className={styles.settingsPrimary} onClick={save}>Save</button>
+                  <button type="button" className={styles.settingsSecondary} onClick={() => setEditing(false)}>Cancel</button>
+                </>
+              ) : (
+                <button type="button" className={styles.settingsPrimary} onClick={startEditing}>Edit</button>
+              )}
+              {isCustom && (
+                <button type="button" className={styles.settingsSecondary} onClick={reset}>Reset to default</button>
+              )}
+            </div>
+          ) : (
+            <p className={styles.settingsNote}>{node.instructionNote}</p>
+          )}
+        </>
       )}
     </div>
   );

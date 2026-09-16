@@ -8,8 +8,8 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { AGENTS } from '@/lib/agent-constants';
-import { LETTERLY_FLOW, AGENT_ROUTES, type FlowNode } from '@/lib/agent-flow';
+import { AGENTS, SUGGESTION_MATCH_THRESHOLD, GOOD_MATCH_SCORE } from '@/lib/agent-constants';
+import { LETTERLY_FLOW, AGENT_ROUTES, STORIES, type FlowNode, type StoryId } from '@/lib/agent-flow';
 
 const nodeById = new Map<string, FlowNode>(LETTERLY_FLOW.nodes.map(n => [n.id, n]));
 
@@ -105,10 +105,10 @@ describe('LETTERLY_FLOW', () => {
     }
   });
 
-  it('explains, for every agent without an instruction port, why its instruction cannot be edited', () => {
+  it('gives every agent exactly one of: an instruction port, a reason its instruction cannot be edited, or what it computes', () => {
     for (const node of LETTERLY_FLOW.nodes.filter(n => n.role === 'agent')) {
-      const hasNote = typeof node.instructionNote === 'string' && node.instructionNote.length > 0;
-      expect({ agent: node.id, hasNote }).toEqual({ agent: node.id, hasNote: node.instructionPort !== true });
+      const ways = [node.instructionPort === true, !!node.instructionNote, !!node.computes].filter(Boolean).length;
+      expect({ agent: node.id, ways }).toEqual({ agent: node.id, ways: 1 });
     }
   });
 
@@ -181,5 +181,117 @@ describe('agent input ports', () => {
       const fields = destructured![1].split(',').map(f => f.trim()).filter(f => f && !ignored.has(f)).sort();
       expect({ agent: id, fields }).toEqual({ agent: id, fields: Object.keys(agent.inputSchema).sort() });
     }
+  });
+});
+
+describe('similarity measures', () => {
+  const measures = Object.entries(AGENTS).filter(([, a]) => a.type === 'embedding').map(([id]) => id).sort();
+
+  it('draws the two embedding units as similarity measures, not agents', () => {
+    expect(measures).toEqual(['MATCH_SUGGESTIONS_SCORER', 'SCORED']);
+    for (const id of measures) expect({ id, group: nodeById.get(id)!.group }).toEqual({ id, group: 'embed-measure' });
+  });
+
+  it('gives a similarity measure no instruction at all, and says what it computes instead', () => {
+    for (const [id, agent] of Object.entries(AGENTS)) {
+      const isMeasure = agent.type === 'embedding';
+      expect({ agent: id, hasInstruction: 'systemInstruction' in agent }).toEqual({ agent: id, hasInstruction: !isMeasure });
+      expect({ agent: id, computes: typeof nodeById.get(id)!.computes }).toEqual({ agent: id, computes: isMeasure ? 'string' : 'undefined' });
+    }
+  });
+
+  it('states the thresholds the code actually uses', () => {
+    const route = fs.readFileSync(path.join(process.cwd(), 'src', 'app', 'api', 'match-suggestions', 'route.ts'), 'utf8');
+    const letterApp = fs.readFileSync(path.join(process.cwd(), 'src', 'components', 'LetterApp.tsx'), 'utf8');
+    expect(route).toContain('SUGGESTION_MATCH_THRESHOLD');
+    expect(nodeById.get('MATCH_SUGGESTIONS_SCORER')!.computes).toContain(String(SUGGESTION_MATCH_THRESHOLD));
+    expect(letterApp).toContain('GOOD_MATCH_SCORE');
+    expect(nodeById.get('SCORED')!.computes).toContain(`${Math.round(GOOD_MATCH_SCORE * 100)}%`);
+  });
+});
+
+describe('fallbacks', () => {
+  it('names the agent a fallback stands in for, and that agent exists', () => {
+    for (const node of LETTERLY_FLOW.nodes) {
+      if (node.fallbackFor) expect(nodeById.get(node.fallbackFor)?.role).toBe('agent');
+    }
+    expect(nodeById.get('MATCH_SUGGESTIONS_SCORER')!.fallbackFor).toBe('MATCH_SUGGESTIONS');
+  });
+
+  it('matches the app, which tries the Suggestion Matcher first and its Scorer only when the response has no match list', () => {
+    const letterApp = fs.readFileSync(path.join(process.cwd(), 'src', 'components', 'LetterApp.tsx'), 'utf8');
+    const triesAgentThenEmbeddings =
+      /\/api\/match-suggestions-agent[\s\S]*?if \(data\.matchedSuggestions && Array\.isArray\(data\.matchedSuggestions\)\)[\s\S]*?\} else \{[\s\S]*?\/api\/match-suggestions"/;
+    expect(triesAgentThenEmbeddings.test(letterApp)).toBe(true);
+  });
+
+  it('says the fallback runs when the response has no match list, not on any failure: a request that throws is not retried', () => {
+    const typing = STORIES.find(s => s.id === 'chat-typing')!;
+    expect(typing.description).toMatch(/no match list/i);
+    expect(typing.description).not.toMatch(/fails/i);
+    expect(nodeById.get('MATCH_SUGGESTIONS_SCORER')!.triggers.join(' ')).toMatch(/no match list/i);
+  });
+});
+
+describe('stories', () => {
+  const ids = STORIES.map(s => s.id);
+  const wiresIn = (story: StoryId) => LETTERLY_FLOW.wires.filter(w => w.stories.includes(story)).map(w => w.id).sort();
+
+  it('labels and describes every story, each once', () => {
+    expect(STORIES.length).toBeGreaterThan(0);
+    for (const s of STORIES) {
+      expect({ story: s.id, labelled: s.label.length > 0 && s.description.length > 0 }).toEqual({ story: s.id, labelled: true });
+    }
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('puts every wire in at least one story the diagram offers', () => {
+    for (const wire of LETTERLY_FLOW.wires) {
+      const ok = wire.stories.length > 0 && wire.stories.every(s => ids.includes(s));
+      expect({ wire: wire.id, ok }).toEqual({ wire: wire.id, ok: true });
+    }
+  });
+
+  it('has at least one wire in every story', () => {
+    for (const s of STORIES) expect({ story: s.id, wired: wiresIn(s.id).length > 0 }).toEqual({ story: s.id, wired: true });
+  });
+
+  it('fires the same draft-time wires for Generate Draft and a setting change, and all of them again after a chat message', () => {
+    expect(wiresIn('setting')).toEqual(wiresIn('generate'));
+    const chat = new Set(wiresIn('chat-send'));
+    for (const id of wiresIn('generate')) expect({ wire: id, inChat: chat.has(id) }).toEqual({ wire: id, inChat: true });
+    expect(chat.size).toBeGreaterThan(wiresIn('generate').length);
+  });
+
+  it('re-reads the notes for a length recommendation whenever they change, including when an agent changes them', () => {
+    const lengthWires = LETTERLY_FLOW.wires.filter(w => w.to.node === 'RECOMMEND_LENGTH' || w.from.node === 'RECOMMEND_LENGTH');
+    expect(lengthWires.length).toBeGreaterThan(0);
+    for (const w of lengthWires) {
+      expect({ wire: w.id, stories: [...w.stories].sort() }).toEqual({ wire: w.id, stories: ['chat-send', 'chip-click', 'letter-edit', 'notes-edit'] });
+    }
+  });
+});
+
+describe('wiring details', () => {
+  const letterApp = fs.readFileSync(path.join(process.cwd(), 'src', 'components', 'LetterApp.tsx'), 'utf8');
+  const generateRoute = fs.readFileSync(path.join(process.cwd(), 'src', 'app', 'api', 'generate', 'route.ts'), 'utf8');
+
+  it('wires recipient and sender into the notes the Similarity Scorer reads, as the app joins them', () => {
+    expect(/const inputs = `\$\{recipient\}\\n\$\{roughNotes\}\\n\$\{sender\}`/.test(letterApp)).toBe(true);
+    expect(LETTERLY_FLOW.wires.some(w => w.from.node === 'to-in' && w.to.node === 'SCORED' && w.to.port === 'roughNotes')).toBe(true);
+    expect(LETTERLY_FLOW.wires.some(w => w.from.node === 'from-in' && w.to.node === 'SCORED' && w.to.port === 'roughNotes')).toBe(true);
+  });
+
+  it('says that image-request lines are removed from the notes before the Letter Generator reads them', () => {
+    expect(/filter\(line => !imageRequestPattern\.test\(line\)\)/.test(generateRoute)).toBe(true);
+    const wire = LETTERLY_FLOW.wires.find(w => w.id === 'rough-notes-in.roughNotes->GENERATE.roughNotes')!;
+    expect(wire.when).toMatch(/image/i);
+  });
+
+  it('says that a fixed pattern, not the model, picks the notes line the Image Request Detector reads', () => {
+    expect(generateRoute).toContain('imageRequestPattern');
+    const wire = LETTERLY_FLOW.wires.find(w => w.id === 'rough-notes-in.roughNotes->DETECT_IMAGE_REQUEST.message')!;
+    expect(wire.when).toMatch(/pattern/i);
+    expect(AGENTS.DETECT_IMAGE_REQUEST.inputSchema.message).toMatch(/notes/i);
   });
 });

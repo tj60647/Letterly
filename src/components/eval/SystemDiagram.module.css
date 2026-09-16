@@ -29,6 +29,7 @@
 
 .layoutToggle {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   margin-top: 10px;
@@ -367,4 +368,47 @@
   border-radius: 6px;
   padding: 8px 10px;
   line-height: 1.5;
+}
+
+/* ── Story selector ──────────────────────────────────────────────────────── */
+
+.diagramIntro .storyNote {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+/* A similarity measure is drawn with cut corners, in the legend as on the canvas. */
+.legendSwatchMeasure {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid;
+  clip-path: polygon(25% 0, 75% 0, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0 75%, 0 25%);
+  flex-shrink: 0;
+}
+
+.legendPill {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  line-height: 1.4;
+  padding: 0 7px;
+  border-radius: 999px;
+  border: 1px solid #115e59;
+  color: #115e59;
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+/* What a similarity measure computes, shown where a prompted agent shows its instruction. */
+.settingsComputes {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--text-primary);
+  background: var(--bg-secondary, #f8fafc);
+  border: 1px solid var(--border-subtle, #e2e8f0);
+  border-radius: 6px;
+  padding: 10px 12px;
 }
