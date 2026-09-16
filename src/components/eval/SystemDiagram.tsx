@@ -134,7 +134,7 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
           {' '}Each <strong>node</strong> has <strong>ports</strong>: inputs on the left, outputs on the right, coloured by the kind of value they carry.
           A <strong>hollow</strong> port is the instruction you can edit in the Writers&rsquo; Room.
           {' '}<strong>Cut corners</strong> mark a similarity measure: it compares embeddings and takes no instruction.
-          {' '}Each <strong>wire</strong> is labelled with the ports it joins. <strong>Dashed borders</strong> are agents that run in the background.
+          {' '}Each <strong>wire</strong> is labelled with the ports it joins. <strong>Dashed borders</strong> mark what runs in the background, without you asking.
           {' '}<strong>Hover</strong> a node or wire to see what it does and when it fires, or <strong>click</strong> to pin it.
         </p>
         <div className={styles.layoutToggle} role="group" aria-label="Layout">
@@ -451,11 +451,11 @@ export function SystemDiagram({ assignments = {} }: SystemDiagramProps) {
         ))}
         <div className={styles.legendItem}>
           <span className={styles.legendSwatchDashed} />
-          <span className={styles.legendLabel}>Background agent</span>
+          <span className={styles.legendLabel}>Background: runs without being asked</span>
         </div>
         <div className={styles.legendItem}>
           <span className={styles.legendPill}>fallback</span>
-          <span className={styles.legendLabel}>Runs only when the agent it stands in for fails</span>
+          <span className={styles.legendLabel}>Runs only when the agent it stands in for answers without a result</span>
         </div>
         {(Object.entries(KIND_COLOURS) as [Kind, string][]).map(([kind, colour]) => (
           <div key={kind} className={styles.legendItem}>

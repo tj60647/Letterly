@@ -224,6 +224,13 @@ describe('fallbacks', () => {
       /\/api\/match-suggestions-agent[\s\S]*?if \(data\.matchedSuggestions && Array\.isArray\(data\.matchedSuggestions\)\)[\s\S]*?\} else \{[\s\S]*?\/api\/match-suggestions"/;
     expect(triesAgentThenEmbeddings.test(letterApp)).toBe(true);
   });
+
+  it('says the fallback runs when the response has no match list, not on any failure: a request that throws is not retried', () => {
+    const typing = STORIES.find(s => s.id === 'chat-typing')!;
+    expect(typing.description).toMatch(/no match list/i);
+    expect(typing.description).not.toMatch(/fails/i);
+    expect(nodeById.get('MATCH_SUGGESTIONS_SCORER')!.triggers.join(' ')).toMatch(/no match list/i);
+  });
 });
 
 describe('stories', () => {

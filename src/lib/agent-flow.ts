@@ -62,7 +62,7 @@ export interface FlowNode {
   uiLabel?: string;
   /** For input fields: whether the author can use it from the start, or only once a first draft exists. */
   available?: 'start' | 'after-draft';
-  /** True for agents that run in the background, without the author asking. Drawn with a dashed border. */
+  /** True for nodes that run in the background, without the author asking: agents and measures alike. Drawn with a dashed border. */
   background?: boolean;
   /** What makes this node act. */
   triggers: string[];
@@ -79,7 +79,7 @@ export interface FlowNode {
   modelFrom?: string;
   /** For similarity measures: what they compute, in place of an instruction. Copied from AGENTS. */
   computes?: string;
-  /** For an agent that runs only when another one fails: the id of the agent it stands in for. */
+  /** For a node that runs only when another one's response has no result: the id of the agent it stands in for. */
   fallbackFor?: string;
 }
 
@@ -116,7 +116,7 @@ export const STORIES: Story[] = [
   {
     id: 'chat-typing',
     label: 'Type a chat message',
-    description: '800 ms after the last keystroke, the Suggestion Matcher shades the chips the message addresses. Its Scorer steps in only if the Matcher fails.',
+    description: "800 ms after the last keystroke, the Suggestion Matcher shades the chips the message addresses. Its Scorer steps in only when the Matcher's response has no match list; if the request itself breaks, nothing is retried.",
   },
   {
     id: 'notes-edit',

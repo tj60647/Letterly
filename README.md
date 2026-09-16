@@ -507,7 +507,7 @@ Instead of one single AI doing everything, Letterly uses a **Writers' Room** app
 8.  **Similarity Scorer** — Calculates how closely the draft letter matches your notes. A similarity measure rather than an agent: it compares embeddings and takes no instruction.
 9.  **Tone Request Detector** — Checks each chat message for a tone change request (e.g., "make it more formal").
 10. **Image Request Detector** — Checks lines in your notes that ask to add or create an image.
-11. **Suggestion Matcher Scorer** — A fallback for the Suggestion Matcher, used only when the matcher fails. Also a similarity measure: it compares embeddings and takes no instruction.
+11. **Suggestion Matcher Scorer** — A fallback for the Suggestion Matcher, used only when the matcher's response has no match list. Also a similarity measure: it compares embeddings and takes no instruction.
 
 The first seven appear in the Writers' Room. The last four run behind the scenes; you can see all eleven, and how they connect, in the System Diagram, which draws the two similarity measures with cut corners.
 
@@ -671,7 +671,7 @@ In Letterly:
 - Pick a **story** (Generate Draft, Send a chat message, Type a chat message, and so on) to light only the wires that fire for that one action. With no story chosen, every wire is lit at once: the whole system, but not any one use of it.
 - Every node has **ports**, and every **wire** is labelled with the value it carries. Hover or focus a wire to see when it fires; hover a node to see what it does.
 - A **hollow port** marks an instruction you can edit that actually reaches the model. The **gear** on an agent opens its settings; for a similarity measure, the settings show what it computes, threshold included, in place of an instruction.
-- A **fallback** tag marks the Suggestion Matcher Scorer, which runs only when the Suggestion Matcher fails.
+- A **fallback** tag marks the Suggestion Matcher Scorer, which runs only when the Suggestion Matcher's response has no match list; if the request itself breaks, nothing is retried.
 - Switch between **Columns** and **ELK** layouts.
 
 ---

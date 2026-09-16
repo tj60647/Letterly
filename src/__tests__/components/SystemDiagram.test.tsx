@@ -269,6 +269,11 @@ describe('SystemDiagram stories, measures, and fallbacks', () => {
     render(<SystemDiagram />);
     expect(screen.getAllByText(/similarity measure/i).length).toBeGreaterThan(0);
     expect(screen.queryByText('Embedding Agent')).toBeNull();
+    // Measures run in the background too, so the dashed-border legend cannot call them agents.
+    expect(screen.queryByText('Background agent')).toBeNull();
+    expect(screen.getByText('Background: runs without being asked')).toBeInTheDocument();
+    // The Scorer runs when the Matcher answers without a match list, not on every failure.
+    expect(screen.getByText('Runs only when the agent it stands in for answers without a result')).toBeInTheDocument();
   });
 
   it('shows what a similarity measure computes, with no instruction box and no Default badge', () => {
