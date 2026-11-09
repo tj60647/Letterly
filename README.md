@@ -844,7 +844,7 @@ See `e2e/README.md` for detailed execution instructions.
 #### Checks That Run on GitHub
 
 - **CI** (`.github/workflows/ci.yml`): type check, lint, tests, and build on every pull request. The `main` branch only accepts changes through a pull request that passes it.
-- **Heartbeat** (`.github/workflows/heartbeat.yml`): every 15 minutes, asks the live site's `/api/health`, which answers `200 {"ok":true}` only when the deployment's OpenRouter key is valid and has credit. A failed run emails the repository owner. GitHub can delay scheduled runs, and it disables them after 60 days without repository activity.
+- **Heartbeat** (`.github/workflows/heartbeat.yml`): every two hours, asks the live site's `/api/health`, which answers `200 {"ok":true}` only when the deployment's OpenRouter key is valid and has credit. A failed run emails the repository owner. GitHub can delay scheduled runs, and it disables them after 60 days without repository activity.
 - **Model catalogue** (`.github/workflows/model-catalogue.yml`): every Monday, and whenever the model list changes, checks that every listed model still exists on OpenRouter. OpenRouter retires models without notice.
 
 ---
